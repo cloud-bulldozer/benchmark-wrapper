@@ -27,7 +27,7 @@ def _index_result(server,port,payload):
     for result in payload:
          es.index(index=index, doc_type="result", body=result)
 
-def _json_payload(data,iteration,uuid,user,hostnetwork,remote,client):
+def _json_stream_payload(data,iteration,uuid,user,hostnetwork,remote,client):
     processed = []
     prev_bytes = 0
     prev_ops = 0
@@ -73,34 +73,49 @@ def _parse_stdout(stdout):
     results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)",stdout)
     return { "test": test, "protocol": protocol, "message_size": size, "results" : results }
 
-def _summarize_data(data):
+def _summarize_stream_data(data):
 
     byte = []
     op = []
 
     for entry in data :
-        byte.append(data["norm_byte"])
-        op.append(data["norm_ops"])
+        byte.append(entry["norm_byte"])
+        op.append(entry["norm_ops"])
 
     byte_result = np.array(byte)
     op_result = np.array(op)
 
-    print("+{}+".format("-" * (49+20)))
-    print("Setup - hostnetwork : {}, client: {}, server: {}".format(data['hostnetwork'],
-                                                                    data['client_ips'],
-                                                                    data['remote_ip']))
+    data = data[0]
+    print("+{} UPerf Results {}+".format("-"*(50), "-"*(50)))
     print("Run : {}".format(data['iteration']))
+    print("Uperf Setup")
+    print("""
+          hostnetwork : {}
+          client: {}
+          server: {}""".format(data['hostnetwork'],
+                               data['client_ips'],
+                               data['remote_ip']))
+    print("")
     print("UPerf results for :")
-    print("  test_type: {} , protocol: {} , message_size: {}".format(data['test_type'],
-                                                                     data['protocol'],
-                                                                     data['message_size']))
-    print("min: {}, max: {}, median: {}, median: {}, average: {}, 95th: {}".format(np.amin(byte_result),
-                                                                                   np.amax(byte_result),
-                                                                                   np.median(byte_result),
-                                                                                   np.average(byte_result),
-                                                                                   np.percentile(byte_result, 95)))
-
-    print("+{}+".format("-" * (49+30)))
+    print("""
+          test_type: {}
+          protocol: {}
+          message_size: {}""".format(data['test_type'],
+                                     data['protocol'],
+                                     data['message_size']))
+    print("")
+    print("UPerf results (bytes/sec):")
+    print("""
+          min: {}
+          max: {}
+          median: {}
+          average: {}
+          95th: {}""".format(np.amin(byte_result),
+                             np.amax(byte_result),
+                             np.median(byte_result),
+                             np.average(byte_result),
+                             np.percentile(byte_result, 95)))
+    print("+{}+".format("-"*(115)))
 
 def main():
     parser = argparse.ArgumentParser(description="UPerf Wrapper script")
@@ -121,10 +136,15 @@ def main():
         help='Elasticsearch index')
     args = parser.parse_args()
 
-    server = os.environ["es"]
-    port = os.environ["es_port"]
-    user = os.environ["user"]
-    uuid = os.environ["uuid"]
+    server = ""
+    uuid = ""
+    user = ""
+    if "es" in os.environ :
+        server = os.environ["es"]
+        port = os.environ["es_port"]
+        uuid = os.environ["uuid"]
+    if "user" in os.environ :
+        user = os.environ["user"]
     hostnetwork = os.environ["hostnet"]
     remoteip = os.environ["h"]
     clientips = os.environ["ips"]
@@ -136,11 +156,14 @@ def main():
             print "UPerf failed to execute a second time, stopping..."
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,remoteip,clientips)
-    if ( server != "" ):
-      _index_result(server,port,documents)
+    documents = None
+    if data['test'] == "stream" :
+        documents = _json_stream_payload(data,args.run[0],uuid,user,hostnetwork,remoteip,clientips)
+        if server != "" :
+            _index_result(server,port,documents)
     print stdout[0]
-    _summarize_data(documents)
+    if data['test'] == "stream" :
+        _summarize_stream_data(documents)
 
 if __name__ == '__main__':
     sys.exit(main())

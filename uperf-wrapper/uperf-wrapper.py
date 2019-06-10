@@ -14,6 +14,7 @@
 import argparse
 from datetime import datetime
 import elasticsearch
+import numpy as np
 import re
 import os
 import subprocess
@@ -57,7 +58,7 @@ def _run_uperf(workload):
     cmd = "uperf -v -a -x -i 1 -m {}".format(workload)
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     stdout,stderr = process.communicate()
-    return stdout.strip()
+    return stdout.strip(), process.returncode
 
 def _parse_stdout(stdout):
     # This will effectivly give us:
@@ -71,6 +72,35 @@ def _parse_stdout(stdout):
     # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
     results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)",stdout)
     return { "test": test, "protocol": protocol, "message_size": size, "results" : results }
+
+def _summarize_data(data):
+
+    byte = []
+    op = []
+
+    for entry in data :
+        byte.append(data["norm_byte"])
+        op.append(data["norm_ops"])
+
+    byte_result = np.array(byte)
+    op_result = np.array(op)
+
+    print("+{}+".format("-" * (49+20)))
+    print("Setup - hostnetwork : {}, client: {}, server: {}".format(data['hostnetwork'],
+                                                                    data['client_ips'],
+                                                                    data['remote_ip']))
+    print("Run : {}".format(data['iteration']))
+    print("UPerf results for :")
+    print("  test_type: {} , protocol: {} , message_size: {}".format(data['test_type'],
+                                                                     data['protocol'],
+                                                                     data['message_size']))
+    print("min: {}, max: {}, median: {}, median: {}, average: {}, 95th: {}".format(np.amin(byte_result),
+                                                                                   np.amax(byte_result),
+                                                                                   np.median(byte_result),
+                                                                                   np.average(byte_result),
+                                                                                   np.percentile(byte_result, 95)))
+
+    print("+{}+".format("-" * (49+30)))
 
 def main():
     parser = argparse.ArgumentParser(description="UPerf Wrapper script")
@@ -99,11 +129,18 @@ def main():
     remoteip = os.environ["h"]
     clientips = os.environ["ips"]
     stdout = _run_uperf(args.workload[0])
-    data = _parse_stdout(stdout)
+    if stdout[1] == 1 :
+        print "UPerf failed to execute, trying one more time.."
+        stdout = _run_uperf(args.workload[0])
+        if stdout[1] == 1:
+            print "UPerf failed to execute a second time, stopping..."
+            exit(1)
+    data = _parse_stdout(stdout[0])
     documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,remoteip,clientips)
     if ( server != "" ):
       _index_result(server,port,documents)
-    print stdout
+    print stdout[0]
+    _summarize_data(documents)
 
 if __name__ == '__main__':
     sys.exit(main())

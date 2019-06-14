@@ -27,7 +27,7 @@ def _index_result(server,port,payload):
     for result in payload:
          es.index(index=index, doc_type="result", body=result)
 
-def _json_stream_payload(data,iteration,uuid,user,hostnetwork,remote,client):
+def _json_payload(data,iteration,uuid,test_name,hostnetwork,remote,client):
     processed = []
     prev_bytes = 0
     prev_ops = 0
@@ -35,7 +35,7 @@ def _json_stream_payload(data,iteration,uuid,user,hostnetwork,remote,client):
         processed.append({
             "workload" : "uperf",
             "uuid": uuid,
-            "user": user,
+            "test_name": test_name,
             "hostnetwork": hostnetwork,
             "iteration" : int(iteration),
             "remote_ip": remote,
@@ -73,7 +73,7 @@ def _parse_stdout(stdout):
     results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)",stdout)
     return { "test": test, "protocol": protocol, "message_size": size, "results" : results }
 
-def _summarize_stream_data(data):
+def _summarize_data(data):
 
     byte = []
     op = []
@@ -115,6 +115,18 @@ def _summarize_stream_data(data):
                              np.median(byte_result),
                              np.average(byte_result),
                              np.percentile(byte_result, 95)))
+    print("")
+    print("UPerf results (ops/sec):")
+    print("""
+          min: {}
+          max: {}
+          median: {}
+          average: {}
+          95th: {}""".format(np.amin(op_result),
+                             np.amax(op_result),
+                             np.median(op_result),
+                             np.average(op_result),
+                             np.percentile(op_result, 95)))
     print("+{}+".format("-"*(115)))
 
 def main():
@@ -138,13 +150,13 @@ def main():
 
     server = ""
     uuid = ""
-    user = ""
+    test_name = ""
     if "es" in os.environ :
         server = os.environ["es"]
         port = os.environ["es_port"]
         uuid = os.environ["uuid"]
-    if "user" in os.environ :
-        user = os.environ["user"]
+    if "test_name" in os.environ :
+        test_name = os.environ["test_name"]
     hostnetwork = os.environ["hostnet"]
     remoteip = os.environ["h"]
     clientips = os.environ["ips"]
@@ -157,13 +169,13 @@ def main():
             exit(1)
     data = _parse_stdout(stdout[0])
     documents = None
-    if data['test'] == "stream" :
-        documents = _json_stream_payload(data,args.run[0],uuid,user,hostnetwork,remoteip,clientips)
-        if server != "" :
+    if server != "" :
+        documents = _json_stream_payload(data,args.run[0],uuid,test_name,hostnetwork,remoteip,clientips)
+        if len(documents) > 0 :
             _index_result(server,port,documents)
     print stdout[0]
-    if data['test'] == "stream" :
-        _summarize_stream_data(documents)
+    if len(documents) > 0 :
+      _summarize_data(documents)
 
 if __name__ == '__main__':
     sys.exit(main())

@@ -170,7 +170,7 @@ def main():
     data = _parse_stdout(stdout[0])
     documents = None
     if server != "" :
-        documents = _json_stream_payload(data,args.run[0],uuid,user,hostnetwork,remoteip,clientips)
+        documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,remoteip,clientips)
         if len(documents) > 0 :
             _index_result(server,port,documents)
     print stdout[0]

@@ -27,7 +27,7 @@ def _index_result(server,port,payload):
     for result in payload:
          es.index(index=index, doc_type="result", body=result)
 
-def _json_payload(data,iteration,uuid,test_name,hostnetwork,remote,client):
+def _json_payload(data,iteration,uuid,user,hostnetwork,remote,client):
     processed = []
     prev_bytes = 0
     prev_ops = 0
@@ -35,7 +35,7 @@ def _json_payload(data,iteration,uuid,test_name,hostnetwork,remote,client):
         processed.append({
             "workload" : "uperf",
             "uuid": uuid,
-            "test_name": test_name,
+            "user": user,
             "hostnetwork": hostnetwork,
             "iteration" : int(iteration),
             "remote_ip": remote,
@@ -150,13 +150,13 @@ def main():
 
     server = ""
     uuid = ""
-    test_name = ""
+    user = ""
     if "es" in os.environ :
         server = os.environ["es"]
         port = os.environ["es_port"]
         uuid = os.environ["uuid"]
-    if "test_name" in os.environ :
-        test_name = os.environ["test_name"]
+    if "test_user" in os.environ :
+        user = os.environ["test_user"]
     hostnetwork = os.environ["hostnet"]
     remoteip = os.environ["h"]
     clientips = os.environ["ips"]
@@ -170,7 +170,7 @@ def main():
     data = _parse_stdout(stdout[0])
     documents = None
     if server != "" :
-        documents = _json_stream_payload(data,args.run[0],uuid,test_name,hostnetwork,remoteip,clientips)
+        documents = _json_stream_payload(data,args.run[0],uuid,user,hostnetwork,remoteip,clientips)
         if len(documents) > 0 :
             _index_result(server,port,documents)
     print stdout[0]

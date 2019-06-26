@@ -168,9 +168,8 @@ def main():
             print "UPerf failed to execute a second time, stopping..."
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = None
+    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,remoteip,clientips)
     if server != "" :
-        documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,remoteip,clientips)
         if len(documents) > 0 :
             _index_result(server,port,documents)
     print stdout[0]

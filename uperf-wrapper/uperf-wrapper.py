@@ -27,7 +27,7 @@ def _index_result(server,port,payload):
     for result in payload:
          es.index(index=index, doc_type="result", body=result)
 
-def _json_payload(data,iteration,uuid,user,hostnetwork,remote,client):
+def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client):
     processed = []
     prev_bytes = 0
     prev_ops = 0
@@ -43,6 +43,7 @@ def _json_payload(data,iteration,uuid,user,hostnetwork,remote,client):
             "uperf_ts" : datetime.fromtimestamp(int(result[0].split('.')[0])/1000),
             "test_type": data['test'],
             "protocol": data['protocol'],
+            "service_ip": serviceip,
             "message_size": int(data['message_size']),
             "duration": len(data['results']),
             "bytes": int(result[1]),
@@ -137,29 +138,31 @@ def main():
     parser.add_argument(
         '-r', '--run', nargs=1,
         help='Provide the iteration for the run')
-    parser.add_argument(
-        '-e', '--elasticsearch', nargs='?',
-        help='Elasticsearch host')
-    parser.add_argument(
-        '-p', '--elasticport', nargs='?',
-        help='Elasticsearch port')
-    parser.add_argument(
-        '-i', '--elasticindex', nargs='?',
-        help='Elasticsearch index')
     args = parser.parse_args()
 
     server = ""
     uuid = ""
     user = ""
+    clientips = ""
+    remoteip = ""
+    hostnetwork = ""
+    serviceip = ""
+
+    if "serviceip" in os.environ:
+        serviceip = os.environ['serviceip']
     if "es" in os.environ :
         server = os.environ["es"]
         port = os.environ["es_port"]
         uuid = os.environ["uuid"]
     if "test_user" in os.environ :
         user = os.environ["test_user"]
-    hostnetwork = os.environ["hostnet"]
-    remoteip = os.environ["h"]
-    clientips = os.environ["ips"]
+    if "hostnet" in os.environ:
+        hostnetwork = os.environ["hostnet"]
+    if "h" in os.environ:
+        remoteip = os.environ["h"]
+    if "ips" in os.environ:
+        clientips = os.environ["ips"]
+
     stdout = _run_uperf(args.workload[0])
     if stdout[1] == 1 :
         print "UPerf failed to execute, trying one more time.."
@@ -168,7 +171,7 @@ def main():
             print "UPerf failed to execute a second time, stopping..."
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,remoteip,clientips)
+    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips)
     if server != "" :
         if len(documents) > 0 :
             _index_result(server,port,documents)

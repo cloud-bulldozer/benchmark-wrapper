@@ -73,7 +73,8 @@ def _summarize_data(data,iteration,numclients,database):
     print("Run: {}".format(iteration))
     print("PGBench Config:")
     for line in data['config']:
-        print(line)
+        print("""
+              {}: {}""".format(line[0], line[1]))
     print("")
     print("PGBench results for:")
     print("""

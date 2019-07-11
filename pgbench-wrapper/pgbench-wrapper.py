@@ -37,8 +37,8 @@ def _json_payload(data,iteration,uuid,user,numclients,database):
         "iteration": int(iteration),
         "database": database,
         "numclients": numclients,
-        "tps_incl_con_est": data[tps][0][0],
-        "tps_excl_con_est": data[tps][1][0]
+        "tps_incl_con_est": data['tps'][0][0],
+        "tps_excl_con_est": data['tps'][1][0]
     })
     for line in data[config]:
         processed.append({

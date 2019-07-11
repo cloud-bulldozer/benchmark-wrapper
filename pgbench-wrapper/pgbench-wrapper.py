@@ -58,7 +58,7 @@ def _parse_stdout(stdout):
     # in a 'key: value' format. Matching on the colon.
     # This should provide us a structure like:
     # [['transaction_type', 'TPC-B (sort of)'],['scaling_factor', '50'],...]
-    config = re.findall(r": ",stdout)
+    config = re.findall(r".*:.*",stdout)
     for idx, line in enumerate(config):
         config[idx] = line.split(':')
         config[idx][0] = config[idx][0].replace(" ", "_")

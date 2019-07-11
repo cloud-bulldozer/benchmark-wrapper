@@ -65,7 +65,7 @@ def _parse_stdout(stdout):
     # This will yeild us this structure:
     #     tps, condition
     # [('2394.718707', 'including connections establishing'), ('2394.874350', 'excluding connections establishing')]
-    tps = re.findall(r"tps = (.*) \((.*)\)")
+    tps = re.findall(r"tps = (.*) \((.*)\)",stdout)
     return { "config": config, "tps": tps, "raw_output_b64": raw_output_b64 }
 
 def _summarize_data(data,iteration,numclients,database):

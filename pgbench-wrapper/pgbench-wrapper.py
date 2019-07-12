@@ -82,10 +82,11 @@ def _parse_stdout(stdout):
                 results[idx][1] = re.sub(' \(.*', '', results[idx][1])
     return { "config": config, "results": results, "raw_output_b64": raw_output_b64 }
 
-def _summarize_data(data,iteration,database,pgb_vers):
+def _summarize_data(data,iteration,uuid,database,pgb_vers):
     print("+{} PGBench Results {}+".format("-"*(50), "-"*(50)))
     print("PGBench version: {}".format(pgb_vers))
     print("")
+    print("UUID: {}".format(uuid))
     print("Run: {}".format(iteration))
     print("")
     print("Database: {}".format(database))
@@ -117,11 +118,12 @@ def main():
     database = ""
     pgb_vers = ""
 
-    if "es" in os.environ :
+    if "es" in os.environ:
         server = os.environ["es"]
         port = os.environ["es_port"]
+    if "uuid" in os.environ:
         uuid = os.environ["uuid"]
-    if "test_user" in os.environ :
+    if "test_user" in os.environ:
         user = os.environ["test_user"]
     if "database" in os.environ:
         database = os.environ["database"]
@@ -142,7 +144,7 @@ def main():
             _index_result(server,port,documents)
     print stdout[0]
     if len(documents) > 0 :
-      _summarize_data(data,args.run[0],database,pgb_vers)
+      _summarize_data(data,args.run[0],uuid,database,pgb_vers)
     print(documents)
 
 if __name__ == '__main__':

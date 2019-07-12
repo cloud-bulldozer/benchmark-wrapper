@@ -28,20 +28,23 @@ def _index_result(server,port,payload):
     for result in payload:
          es.index(index=index, doc_type="result", body=result)
 
-def _json_payload(data,iteration,uuid,user,numclients,database):
+def _json_payload(data,iteration,uuid,user,database,pgb_vers):
     processed = []
     processed.append({
         "workload": "pgbench",
+        "pgb_vers": pgb_vers,
         "uuid": uuid,
         "user": user,
         "iteration": int(iteration),
         "database": database,
-        "numclients": numclients,
-        "tps_incl_con_est": data['tps'][0][0],
-        "tps_excl_con_est": data['tps'][1][0]
+        "raw_output_b64": data['raw_output_b64'],
     })
     for line in data['config']:
-        processed.append({
+        processed[0].update({
+            "{}".format(line[0]): line[1]
+        })
+    for line in data['results']:
+        processed[0].update({
             "{}".format(line[0]): line[1]
         })
     return processed
@@ -54,38 +57,50 @@ def _run_pgbench():
 
 def _parse_stdout(stdout):
     raw_output_b64 = base64.b64encode(stdout)
-    # All pgbench config values are output on separate lines
-    # in a 'key: value' format. Matching on the colon.
-    # This should provide us a structure like:
-    # [['transaction_type', 'TPC-B (sort of)'],['scaling_factor', '50'],...]
-    config = re.findall(r".*:.*",stdout)
+    # pgbench outputs config values and results in either 'key:value'
+    # or 'key=value' format. It's a bit inconsistent between versions
+    # which information uses which format, and some of the output is
+    # config info and some is benchmark results.
+    #
+    # We normalize everything to 'key:value' first, then extract from
+    # the new list the outputs that are results and place them in a
+    # new list.
+    results = []
+    config = stdout.splitlines()
     for idx, line in enumerate(config):
-        config[idx] = line.split(':')
+        config[idx] = line.replace(' = ',':').split(':',1)
         config[idx][0] = config[idx][0].replace(" ", "_")
-    # This will yeild us this structure:
-    #     tps, condition
-    # [('2394.718707', 'including connections establishing'), ('2394.874350', 'excluding connections establishing')]
-    tps = re.findall(r"tps = (.*) \((.*)\)",stdout)
-    return { "config": config, "tps": tps, "raw_output_b64": raw_output_b64 }
+        if re.search('tps|latency|processed',config[idx][0]):
+            results.append(config[idx])
+    for idx, line in enumerate(results):
+        if line in config:
+            config.remove(line)
+        if re.search('tps',results[idx][0]):
+            cons=re.findall('.*\((....)uding.*',results[idx][1])
+            if cons:
+                results[idx][0] = 'tps_{}_con_est'.format(cons[0])
+                results[idx][1] = re.sub(' \(.*', '', results[idx][1])
+    return { "config": config, "results": results, "raw_output_b64": raw_output_b64 }
 
-def _summarize_data(data,iteration,numclients,database):
+def _summarize_data(data,iteration,database,pgb_vers):
     print("+{} PGBench Results {}+".format("-"*(50), "-"*(50)))
+    print("PGBench version: {}".format(pgb_vers))
+    print("")
     print("Run: {}".format(iteration))
-    print("PGBench Config:")
+    print("")
+    print("Database: {}".format(database))
+    print("")
+    print("PGBench run info:")
     for line in data['config']:
-        print("""
-              {}: {}""".format(line[0], line[1]))
+        print("          {}: {}".format(line[0], line[1]))
     print("")
-    print("PGBench results for:")
-    print("""
-          database: {}
-          numclients: {}""".format(database, numclients))
+    # I asked for a mai tai, and they brought me a pina colada,
+    # and I said no salt, NO salt on the margarita, but it had salt
+    # on it, big grains of salt, floating in the glass.
+    print("TPS report:") 
+    for line in data['results']:
+        print("          {}: {}".format(line[0], line[1]))
     print("")
-    print("PGBench results (tps):")
-    print("""
-          {}: {}
-          {}: {}""".format(data['tps'][0][1], data['tps'][0][0],
-                           data['tps'][1][1], data['tps'][1][0]))
     print("+{}+".format("-"*(115)))
 
 def main():
@@ -99,8 +114,8 @@ def main():
     port = ""
     uuid = ""
     user = ""
-    numclients = ""
     database = ""
+    pgb_vers = ""
 
     if "es" in os.environ :
         server = os.environ["es"]
@@ -108,10 +123,10 @@ def main():
         uuid = os.environ["uuid"]
     if "test_user" in os.environ :
         user = os.environ["test_user"]
-    if "numclients" in os.environ:
-        numclients = os.environ["numclients"]
     if "database" in os.environ:
         database = os.environ["database"]
+    if "pgb_vers" in os.environ:
+        pgb_vers = os.environ["pgb_vers"]
 
     stdout = _run_pgbench()
     if stdout[1] == 1 :
@@ -121,13 +136,14 @@ def main():
             print "PGBench failed to execute a second time, stopping..."
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = _json_payload(data,args.run[0],uuid,user,numclients,database)
+    documents = _json_payload(data,args.run[0],uuid,user,database,pgb_vers)
     if server != "" :
         if len(documents) > 0 :
             _index_result(server,port,documents)
     print stdout[0]
     if len(documents) > 0 :
-      _summarize_data(data,args.run[0],numclients,database)
+      _summarize_data(data,args.run[0],database,pgb_vers)
+    print(documents)
 
 if __name__ == '__main__':
     sys.exit(main())

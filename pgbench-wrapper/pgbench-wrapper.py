@@ -65,7 +65,7 @@ def _num_convert(value):
     return value
     
 
-def _parse_stdout(stdout):
+def _parse_stdout(stdout,duration):
     raw_output_b64 = base64.b64encode(stdout)
     # pgbench outputs config values and results in either 'key:value'
     # or 'key=value' format. It's a bit inconsistent between versions
@@ -83,6 +83,9 @@ def _parse_stdout(stdout):
         config[idx][1] = _num_convert(config[idx][1].strip())
         if re.search('tps|latency|processed',config[idx][0]):
             results.append(config[idx])
+        if re.search('duration',config[idx][0]):
+            config[idx][0] += "_seconds"
+            config[idx][1] = _num_convert(duration)
     for idx, line in enumerate(results):
         if line in config:
             config.remove(line)
@@ -94,6 +97,11 @@ def _parse_stdout(stdout):
         elif re.search('latency',results[idx][0]):
             results[idx][0] += "_ms"
             results[idx][1] = _num_convert(results[idx][1].split(" ",1)[0])
+        elif re.search('processed',results[idx][0]):
+            try:
+                results[idx][1] = _num_convert(results[idx][1].split("/",1)[0])
+            except AttributeError:
+                pass
     return { "config": config, "results": results, "raw_output_b64": raw_output_b64 }
 
 def _summarize_data(data,iteration,uuid,database,pgb_vers):
@@ -131,6 +139,7 @@ def main():
     user = ""
     database = ""
     pgb_vers = ""
+    duration = ""
 
     if "es" in os.environ:
         server = os.environ["es"]
@@ -143,6 +152,8 @@ def main():
         database = os.environ["database"]
     if "pgb_vers" in os.environ:
         pgb_vers = os.environ["pgb_vers"]
+    if "duration" in os.environ:
+        duration = os.environ["duration"]
 
     # Initialize json payload shared metadata
     meta_processed = []
@@ -162,7 +173,7 @@ def main():
         if stdout[1] == 1:
             print "PGBench failed to execute a second time, stopping..."
             exit(1)
-    data = _parse_stdout(stdout[0])
+    data = _parse_stdout(stdout[0],duration)
     documents = _json_payload(meta_processed,data)
     documents_raw = _json_payload_raw(meta_processed,data)
     if server != "" :

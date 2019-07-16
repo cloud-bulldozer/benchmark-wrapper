@@ -13,19 +13,11 @@
 
 import argparse
 from datetime import datetime
-import elasticsearch
 import numpy as np
+from common.elastic import  *
+from common.common import *
 import re
-import os
-import subprocess
 import sys
-
-def _index_result(server,port,payload):
-    index = "uperf-results"
-    es = elasticsearch.Elasticsearch([
-        {'host': server,'port': port }],send_get_body_as='POST')
-    for result in payload:
-         es.index(index=index, doc_type="result", body=result)
 
 def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client):
     processed = []
@@ -54,12 +46,6 @@ def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client):
         prev_bytes = int(result[1])
         prev_ops = int(result[2])
     return processed
-
-def _run_uperf(workload):
-    cmd = "uperf -v -a -x -i 1 -m {}".format(workload)
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    stdout,stderr = process.communicate()
-    return stdout.strip(), process.returncode
 
 def _parse_stdout(stdout):
     # This will effectivly give us:
@@ -131,6 +117,7 @@ def _summarize_data(data):
     print("+{}+".format("-"*(115)))
 
 def main():
+    workload = "uperf"
     parser = argparse.ArgumentParser(description="UPerf Wrapper script")
     parser.add_argument(
         '-w', '--workload', nargs=1,
@@ -147,12 +134,13 @@ def main():
     remoteip = ""
     hostnetwork = ""
     serviceip = ""
+    es = {}
 
     if "serviceip" in os.environ:
         serviceip = os.environ['serviceip']
     if "es" in os.environ :
-        server = os.environ["es"]
-        port = os.environ["es_port"]
+        es['server'] = os.environ["es"]
+        es['port'] = os.environ["es_port"]
         uuid = os.environ["uuid"]
     if "test_user" in os.environ :
         user = os.environ["test_user"]
@@ -163,18 +151,20 @@ def main():
     if "ips" in os.environ:
         clientips = os.environ["ips"]
 
-    stdout = _run_uperf(args.workload[0])
-    if stdout[1] == 1 :
+    cmd = "uperf -v -a -x -i 1 -m {}".format(args.workload[0])
+    stdout = run(cmd)
+    if stdout[1] != 0 :
         print "UPerf failed to execute, trying one more time.."
-        stdout = _run_uperf(args.workload[0])
-        if stdout[1] == 1:
+        stdout = run(cmd)
+        if stdout[1] != 0:
             print "UPerf failed to execute a second time, stopping..."
             exit(1)
     data = _parse_stdout(stdout[0])
     documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips)
     if server != "" :
         if len(documents) > 0 :
-            _index_result(server,port,documents)
+            index = "uperf-results"
+            index_result(es,workload,documents)
     print stdout[0]
     if len(documents) > 0 :
       _summarize_data(documents)

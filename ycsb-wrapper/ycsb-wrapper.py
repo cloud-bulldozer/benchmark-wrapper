@@ -20,62 +20,82 @@ import os
 import subprocess
 import sys
 
-def _index_result(server,port,payload):
-    index = "ripsaw-uperf-results"
-    es = elasticsearch.Elasticsearch([
-        {'host': server,'port': port }],send_get_body_as='POST')
-    for result in payload:
-         es.index(index=index, body=result)
+def _index_result(server,port,index,payload):
+    try :
+        es = elasticsearch.Elasticsearch([
+            {'host': server,'port': port }],send_get_body_as='POST')
+        for result in payload :
+            print result
+            es.index(index=index,doc_type="result", body=result)
+    except Exception as e:
+        print "An unknown error occured connecting to ElasticSearch: {}".format(e)
+        return False
 
 def _run(cmd):
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout,stderr = process.communicate()
-    return stdout.strip(), process.returncode
+    return [ stdout.strip(), stderr.strip(), process.returncode]
 
-def _json_payload(data,iteration,uuid,user,phase,workload,recordcount,operationcount):
+def _json_payload(data,iteration,uuid,user,phase,workload,driver,recordcount,operationcount):
     processed = []
+    summary = []
     for result in data['results'] :
-        processed.append({
+        for action in result[3].split("["):
+            bits = action.split(" ")
+            _date = result[0].split(" ")[0].split("-")
+            _time = result[0].split(" ")[1].split(":")
+            if len(bits) >= 8 :
+                processed.append({
+                    "workload" : "ycsb",
+                    "uuid": uuid,
+                    "user": user,
+                    "phase": phase,
+                    "driver": driver,
+                    "timestamp": datetime(int(_date[0]),
+                                          int(_date[1]),
+                                          int(_date[2]),
+                                          int(_time[0]),
+                                          int(_time[1]),
+                                          int(_time[2]),
+                                          int(_time[3])),
+                    "overall_rate": float(result[2].split(" ")[0]),
+                    "action": bits[0][:-1],
+                    "count": int(bits[1].split("=")[1][:-1]),
+                    "latency_90": int(bits[5].split("=")[1][:-1]),
+                    "latency_min": int(bits[3].split("=")[1][:-1]),
+                    "latency_max": int(bits[2].split("=")[1][:-1]),
+                    "recordcount": int(recordcount),
+                    "operationcount": int(operationcount),
+                    "iteration" : int(iteration),
+                    "workload_type": workload
+        })
+    summary_dict = {}
+    if 'summary' in data :
+        for summ in data['summary'] :
+            if summ[0][0].isdigit() :
+                continue
+            if not summ[0].strip('[').strip(']') in summary_dict :
+                summary_dict[summ[0].strip('[').strip(']')] = {}
+            summary_dict[summ[0].strip('[').strip(']')][summ[1]] = float(summ[2])
+        summary.append({
             "workload" : "ycsb",
             "uuid": uuid,
             "user": user,
             "phase": phase,
-            "recordcount": recordcount,
-            "operationcount": operationcount,
+            "driver": driver,
+            "timestamp": datetime.now(),
+            "data": summary_dict,
+            "recordcount": int(recordcount),
+            "operationcount": int(operationcount),
             "iteration" : int(iteration),
             "workload_type": workload
         })
-    return processed
+    return processed, summary
 
-def _parse_stdout(stdout):
-    data_points = re.findall(r"(\d+-\d+-\d+ \d+:\d+:\d+:\d+) \d+ sec: (\d+ operations); (\d+.\d? current ops/sec); ([[A-Z]+:.*])+ ",data)
-    summary = re.findall(r"[([[A-Z]+]), (.*), (.*)",data)
+def _parse_stdout(data):
+    data_points = re.findall(r"(\d+-\d+-\d+ \d+:\d+:\d+:\d+) \d+ sec: (\d+ operations); (\d+.\d+? current ops/sec); (.*)",data)
+    summary = re.findall(r"(.*), (.*), (.*)",data)
     return { "results": data_points, "summary": summary }
-
-def _summarize_data(data):
-
-    print("+{} YCSB Results {}+".format("-"*(50), "-"*(50)))
-    print("Run : {}".format(data['iteration']))
-    print("YCSB Setup")
-    print("""
-          workload: {}
-          num_records: {}
-          num_operations: {}""".format(data['workload'],
-                               data['num_records'],
-                               data['num_operations']))
-    print("")
-    print("YCSB results (ops/sec):")
-    print("""
-          min: {}
-          max: {}
-          median: {}
-          average: {}
-          """.format(np.amin(op_result),
-                             np.amax(op_result),
-                             np.median(op_result),
-                             np.average(op_result),
-                             ))
-    print("+{}+".format("-"*(115)))
 
 def main():
     parser = argparse.ArgumentParser(description="YCSB Wrapper script")
@@ -104,22 +124,22 @@ def main():
     uuid = ""
     user = ""
     workload = ""
-    num_operations = ""
-    num_records = ""
+    recordcount = ""
+    operationcount = ""
     phase = ""
 
     if "es" in os.environ :
         server = os.environ["es"]
         port = os.environ["es_port"]
         uuid = os.environ["uuid"]
-    if "test_user" in os.environ :
-        user = os.environ["test_user"]
+    if "user" in os.environ :
+        user = os.environ["user"]
     if "workload" in os.environ :
         workload = os.environ["workload"]
     if "num_records" in os.environ :
-        num_records = os.environ["num_records"]
+        recordcount = os.environ["num_records"]
     if "num_operations" in os.environ :
-        num_operations= os.environ["num_records"]
+        operationcount = os.environ["num_operations"]
 
     extra = ""
     if not args.extra is None:
@@ -127,31 +147,35 @@ def main():
 
     if args.load :
         phase = "load"
-        cmd = "/ycsb/bin/ycsb {} {} -s -P /ycsb/workloads/{} {}".format(phase,
+        cmd = "/ycsb/bin/ycsb {} {} -s -P /tmp/ycsb/{} {}".format(phase,
                                                                         args.driver[0],
                                                                         args.workload[0],
                                                                         extra)
         stdout = _run(cmd)
+        output = "{}\n{}".format(stdout[0],stdout[1])
     else:
         phase = "run"
-        cmd = "/ycsb/bin/ycsb {} {} -s -P /ycsb/workloads/{} {}".format(phase,
+        cmd = "/ycsb/bin/ycsb {} {} -s -P /tmp/ycsb/{} {}".format(phase,
                                                                         args.driver[0],
                                                                         args.workload[0],
                                                                         extra)
         stdout = _run(cmd)
+        output = "{}\n{}".format(stdout[0],stdout[1])
 
-    if stdout[1] != 0 :
+    if stdout[2] != 0 :
         print "YCSB failed to execute"
         exit(1)
-    data = _parse_stdout(stdout[0])
-    pprint.pprint(data)
-    documents = _json_payload(data,args.run[0],uuid,user,phase,workload,recordcount,operationcount)
+    data = _parse_stdout(output)
+    documents,summary = _json_payload(data,args.run[0],uuid,user,phase,workload,args.driver[0],recordcount,operationcount)
+    print output
     if server != "" :
+        print "Attempting to index results..."
         if len(documents) > 0 :
-            _index_result(server,port,documents)
-    print stdout[0]
-    if len(documents) > 0 :
-      _summarize_data(documents)
+            index = "ripsaw-ycsb-results"
+            _index_result(server,port,index,documents)
+        if len(summary) > 0 :
+            index = "ripsaw-ycsb-summary"
+            _index_result(server,port,index,summary)
 
 if __name__ == '__main__':
     sys.exit(main())

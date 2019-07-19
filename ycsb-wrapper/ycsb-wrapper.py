@@ -42,6 +42,10 @@ def _json_payload(data,iteration,uuid,user,phase,workload,driver,recordcount,ope
     for result in data['results'] :
         for action in result[3].split("["):
             bits = action.split(" ")
+            if len(bits) < 2 :
+                continue
+            if bits[0][len(bits[0])-1] != ':':
+                continue
             _date = result[0].split(" ")[0].split("-")
             _time = result[0].split(" ")[1].split(":")
             if len(bits) >= 8 :
@@ -92,10 +96,12 @@ def _json_payload(data,iteration,uuid,user,phase,workload,driver,recordcount,ope
         })
     return processed, summary
 
+
 def _parse_stdout(data):
     data_points = re.findall(r"(\d+-\d+-\d+ \d+:\d+:\d+:\d+) \d+ sec: (\d+ operations); (\d+.\d+? current ops/sec); (.*)",data)
     summary = re.findall(r"(.*), (.*), (.*)",data)
     return { "results": data_points, "summary": summary }
+
 
 def main():
     parser = argparse.ArgumentParser(description="YCSB Wrapper script")

@@ -165,9 +165,13 @@ def main():
     if stdout[2] != 0 :
         print "YCSB failed to execute"
         exit(1)
+    if "Error inserting" in stdout[1] :
+        print "YCSB failed to load database... Drop previous YCSB database"
+        exit(1)
+
     data = _parse_stdout(output)
-    documents,summary = _json_payload(data,args.run[0],uuid,user,phase,workload,args.driver[0],recordcount,operationcount)
     print output
+    documents,summary = _json_payload(data,args.run[0],uuid,user,phase,workload,args.driver[0],recordcount,operationcount)
     if server != "" :
         print "Attempting to index results..."
         if len(documents) > 0 :

@@ -131,8 +131,19 @@ def _index_result(es,document_index_suffix,payload):
     index = es['index_prefix'] + '-' + str(document_index_suffix)
     es = elasticsearch.Elasticsearch([
         {'host': es['server'],'port': es['port'] }],send_get_body_as='POST')
+    indexed=True
+    processed_count = 0
+    total_count = 0
     for result in payload:
-         es.index(index=index, doc_type="result", body=result)
+        try:
+            es.index(index=index, doc_type="result", body=result)
+            processed_count += 1
+        except Exception as e:
+            print(repr(e) + "occurred for the json document:")
+            print(str(result))
+            indexed=False
+        total_count += 1
+    return indexed, processed_count, total_count
 
 def _clean_output(fio_output_file):
     cmd = ["sed", "-i", "/{/,$!d"]
@@ -177,7 +188,7 @@ def _build_fio_job(job_name, job_dict, parent_dir, fio_job_file_name):
     config[job_name] = job_dict[job_name]
     if os.path.exists(fio_job_file_name):
         os.remove(fio_job_file_name)
-        print("file" , fio_job_file_name,  " already exists. overwriting")
+        print("file " + fio_job_file_name + " already exists. overwriting")
     with open(fio_job_file_name, 'w') as configfile:
         config.write(configfile, space_around_delimiters=False)
 
@@ -211,24 +222,33 @@ def _trigger_fio(fio_jobs, working_dir, fio_jobs_dict, host_file, user, uuid, sa
             fio_result_documents, fio_starttime, earliest_starttime = _document_payload(data, user, uuid, sample, hosts, fio_endtime, fio_version) #hosts_metadata
             if indexed:
                 if len(fio_result_documents) > 0:
-                    _index_result(es, 'results', fio_result_documents)
-                    print("fio result documents succesfully indexed to index {}".format(str(es['index_prefix'])+'results'))
+                    _status_results, processed_count, total_count = _index_result(es, 'results', fio_result_documents)
+                    if _status_results:
+                        print("Succesfully indexed " + str(total_count) + " fio result documents to index {}".format(str(es['index_prefix'])+'-results'))
+                    else:
+                        print(str(processed_count) + "/" + str(total_count) + "succesfully indexed")
             if fio_jobs_dict[job]['filename_format'] != 'f.\$jobnum.\$filenum' or int(fio_jobs_dict[job]['numjobs']) != 1:
                 print("filename_format is not 'f.\$jobnum.\$filenum' and/or numjobs is not 1, so can't process logs")
                 exit(1)
             fio_log_documents = _log_payload(job_dir, user, uuid, sample, fio_jobs_dict, fio_version, fio_starttime, hosts, job)
             if indexed:
                 if len(fio_log_documents) > 0:
-                    _index_result(es, 'logs', fio_log_documents)
-                    print("fio logs succesfully indexed to index {}".format(str(es['index_prefix'])+'logs'))
+                    _status_results, processed_count, total_count = _index_result(es, 'logs', fio_log_documents)
+                    if _status_results:
+                        print("Succesfully indexed " + str(total_count) + " fio logs to index {}".format(str(es['index_prefix'])+'-logs'))
+                    else:
+                        print(str(processed_count) + "/" + str(total_count) + "succesfully indexed")
             processed_histogram_prefix = fio_jobs_dict[job]['write_hist_log'] +'_clat_hist'
             histogram_output_file = job_dir + '/' + processed_histogram_prefix + '_processed.' + str(numjob)
             _process_histogram(fio_jobs_dict, hosts, job, job_dir, processed_histogram_prefix, histogram_output_file)
             histogram_documents = _histogram_payload(histogram_output_file, user, uuid, sample, fio_jobs_dict, fio_version, earliest_starttime, hosts, job)
             if indexed:
                 if len(histogram_documents) > 0:
-                    _index_result(es, 'logs', histogram_documents)
-                    print("fio processed histogram log succesfully indexed to index {}".format(str(es['index_prefix'])+'logs'))
+                    _status_results, processed_count, total_count =_index_result(es, 'logs', histogram_documents)
+                    if _status_results:
+                        print("Succesfully indexed " + str(total_count) + " processed histogram logs to index {}".format(str(es['index_prefix'])+'-logs'))
+                    else:
+                        print(str(processed_count) + "/" + str(total_count) + "succesfully indexed")
 
 
 def main():
@@ -251,7 +271,7 @@ def main():
     if "es" in os.environ:
         es['server'] = os.environ["es"]
         es['port'] = os.environ["es_port"]
-        es['index_prefix'] = os.environ["es_index"]
+        es['index_prefix'] = "ripsaw-fio"
         index_results = True
     if "uuid" in os.environ:
         uuid = os.environ["uuid"]

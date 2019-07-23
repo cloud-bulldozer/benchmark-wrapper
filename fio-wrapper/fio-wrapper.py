@@ -74,7 +74,13 @@ def _log_payload(directory, user, uuid, sample, fio_jobs_dict, fio_version, fio_
             log_file_prefix_string = 'write_' + str(log) + '_log'
             if log in ['clat','slat']:
                 log_file_prefix_string = 'write_lat_log'
-            log_file_name = str(job_options[log_file_prefix_string]) + '_' + str(log) + '.1.log.' + str(host)
+            try:
+                log_file_name = str(job_options[log_file_prefix_string]) + '_' + str(log) + '.1.log.' + str(host)
+            except KeyError:
+                try:
+                    log_file_name = str(fio_jobs_dict['global'][log_file_prefix_string]) + '_' + str(log) + '.1.log.' + str(host)
+                except:
+                    print("Error setting log_file_name")
             with open(directory+'/'+str(log_file_name), 'r') as log_file:
                 for log_line in log_file:
                     log_line_values = str(log_line).split(", ")
@@ -213,7 +219,7 @@ def _trigger_fio(fio_jobs, working_dir, fio_jobs_dict, host_file, user, uuid, sa
         if clean_stdout[1] != 0:
             print("failed to parse the output file")
             exit(1)
-        print("fio has succesfully finished executing for jobname {} and results are in the dir {}".format(job,job_dir))
+        print("fio has successfully finished executing for jobname {} and results are in the dir {}\n".format(job,job_dir))
         if indexed:
             with open(fio_output_file) as f:
                 data = json.load(f)
@@ -227,9 +233,17 @@ def _trigger_fio(fio_jobs, working_dir, fio_jobs_dict, host_file, user, uuid, sa
                         print("Succesfully indexed " + str(total_count) + " fio result documents to index {}".format(str(es['index_prefix'])+'-results'))
                     else:
                         print(str(processed_count) + "/" + str(total_count) + "succesfully indexed")
-            if fio_jobs_dict[job]['filename_format'] != 'f.\$jobnum.\$filenum' or int(fio_jobs_dict[job]['numjobs']) != 1:
-                print("filename_format is not 'f.\$jobnum.\$filenum' and/or numjobs is not 1, so can't process logs")
-                exit(1)
+            try:
+                if fio_jobs_dict[job]['filename_format'] != 'f.\$jobnum.\$filenum' or int(fio_jobs_dict[job]['numjobs']) != 1:
+                    print("filename_format is not 'f.\$jobnum.\$filenum' and/or numjobs is not 1, so can't process logs")
+                    exit(1)
+            except KeyError:
+                try:
+                    if fio_jobs_dict['global']['filename_format'] != 'f.\$jobnum.\$filenum' or int(fio_jobs_dict['global']['numjobs']) != 1:
+                        print("filename_format is not 'f.\$jobnum.\$filenum' and/or numjobs is not 1, so can't process logs")
+                        exit(1)
+                except:
+                    print("Error getting filename_format")
             fio_log_documents = _log_payload(job_dir, user, uuid, sample, fio_jobs_dict, fio_version, fio_starttime, hosts, job)
             if indexed:
                 if len(fio_log_documents) > 0:
@@ -238,7 +252,13 @@ def _trigger_fio(fio_jobs, working_dir, fio_jobs_dict, host_file, user, uuid, sa
                         print("Succesfully indexed " + str(total_count) + " fio logs to index {}".format(str(es['index_prefix'])+'-logs'))
                     else:
                         print(str(processed_count) + "/" + str(total_count) + "succesfully indexed")
-            processed_histogram_prefix = fio_jobs_dict[job]['write_hist_log'] +'_clat_hist'
+            try:
+                processed_histogram_prefix = fio_jobs_dict[job]['write_hist_log'] +'_clat_hist'
+            except KeyError:
+                try:
+                    processed_histogram_prefix = fio_jobs_dict['global']['write_hist_log'] +'_clat_hist'
+                except:
+                    print("Error setting processed_histogram_prefix")
             histogram_output_file = job_dir + '/' + processed_histogram_prefix + '_processed.' + str(numjob)
             _process_histogram(fio_jobs_dict, hosts, job, job_dir, processed_histogram_prefix, histogram_output_file)
             histogram_documents = _histogram_payload(histogram_output_file, user, uuid, sample, fio_jobs_dict, fio_version, earliest_starttime, hosts, job)
@@ -249,6 +269,8 @@ def _trigger_fio(fio_jobs, working_dir, fio_jobs_dict, host_file, user, uuid, sa
                         print("Succesfully indexed " + str(total_count) + " processed histogram logs to index {}".format(str(es['index_prefix'])+'-logs'))
                     else:
                         print(str(processed_count) + "/" + str(total_count) + "succesfully indexed")
+        else:
+            print("Not indexing\n")
 
 
 def main():
@@ -271,7 +293,7 @@ def main():
     if "es" in os.environ:
         es['server'] = os.environ["es"]
         es['port'] = os.environ["es_port"]
-        es['index_prefix'] = "ripsaw-fio"
+        es['index_prefix'] = os.environ["es_index"]
         index_results = True
     if "uuid" in os.environ:
         uuid = os.environ["uuid"]

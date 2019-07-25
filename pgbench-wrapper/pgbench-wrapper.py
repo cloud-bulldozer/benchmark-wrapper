@@ -26,8 +26,19 @@ def _index_result(index,server,port,payload):
     index = index
     es = elasticsearch.Elasticsearch([
         {'host': server,'port': port }],send_get_body_as='POST')
+    indexed=True
+    processed_count = 0
+    total_count = 0
     for result in payload:
-         es.index(index=index, doc_type="result", body=result)
+        try:
+            es.index(index=index, doc_type="result", body=result)
+            processed_count += 1
+        except Exception as e:
+            print(repr(e) + "occurred for the json document:")
+            print(str(result))
+            indexed=False
+        total_count += 1
+    return indexed, processed_count, total_count
 
 def _json_payload(meta_processed,data):
     processed = copy.deepcopy(meta_processed)
@@ -144,6 +155,10 @@ def main():
     if "es" in os.environ:
         server = os.environ["es"]
         port = os.environ["es_port"]
+        if "es_index" in os.environ:
+            index = os.environ["es_index"]
+        else:
+            index = "pgbench"
     if "uuid" in os.environ:
         uuid = os.environ["uuid"]
     if "test_user" in os.environ:
@@ -178,8 +193,20 @@ def main():
     documents_raw = _json_payload_raw(meta_processed,data)
     if server != "" :
         if len(documents) > 0 :
-            _index_result("pgbench-results",server,port,documents)
-            _index_result("pgbench-results-raw",server,port,documents_raw)
+            _status_results, processed_count, total_count = _index_result("{}-results".format(index),server,port,documents)
+            if _status_results:
+                print("Succesfully indexed {} fio result documents to index {}-results\n".format(str(total_count),str(index)))
+            else:
+                print("{}/{} succesfully indexed\n".format(str(processed_count),str(total_count)))
+            _status_results, processed_count, total_count = _index_result("{}-results-raw".format(index),server,port,documents_raw)
+            if _status_results:
+                print("Succesfully indexed {} fio raw result documents to index {}-results-raw\n".format(str(total_count),str(index)))
+            else:
+                print("{}/{} succesfully indexed\n".format(str(processed_count),str(total_count)))
+        else:
+            print("Indexing failed; json document empty!\n")
+    else:
+        print("Results not indexed.\n")
     print stdout[0]
     if len(documents) > 0 :
       _summarize_data(data,args.run[0],uuid,database,pgb_vers)

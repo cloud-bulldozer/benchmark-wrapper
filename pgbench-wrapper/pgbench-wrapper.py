@@ -193,14 +193,14 @@ def main():
     documents_raw = _json_payload_raw(meta_processed,data)
     if server != "" :
         if len(documents) > 0 :
-            _status_results, processed_count, total_count = _index_result("{}-results".format(index),server,port,documents)
+            _status_results, processed_count, total_count = _index_result("{}-summary".format(index),server,port,documents)
             if _status_results:
-                print("Succesfully indexed {} fio result documents to index {}-results\n".format(str(total_count),str(index)))
+                print("Succesfully indexed {} fio result documents to index {}-summary\n".format(str(total_count),str(index)))
             else:
                 print("{}/{} succesfully indexed\n".format(str(processed_count),str(total_count)))
-            _status_results, processed_count, total_count = _index_result("{}-results-raw".format(index),server,port,documents_raw)
+            _status_results, processed_count, total_count = _index_result("{}-raw".format(index),server,port,documents_raw)
             if _status_results:
-                print("Succesfully indexed {} fio raw result documents to index {}-results-raw\n".format(str(total_count),str(index)))
+                print("Succesfully indexed {} fio raw result documents to index {}-raw\n".format(str(total_count),str(index)))
             else:
                 print("{}/{} succesfully indexed\n".format(str(processed_count),str(total_count)))
         else:

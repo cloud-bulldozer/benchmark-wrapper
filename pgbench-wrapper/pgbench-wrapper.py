@@ -44,11 +44,11 @@ def _json_payload(meta_processed,data):
     processed = copy.deepcopy(meta_processed)
     for line in data['config']:
         processed[0].update({
-            "{}".format(line[0]): line[1]
+            "{}".format(line[0]): _num_convert(line[1])
         })
     for line in data['results']:
         processed[0].update({
-            "{}".format(line[0]): line[1]
+            "{}".format(line[0]): _num_convert(line[1])
         })
     return processed
 
@@ -59,11 +59,19 @@ def _json_payload_raw(meta_processed,data):
     })
     return processed
 
+def _json_payload_prog(meta_processed,data):
+    processed = []
+    for prog in data:
+        entry = copy.copy(meta_processed[0])
+        entry.update(prog)
+        processed.append(entry)
+    return processed
+
 def _run_pgbench():
-    cmd = "pgbench $pgbench_opts"
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    cmd = "pgbench -P 10 --progress-timestamp $pgbench_opts"
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout,stderr = process.communicate()
-    return stdout.strip(), process.returncode
+    return stdout.strip(), stderr.strip(), process.returncode
 
 def _num_convert(value):
     try:
@@ -76,7 +84,7 @@ def _num_convert(value):
     return value
     
 
-def _parse_stdout(stdout,duration):
+def _parse_stdout(stdout):
     raw_output_b64 = base64.b64encode(stdout)
     # pgbench outputs config values and results in either 'key:value'
     # or 'key=value' format. It's a bit inconsistent between versions
@@ -96,7 +104,7 @@ def _parse_stdout(stdout,duration):
             results.append(config[idx])
         if re.search('duration',config[idx][0]):
             config[idx][0] += "_seconds"
-            config[idx][1] = _num_convert(duration)
+            config[idx][1] = _num_convert(config[idx][1].split()[0])
     for idx, line in enumerate(results):
         if line in config:
             config.remove(line)
@@ -114,6 +122,18 @@ def _parse_stdout(stdout,duration):
             except AttributeError:
                 pass
     return { "config": config, "results": results, "raw_output_b64": raw_output_b64 }
+
+def _parse_stderr(stderr):
+    progress = []
+    for line in stderr.splitlines():
+        if "progress" in line:
+            progress.append({
+                "timestamp": datetime.fromtimestamp(float(line.split(" ")[1])),
+                "tps": float(line.split(" ")[3]),
+                "latency_ms": float(line.split(" ")[6]),
+                "stddev": float(line.split(" ")[9])
+            })
+    return progress
 
 def _summarize_data(data,iteration,uuid,database,pgb_vers):
     print("+{} PGBench Results {}+".format("-"*(50), "-"*(50)))
@@ -150,7 +170,6 @@ def main():
     user = ""
     database = ""
     pgb_vers = ""
-    duration = ""
 
     if "es" in os.environ:
         server = os.environ["es"]
@@ -167,8 +186,6 @@ def main():
         database = os.environ["database"]
     if "pgb_vers" in os.environ:
         pgb_vers = os.environ["pgb_vers"]
-    if "duration" in os.environ:
-        duration = os.environ["duration"]
 
     # Initialize json payload shared metadata
     meta_processed = []
@@ -181,37 +198,47 @@ def main():
         "database": database,
     })
 
-    stdout = _run_pgbench()
-    if stdout[1] == 1 :
+    output = _run_pgbench()
+    if output[2] == 1 :
         print "PGBench failed to execute, trying one more time.."
-        stdout = _run_pgbench()
-        if stdout[1] == 1:
+        output = _run_pgbench()
+        if output[2] == 1:
             print "PGBench failed to execute a second time, stopping..."
             exit(1)
-    data = _parse_stdout(stdout[0],duration)
+    data = _parse_stdout(output[0])
+    progress = _parse_stderr(output[1])
     documents = _json_payload(meta_processed,data)
     documents_raw = _json_payload_raw(meta_processed,data)
+    documents_prog = _json_payload_prog(meta_processed,progress)
+    print output[0]
+    if len(documents) > 0 :
+      _summarize_data(data,args.run[0],uuid,database,pgb_vers)
+    print("\n")
+    print(documents)
+    print("\n")
     if server != "" :
         if len(documents) > 0 :
             _status_results, processed_count, total_count = _index_result("{}-summary".format(index),server,port,documents)
             if _status_results:
-                print("Succesfully indexed {} fio result documents to index {}-summary\n".format(str(total_count),str(index)))
+                print("Succesfully indexed {} pgbench summary documents to index {}-summary\n".format(str(total_count),str(index)))
             else:
-                print("{}/{} succesfully indexed\n".format(str(processed_count),str(total_count)))
+                print("{}/{} pgbench summary documents succesfully indexed to {}-summary\n".format(str(processed_count),str(total_count),str(index)))
+
             _status_results, processed_count, total_count = _index_result("{}-raw".format(index),server,port,documents_raw)
             if _status_results:
-                print("Succesfully indexed {} fio raw result documents to index {}-raw\n".format(str(total_count),str(index)))
+                print("Succesfully indexed {} pgbench raw documents to index {}-raw\n".format(str(total_count),str(index)))
             else:
-                print("{}/{} succesfully indexed\n".format(str(processed_count),str(total_count)))
+                print("{}/{} pgbench raw documents succesfully indexed to {}-raw\n".format(str(processed_count),str(total_count),str(index)))
+
+            _status_results, processed_count, total_count = _index_result("{}-results".format(index),server,port,documents_prog)
+            if _status_results:
+                print("Succesfully indexed {} pgbench results documents to index {}-results\n".format(str(total_count),str(index)))
+            else:
+                print("{}/{} pgbench results documents succesfully indexed to {}-results\n".format(str(processed_count),str(total_count),str(index)))
         else:
-            print("Indexing failed; json document empty!\n")
+            print("Indexing failed; summary JSON document empty!\n")
     else:
         print("Results not indexed.\n")
-    print stdout[0]
-    if len(documents) > 0 :
-      _summarize_data(data,args.run[0],uuid,database,pgb_vers)
-    print(documents)
-    print(documents_raw)
 
 if __name__ == '__main__':
     sys.exit(main())

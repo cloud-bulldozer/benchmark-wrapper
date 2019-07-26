@@ -45,6 +45,7 @@ def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client):
             "protocol": data['protocol'],
             "service_ip": serviceip,
             "message_size": int(data['message_size']),
+            "num_threads": int(data['num_threads']),
             "duration": len(data['results']),
             "bytes": int(result[1]),
             "norm_byte": int(result[1])-prev_bytes,
@@ -68,11 +69,12 @@ def _parse_stdout(stdout):
     test = re.split("-",config[0])[0]
     protocol = re.split("-",config[0])[1]
     size = re.split("-",config[0])[2]
+    nthr = re.split("-",config[0])[3]
     # This will yeild us this structure :
     #     timestamp, number of bytes, number of operations
     # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
     results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)",stdout)
-    return { "test": test, "protocol": protocol, "message_size": size, "results" : results }
+    return { "test": test, "protocol": protocol, "message_size": size, "num_threads": nthr, "results" : results }
 
 def _summarize_data(data):
 
@@ -101,9 +103,11 @@ def _summarize_data(data):
     print("""
           test_type: {}
           protocol: {}
-          message_size: {}""".format(data['test_type'],
+          message_size: {}
+          num_threads: {}""".format(data['test_type'],
                                      data['protocol'],
-                                     data['message_size']))
+                                     data['message_size'],
+                                     data['num_threads']))
     print("")
     print("UPerf results (bytes/sec):")
     print("""

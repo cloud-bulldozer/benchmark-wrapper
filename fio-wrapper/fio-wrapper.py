@@ -31,12 +31,12 @@ import configparser
 _log_files={'bw':{'metric':'bandwidth'},'iops':{'metric':'iops'},'lat':{'metric':'latency'},'clat':{'metric':'latency'},'slat':{'metric':'latency'}} # ,'clat_hist_processed'
 _data_direction={0:'read',1:'write',2:'trim'}
 
-def _document_payload(data, user, uuid, sample, list_hosts, end_time, fio_version): #pod_details,
+def _document_payload(data, user, uuid, sample, list_hosts, end_time, fio_version, fio_jobs_dict): #pod_details,
     processed = []
     fio_starttime = {}
     earliest_starttime = float('inf')
     for result in data["client_stats"] :
-        processed.append({
+        document = {
           "uuid": uuid,
           "user": user,
           "hosts": list_hosts,
@@ -45,7 +45,10 @@ def _document_payload(data, user, uuid, sample, list_hosts, end_time, fio_versio
           #"nodeName": pod_details["hostname"],
           "sample": int(sample),
           "fio": result
-        })
+        }
+        if 'global' in fio_jobs_dict.keys():
+            document['global_options'] = fio_jobs_dict['global']
+        processed.append(document)
         if result['jobname'] != 'All clients':
             start_time= (int(end_time) * 1000) - result['job_runtime']
             fio_starttime[result['hostname']] = start_time
@@ -219,13 +222,13 @@ def _trigger_fio(fio_jobs, working_dir, fio_jobs_dict, host_file, user, uuid, sa
         if clean_stdout[1] != 0:
             print("failed to parse the output file")
             exit(1)
-        print("fio has successfully finished executing for jobname {} and results are in the dir {}\n".format(job,job_dir))
+        print("fio has successfully finished sample {} executing for jobname {} and results are in the dir {}\n".format(sample, job, job_dir))
         if indexed:
             with open(fio_output_file) as f:
                 data = json.load(f)
             fio_endtime = int(data['timestamp']) # in epoch seconds
             fio_version = data["fio version"]
-            fio_result_documents, fio_starttime, earliest_starttime = _document_payload(data, user, uuid, sample, hosts, fio_endtime, fio_version) #hosts_metadata
+            fio_result_documents, fio_starttime, earliest_starttime = _document_payload(data, user, uuid, sample, hosts, fio_endtime, fio_version, fio_jobs_dict) #hosts_metadata
             if indexed:
                 if len(fio_result_documents) > 0:
                     _status_results, processed_count, total_count = _index_result(es, 'results', fio_result_documents)
@@ -280,7 +283,7 @@ def main():
     parser.add_argument(
         'job', help='path to job file')
     parser.add_argument(
-        '-s', '--sample', type=int, default=1, help='Provide sample number for the run')
+        '-s', '--sample', type=int, default=1, help='number of times to run benchmark, defaults to 1')
     parser.add_argument(
         '-d', '--dir', help='output parent directory', default=os.path.dirname(os.getcwd()))
     args = parser.parse_args()
@@ -309,7 +312,11 @@ def main():
     if 'global' in fio_job_names:
         fio_job_names.remove('global')
     fio_jobs_dict = _parse_jobs(_fio_job_dict, fio_job_names)
-    _trigger_fio(fio_job_names, working_dir, fio_jobs_dict, host_file_path, user, uuid, sample, es, index_results)
+    for i in range(1, sample + 1):
+        sample_dir = working_dir + '/' + str(i)
+        if not os.path.exists(sample_dir):
+            os.mkdir(sample_dir)
+        _trigger_fio(fio_job_names, sample_dir, fio_jobs_dict, host_file_path, user, uuid, sample, es, index_results)
 
 if __name__ == '__main__':
     sys.exit(main())

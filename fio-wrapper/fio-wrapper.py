@@ -123,7 +123,7 @@ class Fio_Analyzer:
                     average_read_result_list.append(self.sumdoc[itera][oper][io_size]['read'])
     
                     if firstrecord:
-                        importdoc["_source"]['date'] = self.sumdoc[itera][oper][io_size]['date']
+                        importdoc['date'] = self.sumdoc[itera][oper][io_size]['date']
                         firstrecord = True
 
                 read_average = (sum(average_read_result_list)/len(average_read_result_list))

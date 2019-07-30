@@ -49,8 +49,6 @@ class Fio_Analyzer:
         self.operation_list = []
         self.io_size_list = []
         self.sumdoc = {}
-        self.block_size_list = []
-
 
     def add_fio_result_documents(self, document_list, starttime):
         """
@@ -68,26 +66,27 @@ class Fio_Analyzer:
         will loop through all documents and will populate parameter lists and sum total iops across all host
         for a specific operation and io size
         """
-        for fio_result in self.json_data_list:
+
+        for fio_result in self.fio_processed_results_list:
             if fio_result['document']['fio']['jobname'] != 'All clients':
                 sample = fio_result['document']['sample']
-                print(fio_result['document']['fio'].keys())
                 bs = fio_result['document']['global_options']['bs']
                 rw = fio_result['document']['fio']['job options']['rw']
-
-                if sample not in self.sample_list: self.sample_list.append(sample)
+                
+                if sample not in self.sample_list: self.sample_list.append(sample) 
                 if rw not in self.operation_list: self.operation_list.append(rw)
-                if bs not in self.block_size_list: self.block_size_list.append(bs)
+                if bs not in self.io_size_list: self.io_size_list.append(bs)
 
         for sample in self.sample_list:
             self.sumdoc[sample] = {}
             for rw in self.operation_list:
                 self.sumdoc[sample][rw] = {}
-                for bs in self.block_size_list:
+                for bs in self.io_size_list:
                     self.sumdoc[sample][rw][bs] = {}
 
             #get measurements
-        for fio_result in self.json_data_list:
+
+        for fio_result in self.fio_processed_results_list:
             if fio_result['document']['fio']['jobname'] != 'All clients':
                 sample = fio_result['document']['sample']
                 bs = fio_result['document']['global_options']['bs']
@@ -98,21 +97,24 @@ class Fio_Analyzer:
                     self.sumdoc[sample][rw][bs]['date'] = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(time_s))
                     self.sumdoc[sample][rw][bs]['write'] = 0
                     self.sumdoc[sample][rw][bs]['read'] = 0
-
+                      
                 if 'write' in fio_result.keys():
                     self.sumdoc[sample][rw][bs]['write'] += int(fio_result["write"]["iops"])
                 if 'read' in fio_result.keys():
                     self.sumdoc[sample][rw][bs]['read'] += int(fio_result["read"]["iops"])
-        print(self.sumdoc)
 
     def emit_payload(self):
+        """
+        Will calculate the average iops across multiple samples and return list containing items for each result based on operation/io size 
+        """
 
         importdoc = {"ceph_benchmark_test": {"test_data": {}},
                      "uuid": self.uuid,
                      "user": self.user
                      }
-        payload_list = []
+
         self.calculate_iops_sum()
+        payload_list = []
 
         for oper in self.operation_list:
             for io_size in self.block_size_list:
@@ -124,7 +126,8 @@ class Fio_Analyzer:
                 tmp_doc['operation'] = oper # set documents operation
                 firstrecord = True
                 calcuate_percent_std_dev = False
-                for itera in self.sample_list: #
+
+                for itera in self.sample_list: # 
                     average_write_result_list.append(self.sumdoc[itera][oper][io_size]['write'])
                     average_read_result_list.append(self.sumdoc[itera][oper][io_size]['read'])
 
@@ -160,9 +163,8 @@ class Fio_Analyzer:
 
                 importdoc['ceph_benchmark_test']['test_data'] = tmp_doc
                 payload_list.append(importdoc)
-        print(payload_list)
-        return payload_list
 
+        return payload_list
 
 
 def _document_payload(data, user, uuid, sample, list_hosts, end_time, fio_version, fio_jobs_dict): #pod_details,
@@ -464,8 +466,7 @@ def main():
         if not os.path.exists(sample_dir):
             os.mkdir(sample_dir)
         _trigger_fio(fio_job_names, sample_dir, fio_jobs_dict, host_file_path, user, uuid, sample, fio_analyzer_obj, es, index_results)
-    fio_analyzer_obj.emit_payload()
-    _index_result(es, fio_analyzer_obj.suffix, fio_analyzer_obj.emit_payload)
+    _index_result(es, fio_analyzer_obj.suffix, fio_analyzer_obj.emit_payload())
 
 if __name__ == '__main__':
     sys.exit(main())

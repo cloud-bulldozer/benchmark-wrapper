@@ -63,10 +63,15 @@ def _json_payload_raw(meta_processed,data):
     })
     return processed
 
-def _json_payload_prog(meta_processed,data):
+def _json_payload_prog(meta_processed,progress,data):
     processed = []
-    for prog in data:
+    for prog in progress:
         entry = copy.copy(meta_processed[0])
+        for line in data['config']:
+            if 'timestamp' not in line[0]:
+                entry.update({
+                    "{}".format(line[0]): _num_convert(line[1])
+                })
         entry.update(prog)
         processed.append(entry)
     return processed
@@ -216,13 +221,12 @@ def main():
     progress = _parse_stderr(output[1])
     documents = _json_payload(meta_processed,data)
     documents_raw = _json_payload_raw(meta_processed,data)
-    documents_prog = _json_payload_prog(meta_processed,progress)
+    documents_prog = _json_payload_prog(meta_processed,progress,data)
     print output[0]
     if len(documents) > 0 :
       _summarize_data(data,args.run[0],uuid,database,pgb_vers)
     print("\n")
     print(documents)
-    print(documents_raw)
     print("\n")
     if server != "" :
         if len(documents) > 0 :

@@ -44,7 +44,7 @@ class Fio_Analyzer:
         self.uuid = uuid
         self.user = user
         self.suffix = "fio_analyzed_result"
-        self.json_data_list = []
+        self.fio_processed_results_list = []
         self.sample_list = []
         self.operation_list = []
         self.io_size_list = []
@@ -58,7 +58,7 @@ class Fio_Analyzer:
             fio_result = {}
             fio_result["document"] = document
             fio_result["starttime"] = starttime
-            self.json_data_list.append(fio_result)
+            self.fio_processed_results_list.append(fio_result)
 
 
     def calculate_iops_sum(self):

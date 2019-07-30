@@ -44,13 +44,12 @@ class Fio_Analyzer:
         self.uuid = uuid
         self.user = user
         self.suffix = "fio_analyzed_result"
-        self.fio_processed_results_list = []
+        self.json_data_list = []
         self.sample_list = []
         self.operation_list = []
         self.io_size_list = []
         self.sumdoc = {}
-        
-        
+
     def add_fio_result_documents(self, document_list, starttime):
         """
         for each new document add it to the results list with its starttime
@@ -59,14 +58,15 @@ class Fio_Analyzer:
             fio_result = {}
             fio_result["document"] = document
             fio_result["starttime"] = starttime
-            self.fio_processed_results_list.append(fio_result)
-        
-        
+            self.json_data_list.append(fio_result)
+
+
     def calculate_iops_sum(self):
         """
         will loop through all documents and will populate parameter lists and sum total iops across all host
         for a specific operation and io size
         """
+
         for fio_result in self.fio_processed_results_list:
             if fio_result['document']['fio']['jobname'] != 'All clients':
                 sample = fio_result['document']['sample']
@@ -76,7 +76,7 @@ class Fio_Analyzer:
                 if sample not in self.sample_list: self.sample_list.append(sample) 
                 if rw not in self.operation_list: self.operation_list.append(rw)
                 if bs not in self.io_size_list: self.io_size_list.append(bs)
-             
+
         for sample in self.sample_list:
             self.sumdoc[sample] = {}
             for rw in self.operation_list:
@@ -85,24 +85,29 @@ class Fio_Analyzer:
                     self.sumdoc[sample][rw][bs] = {}
 
             #get measurements
+
         for fio_result in self.fio_processed_results_list:
             if fio_result['document']['fio']['jobname'] != 'All clients':
                 sample = fio_result['document']['sample']
                 bs = fio_result['document']['global_options']['bs']
                 rw = fio_result['document']['fio']['job options']['rw']
-                
+
                 if not self.sumdoc[sample][rw][bs]:
-                    self.sumdoc[sample][rw][bs]['date'] = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', fio_result['starttime'])
+                    time_s = fio_result['starttime'] / 1000.0
+                    self.sumdoc[sample][rw][bs]['date'] = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(time_s))
                     self.sumdoc[sample][rw][bs]['write'] = 0
                     self.sumdoc[sample][rw][bs]['read'] = 0
                       
-                self.sumdoc[sample][rw][bs]['write'] += int(fio_result["write"]["iops"])
-                self.sumdoc[sample][rw][bs]['read'] += int(fio_result["read"]["iops"])
+                if 'write' in fio_result.keys():
+                    self.sumdoc[sample][rw][bs]['write'] += int(fio_result["write"]["iops"])
+                if 'read' in fio_result.keys():
+                    self.sumdoc[sample][rw][bs]['read'] += int(fio_result["read"]["iops"])
 
     def emit_payload(self):
         """
         Will calculate the average iops across multiple samples and return list containing items for each result based on operation/io size 
         """
+
         importdoc = {"ceph_benchmark_test": {"test_data": {}},
                      "uuid": self.uuid,
                      "user": self.user
@@ -112,7 +117,7 @@ class Fio_Analyzer:
         payload_list = []
 
         for oper in self.operation_list:
-            for io_size in self.io_size_list:
+            for io_size in self.block_size_list:
                 average_write_result_list = []
                 average_read_result_list = []
                 total_ary = []
@@ -121,6 +126,7 @@ class Fio_Analyzer:
                 tmp_doc['operation'] = oper # set documents operation
                 firstrecord = True
                 calcuate_percent_std_dev = False
+
                 for itera in self.sample_list: # 
                     average_write_result_list.append(self.sumdoc[itera][oper][io_size]['write'])
                     average_read_result_list.append(self.sumdoc[itera][oper][io_size]['read'])
@@ -141,10 +147,10 @@ class Fio_Analyzer:
                 if write_average > 0.0:
                     tmp_doc['write-iops'] = write_average
                     if len(average_write_result_list) > 1:
-                        calcuate_percent_std_dev = True 
+                        calcuate_percent_std_dev = True
                 else:
                     tmp_doc['write-iops'] = 0
-        
+
                 tmp_doc['total-iops'] = (tmp_doc['write-iops'] + tmp_doc['read-iops'])
 
                 if calcuate_percent_std_dev:
@@ -243,7 +249,8 @@ def _histogram_payload(processed_histogram_file, user, uuid, sample, fio_jobs_di
     with open(processed_histogram_file, 'r') as log_file:
         for log_line in log_file:
             log_line_values = str(log_line).split(", ")
-            if len(log_line_values) == 7:
+            if len(log_line_values) == 7 and not (any(len(str(x)) <= 0 for x in log_line_values)):
+                print(log_line_values)
                 log_dict = {
                   "uuid": uuid,
                   "user": user,
@@ -318,7 +325,16 @@ def _process_histogram(job_dict, hosts, job, working_dir, processed_histogram_pr
     for host in hosts:
         input_file = working_dir + '/' + processed_histogram_prefix + '.' + str(numjob) + '.log.' + str(host)
         histogram_input_file_list.append(input_file)
-    compute_percentiles_from_logs(output_csv_file=histogram_output_file,file_list=histogram_input_file_list)
+    print(histogram_input_file_list)
+    if 'log_hist_msec' not in job_dict[job].keys():
+        if 'global' in job_dict.keys() and 'log_hist_msec' not in job_dict['global'].keys():
+            print("log_hist_msec, so can't process histogram logs")
+            exit(1)
+        else:
+            _log_hist_msec = job_dict['global']['log_hist_msec']
+    else:
+        _log_hist_msec = job_dict[job]['log_hist_msec']
+    compute_percentiles_from_logs(output_csv_file=histogram_output_file,file_list=histogram_input_file_list,log_hist_msec=_log_hist_msec)
 
 def _build_fio_job(job_name, job_dict, parent_dir, fio_job_file_name):
     config = configparser.ConfigParser()
@@ -360,7 +376,7 @@ def _trigger_fio(fio_jobs, working_dir, fio_jobs_dict, host_file, user, uuid, sa
             fio_version = data["fio version"]
             fio_result_documents, fio_starttime, earliest_starttime = _document_payload(data, user, uuid, sample, hosts, fio_endtime, fio_version, fio_jobs_dict) #hosts_metadata
             # Add fio result document to fio analyzer object
-            fio_analyzer_obj.add_fio_result_documents(fio_result_documents, fio_starttime)
+            fio_analyzer_obj.add_fio_result_documents(fio_result_documents, earliest_starttime)
             if indexed:
                 if len(fio_result_documents) > 0:
                     _status_results, processed_count, total_count = _index_result(es, 'results', fio_result_documents)
@@ -450,7 +466,6 @@ def main():
         if not os.path.exists(sample_dir):
             os.mkdir(sample_dir)
         _trigger_fio(fio_job_names, sample_dir, fio_jobs_dict, host_file_path, user, uuid, sample, fio_analyzer_obj, es, index_results)
-        
     _index_result(es, fio_analyzer_obj.suffix, fio_analyzer_obj.emit_payload())
 
 if __name__ == '__main__':

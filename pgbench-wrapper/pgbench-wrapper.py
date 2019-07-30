@@ -54,6 +54,10 @@ def _json_payload(meta_processed,data):
 
 def _json_payload_raw(meta_processed,data):
     processed = copy.deepcopy(meta_processed)
+    for line in data['config']:
+        processed[0].update({
+            "{}".format(line[0]): _num_convert(line[1])
+        })
     processed[0].update({
         "raw_output_b64": str(data['raw_output_b64'])
     })
@@ -81,6 +85,8 @@ def _num_convert(value):
             value = float(value)
         except:
             pass
+    except TypeError:
+        pass
     return value
     
 
@@ -121,6 +127,7 @@ def _parse_stdout(stdout):
                 results[idx][1] = _num_convert(results[idx][1].split("/",1)[0])
             except AttributeError:
                 pass
+    config.append(["timestamp", datetime.now()])
     return { "config": config, "results": results, "raw_output_b64": raw_output_b64 }
 
 def _parse_stderr(stderr):
@@ -215,6 +222,7 @@ def main():
       _summarize_data(data,args.run[0],uuid,database,pgb_vers)
     print("\n")
     print(documents)
+    print(documents_raw)
     print("\n")
     if server != "" :
         if len(documents) > 0 :

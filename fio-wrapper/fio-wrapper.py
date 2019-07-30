@@ -43,7 +43,7 @@ class Fio_Analyzer:
     def __init__(self, uuid, user):
         self.uuid = uuid
         self.user = user
-        self.suffix = "fio_analyzed_result"
+        self.suffix = "analyzed_result"
         self.fio_processed_results_list = []
         self.sample_list = []
         self.operation_list = []
@@ -98,10 +98,8 @@ class Fio_Analyzer:
                     self.sumdoc[sample][rw][bs]['write'] = 0
                     self.sumdoc[sample][rw][bs]['read'] = 0
                       
-                if 'write' in fio_result.keys():
-                    self.sumdoc[sample][rw][bs]['write'] += int(fio_result["write"]["iops"])
-                if 'read' in fio_result.keys():
-                    self.sumdoc[sample][rw][bs]['read'] += int(fio_result["read"]["iops"])
+                self.sumdoc[sample][rw][bs]['write'] += int(fio_result['document']['fio']["write"]["iops"])
+                self.sumdoc[sample][rw][bs]['read'] += int(fio_result['document']['fio']["read"]["iops"])
 
     def emit_payload(self):
         """
@@ -117,7 +115,7 @@ class Fio_Analyzer:
         payload_list = []
 
         for oper in self.operation_list:
-            for io_size in self.block_size_list:
+            for io_size in self.io_size_list:
                 average_write_result_list = []
                 average_read_result_list = []
                 total_ary = []
@@ -465,7 +463,7 @@ def main():
         sample_dir = working_dir + '/' + str(i)
         if not os.path.exists(sample_dir):
             os.mkdir(sample_dir)
-        _trigger_fio(fio_job_names, sample_dir, fio_jobs_dict, host_file_path, user, uuid, sample, fio_analyzer_obj, es, index_results)
+        _trigger_fio(fio_job_names, sample_dir, fio_jobs_dict, host_file_path, user, uuid, i, fio_analyzer_obj, es, index_results)
     _index_result(es, fio_analyzer_obj.suffix, fio_analyzer_obj.emit_payload())
 
 if __name__ == '__main__':

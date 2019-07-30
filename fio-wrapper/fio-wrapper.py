@@ -28,6 +28,7 @@ import elasticsearch
 import numpy as np
 import configparser
 import statistics
+import time
 
 _log_files={'bw':{'metric':'bandwidth'},'iops':{'metric':'iops'},'lat':{'metric':'latency'},'clat':{'metric':'latency'},'slat':{'metric':'latency'}} # ,'clat_hist_processed'
 _data_direction={0:'read',1:'write',2:'trim'}
@@ -37,7 +38,7 @@ class Fio_Analyzer:
     """
     Fio Analyzer - this class will consume processed fio json results and calculate the average total iops for x number of samples.
     results are analyzed based on operation and io size, this is a static evaluation and future enhancements could evalute results based on
-    other properties dynamically. 
+    other properties dynamically.
     """
     def __init__(self, uuid, user):
         self.uuid = uuid
@@ -47,8 +48,7 @@ class Fio_Analyzer:
         self.sample_list = []
         self.operation_list = []
         self.io_size_list = []
-        self.sumdoc = []
-        self.payload_list = []
+        self.sumdoc = {}
         
         
     def add_fio_result_documents(self, document_list, starttime):
@@ -57,7 +57,7 @@ class Fio_Analyzer:
         """
         for document in document_list:
             fio_result = {}
-            fio_result["data"] = document
+            fio_result["document"] = document
             fio_result["starttime"] = starttime
             self.fio_processed_results_list.append(fio_result)
         
@@ -67,47 +67,50 @@ class Fio_Analyzer:
         will loop through all documents and will populate parameter lists and sum total iops across all host
         for a specific operation and io size
         """
-        for fio_result in self.json_data_list:
-            sample = fio_result['document']['sample']
-            bs = fio_result['document']['global_options']['bs']
-            rw = fio_result['document']['fio']['job options']['rw']
-            
-            if sample not in self.sample_list: self.sample_list.append(sample) 
-            if rw not in self.operation_list: self.operation_list.append(rw)
-            if bs not in self.block_size_list: self.block_size_list.append(bs)
+        for fio_result in self.fio_processed_results_list:
+            if fio_result['document']['fio']['jobname'] != 'All clients':
+                sample = fio_result['document']['sample']
+                bs = fio_result['document']['global_options']['bs']
+                rw = fio_result['document']['fio']['job options']['rw']
+                
+                if sample not in self.sample_list: self.sample_list.append(sample) 
+                if rw not in self.operation_list: self.operation_list.append(rw)
+                if bs not in self.io_size_list: self.io_size_list.append(bs)
              
         for sample in self.sample_list:
             self.sumdoc[sample] = {}
             for rw in self.operation_list:
                 self.sumdoc[sample][rw] = {}
-                for bs in self.block_size_list:
+                for bs in self.io_size_list:
                     self.sumdoc[sample][rw][bs] = {}
-            
+
             #get measurements
-        for fio_result in self.json_data_list:
-            
-            sample = fio_result['document']['sample']
-            bs = fio_result['document']['global_options']['bs']
-            rw = fio_result['document']['fio']['job options']['rw']
-            
-            if not self.sumdoc[sample][rw][bs]:
-                self.sumdoc[sample][rw][bs]['date'] = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', fio_result['starttime'])
-                self.sumdoc[sample][rw][bs]['write'] = 0
-                self.sumdoc[sample][rw][bs]['read'] = 0
-                  
-            self.sumdoc[sample][rw][bs]['write'] += int(fio_result["write"]["iops"])
-            self.sumdoc[sample][rw][bs]['read'] += int(fio_result["read"]["iops"])
-    
-    
+        for fio_result in self.fio_processed_results_list:
+            if fio_result['document']['fio']['jobname'] != 'All clients':
+                sample = fio_result['document']['sample']
+                bs = fio_result['document']['global_options']['bs']
+                rw = fio_result['document']['fio']['job options']['rw']
+                
+                if not self.sumdoc[sample][rw][bs]:
+                    self.sumdoc[sample][rw][bs]['date'] = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', fio_result['starttime'])
+                    self.sumdoc[sample][rw][bs]['write'] = 0
+                    self.sumdoc[sample][rw][bs]['read'] = 0
+                      
+                self.sumdoc[sample][rw][bs]['write'] += int(fio_result["write"]["iops"])
+                self.sumdoc[sample][rw][bs]['read'] += int(fio_result["read"]["iops"])
+
     def emit_payload(self):
-        
+        """
+        Will calculate the average iops across multiple samples and return list containing items for each result based on operation/io size 
+        """
         importdoc = {"ceph_benchmark_test": {"test_data": {}},
                      "uuid": self.uuid,
                      "user": self.user
                      }
-        
+
         self.calculate_iops_sum()
-        
+        payload_list = []
+
         for oper in self.operation_list:
             for io_size in self.io_size_list:
                 average_write_result_list = []
@@ -118,10 +121,10 @@ class Fio_Analyzer:
                 tmp_doc['operation'] = oper # set documents operation
                 firstrecord = True
                 calcuate_percent_std_dev = False
-                for itera in self.iteration_list: # 
+                for itera in self.sample_list: # 
                     average_write_result_list.append(self.sumdoc[itera][oper][io_size]['write'])
                     average_read_result_list.append(self.sumdoc[itera][oper][io_size]['read'])
-    
+
                     if firstrecord:
                         importdoc['date'] = self.sumdoc[itera][oper][io_size]['date']
                         firstrecord = True
@@ -133,7 +136,7 @@ class Fio_Analyzer:
                         calcuate_percent_std_dev = True
                 else:
                     tmp_doc['read-iops'] = 0
-        
+
                 write_average = (sum(average_write_result_list)/len(average_write_result_list))
                 if write_average > 0.0:
                     tmp_doc['write-iops'] = write_average
@@ -143,22 +146,21 @@ class Fio_Analyzer:
                     tmp_doc['write-iops'] = 0
         
                 tmp_doc['total-iops'] = (tmp_doc['write-iops'] + tmp_doc['read-iops'])
-                
+
                 if calcuate_percent_std_dev:
                     if "read" in oper:
                         tmp_doc['std-dev-%s' % io_size] = round(((statistics.stdev(average_read_result_list) / read_average) * 100), 3)
-                    elif "write" in oper: 
+                    elif "write" in oper:
                         tmp_doc['std-dev-%s' % io_size] = round(((statistics.stdev(average_write_result_list) / write_average) * 100), 3)
                     elif "randrw" in oper:
                         tmp_doc['std-dev-%s' % io_size] = round((((statistics.stdev(average_read_result_list) + statistics.stdev(average_write_result_list)) / tmp_doc['total-iops'])* 100), 3)
-                
+
                 importdoc['ceph_benchmark_test']['test_data'] = tmp_doc
-                self.payload_list.append(importdoc)
-                
-        return self.payload_list   
-    
-    
-    
+                payload_list.append(importdoc)
+
+        return payload_list
+
+
 def _document_payload(data, user, uuid, sample, list_hosts, end_time, fio_version, fio_jobs_dict): #pod_details,
     processed = []
     fio_starttime = {}
@@ -449,7 +451,7 @@ def main():
             os.mkdir(sample_dir)
         _trigger_fio(fio_job_names, sample_dir, fio_jobs_dict, host_file_path, user, uuid, sample, fio_analyzer_obj, es, index_results)
         
-    _index_result(es, fio_analyzer_obj.suffix, fio_analyzer_obj.emit_payload)
+    _index_result(es, fio_analyzer_obj.suffix, fio_analyzer_obj.emit_payload())
 
 if __name__ == '__main__':
     sys.exit(main())

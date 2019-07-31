@@ -27,9 +27,143 @@ import subprocess
 import elasticsearch
 import numpy as np
 import configparser
+import statistics
+import time
 
 _log_files={'bw':{'metric':'bandwidth'},'iops':{'metric':'iops'},'lat':{'metric':'latency'},'clat':{'metric':'latency'},'slat':{'metric':'latency'}} # ,'clat_hist_processed'
 _data_direction={0:'read',1:'write',2:'trim'}
+
+
+class Fio_Analyzer:
+    """
+    Fio Analyzer - this class will consume processed fio json results and calculate the average total iops for x number of samples.
+    results are analyzed based on operation and io size, this is a static evaluation and future enhancements could evalute results based on
+    other properties dynamically.
+    """
+    def __init__(self, uuid, user):
+        self.uuid = uuid
+        self.user = user
+        self.suffix = "analyzed_result"
+        self.fio_processed_results_list = []
+        self.sample_list = []
+        self.operation_list = []
+        self.io_size_list = []
+        self.sumdoc = {}
+
+    def add_fio_result_documents(self, document_list, starttime):
+        """
+        for each new document add it to the results list with its starttime
+        """
+        for document in document_list:
+            fio_result = {}
+            fio_result["document"] = document
+            fio_result["starttime"] = starttime
+            self.fio_processed_results_list.append(fio_result)
+
+
+    def calculate_iops_sum(self):
+        """
+        will loop through all documents and will populate parameter lists and sum total iops across all host
+        for a specific operation and io size
+        """
+
+        for fio_result in self.fio_processed_results_list:
+            if fio_result['document']['fio']['jobname'] != 'All clients':
+                sample = fio_result['document']['sample']
+                bs = fio_result['document']['global_options']['bs']
+                rw = fio_result['document']['fio']['job options']['rw']
+                
+                if sample not in self.sample_list: self.sample_list.append(sample) 
+                if rw not in self.operation_list: self.operation_list.append(rw)
+                if bs not in self.io_size_list: self.io_size_list.append(bs)
+
+        for sample in self.sample_list:
+            self.sumdoc[sample] = {}
+            for rw in self.operation_list:
+                self.sumdoc[sample][rw] = {}
+                for bs in self.io_size_list:
+                    self.sumdoc[sample][rw][bs] = {}
+
+            #get measurements
+
+        for fio_result in self.fio_processed_results_list:
+            if fio_result['document']['fio']['jobname'] != 'All clients':
+                sample = fio_result['document']['sample']
+                bs = fio_result['document']['global_options']['bs']
+                rw = fio_result['document']['fio']['job options']['rw']
+
+                if not self.sumdoc[sample][rw][bs]:
+                    time_s = fio_result['starttime'] / 1000.0
+                    self.sumdoc[sample][rw][bs]['date'] = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(time_s))
+                    self.sumdoc[sample][rw][bs]['write'] = 0
+                    self.sumdoc[sample][rw][bs]['read'] = 0
+                      
+                self.sumdoc[sample][rw][bs]['write'] += int(fio_result['document']['fio']["write"]["iops"])
+                self.sumdoc[sample][rw][bs]['read'] += int(fio_result['document']['fio']["read"]["iops"])
+
+    def emit_payload(self):
+        """
+        Will calculate the average iops across multiple samples and return list containing items for each result based on operation/io size 
+        """
+
+        importdoc = {"ceph_benchmark_test": {"test_data": {}},
+                     "uuid": self.uuid,
+                     "user": self.user
+                     }
+
+        self.calculate_iops_sum()
+        payload_list = []
+
+        for oper in self.operation_list:
+            for io_size in self.io_size_list:
+                average_write_result_list = []
+                average_read_result_list = []
+                total_ary = []
+                tmp_doc = {}
+                tmp_doc['object_size'] = io_size # set document's object size
+                tmp_doc['operation'] = oper # set documents operation
+                firstrecord = True
+                calcuate_percent_std_dev = False
+
+                for itera in self.sample_list: # 
+                    average_write_result_list.append(self.sumdoc[itera][oper][io_size]['write'])
+                    average_read_result_list.append(self.sumdoc[itera][oper][io_size]['read'])
+
+                    if firstrecord:
+                        importdoc['date'] = self.sumdoc[itera][oper][io_size]['date']
+                        firstrecord = True
+
+                read_average = (sum(average_read_result_list)/len(average_read_result_list))
+                if read_average > 0.0:
+                    tmp_doc['read-iops'] = read_average
+                    if len(average_read_result_list) > 1:
+                        calcuate_percent_std_dev = True
+                else:
+                    tmp_doc['read-iops'] = 0
+
+                write_average = (sum(average_write_result_list)/len(average_write_result_list))
+                if write_average > 0.0:
+                    tmp_doc['write-iops'] = write_average
+                    if len(average_write_result_list) > 1:
+                        calcuate_percent_std_dev = True
+                else:
+                    tmp_doc['write-iops'] = 0
+
+                tmp_doc['total-iops'] = (tmp_doc['write-iops'] + tmp_doc['read-iops'])
+
+                if calcuate_percent_std_dev:
+                    if "read" in oper:
+                        tmp_doc['std-dev-%s' % io_size] = round(((statistics.stdev(average_read_result_list) / read_average) * 100), 3)
+                    elif "write" in oper:
+                        tmp_doc['std-dev-%s' % io_size] = round(((statistics.stdev(average_write_result_list) / write_average) * 100), 3)
+                    elif "randrw" in oper:
+                        tmp_doc['std-dev-%s' % io_size] = round((((statistics.stdev(average_read_result_list) + statistics.stdev(average_write_result_list)) / tmp_doc['total-iops'])* 100), 3)
+
+                importdoc['ceph_benchmark_test']['test_data'] = tmp_doc
+                payload_list.append(importdoc)
+
+        return payload_list
+
 
 def _document_payload(data, user, uuid, sample, list_hosts, end_time, fio_version, fio_jobs_dict): #pod_details,
     processed = []
@@ -113,7 +247,8 @@ def _histogram_payload(processed_histogram_file, user, uuid, sample, fio_jobs_di
     with open(processed_histogram_file, 'r') as log_file:
         for log_line in log_file:
             log_line_values = str(log_line).split(", ")
-            if len(log_line_values) == 7:
+            if len(log_line_values) == 7 and not (any(len(str(x)) <= 0 for x in log_line_values)):
+                print(log_line_values)
                 log_dict = {
                   "uuid": uuid,
                   "user": user,
@@ -188,7 +323,16 @@ def _process_histogram(job_dict, hosts, job, working_dir, processed_histogram_pr
     for host in hosts:
         input_file = working_dir + '/' + processed_histogram_prefix + '.' + str(numjob) + '.log.' + str(host)
         histogram_input_file_list.append(input_file)
-    compute_percentiles_from_logs(output_csv_file=histogram_output_file,file_list=histogram_input_file_list)
+    print(histogram_input_file_list)
+    if 'log_hist_msec' not in job_dict[job].keys():
+        if 'global' in job_dict.keys() and 'log_hist_msec' not in job_dict['global'].keys():
+            print("log_hist_msec, so can't process histogram logs")
+            exit(1)
+        else:
+            _log_hist_msec = job_dict['global']['log_hist_msec']
+    else:
+        _log_hist_msec = job_dict[job]['log_hist_msec']
+    compute_percentiles_from_logs(output_csv_file=histogram_output_file,file_list=histogram_input_file_list,log_hist_msec=_log_hist_msec)
 
 def _build_fio_job(job_name, job_dict, parent_dir, fio_job_file_name):
     config = configparser.ConfigParser()
@@ -201,7 +345,7 @@ def _build_fio_job(job_name, job_dict, parent_dir, fio_job_file_name):
     with open(fio_job_file_name, 'w') as configfile:
         config.write(configfile, space_around_delimiters=False)
 
-def _trigger_fio(fio_jobs, working_dir, fio_jobs_dict, host_file, user, uuid, sample, es, indexed=False, numjob=1):
+def _trigger_fio(fio_jobs, working_dir, fio_jobs_dict, host_file, user, uuid, sample, fio_analyzer_obj, es, indexed=False, numjob=1):
     with open(host_file) as f:
         hosts = f.read().splitlines()
     for job in fio_jobs:
@@ -229,6 +373,8 @@ def _trigger_fio(fio_jobs, working_dir, fio_jobs_dict, host_file, user, uuid, sa
             fio_endtime = int(data['timestamp']) # in epoch seconds
             fio_version = data["fio version"]
             fio_result_documents, fio_starttime, earliest_starttime = _document_payload(data, user, uuid, sample, hosts, fio_endtime, fio_version, fio_jobs_dict) #hosts_metadata
+            # Add fio result document to fio analyzer object
+            fio_analyzer_obj.add_fio_result_documents(fio_result_documents, earliest_starttime)
             if indexed:
                 if len(fio_result_documents) > 0:
                     _status_results, processed_count, total_count = _index_result(es, 'results', fio_result_documents)
@@ -312,11 +458,13 @@ def main():
     if 'global' in fio_job_names:
         fio_job_names.remove('global')
     fio_jobs_dict = _parse_jobs(_fio_job_dict, fio_job_names)
+    fio_analyzer_obj = Fio_Analyzer(uuid, user)
     for i in range(1, sample + 1):
         sample_dir = working_dir + '/' + str(i)
         if not os.path.exists(sample_dir):
             os.mkdir(sample_dir)
-        _trigger_fio(fio_job_names, sample_dir, fio_jobs_dict, host_file_path, user, uuid, sample, es, index_results)
+        _trigger_fio(fio_job_names, sample_dir, fio_jobs_dict, host_file_path, user, uuid, i, fio_analyzer_obj, es, index_results)
+    _index_result(es, fio_analyzer_obj.suffix, fio_analyzer_obj.emit_payload())
 
 if __name__ == '__main__':
     sys.exit(main())

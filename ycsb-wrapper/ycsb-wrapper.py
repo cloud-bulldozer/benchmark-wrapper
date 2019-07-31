@@ -76,7 +76,7 @@ def _json_payload(data,iteration,uuid,user,phase,workload,driver,recordcount,ope
     summary_dict = {}
     if 'summary' in data :
         for summ in data['summary'] :
-            if summ[0][0].isdigit() :
+            if summ[0][0].isdigit() or summ[0][0] is "I" :
                 continue
             if not summ[0].strip('[').strip(']') in summary_dict :
                 summary_dict[summ[0].strip('[').strip(']')] = {}

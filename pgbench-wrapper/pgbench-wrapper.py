@@ -186,10 +186,10 @@ def main():
     if "es" in os.environ:
         server = os.environ["es"]
         port = os.environ["es_port"]
-        if "es_index" in os.environ:
-            index = os.environ["es_index"]
+        if "es_index_prefix" in os.environ:
+            index = os.environ["es_index_prefix"]
         else:
-            index = "pgbench"
+            index = "snafu-pgbench"
     if "uuid" in os.environ:
         uuid = os.environ["uuid"]
     if "test_user" in os.environ:

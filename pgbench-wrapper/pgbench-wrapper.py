@@ -181,7 +181,7 @@ def main():
     uuid = ""
     user = ""
     database = ""
-    pgb_vers = ""
+    pgb_vers = subprocess.check_output("pgbench --version", shell=True).strip()
 
     if "es" in os.environ:
         server = os.environ["es"]
@@ -196,8 +196,6 @@ def main():
         user = os.environ["test_user"]
     if "database" in os.environ:
         database = os.environ["database"]
-    if "pgb_vers" in os.environ:
-        pgb_vers = os.environ["pgb_vers"]
 
     # Initialize json payload shared metadata
     meta_processed = []

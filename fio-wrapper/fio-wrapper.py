@@ -464,7 +464,8 @@ def main():
         if not os.path.exists(sample_dir):
             os.mkdir(sample_dir)
         _trigger_fio(fio_job_names, sample_dir, fio_jobs_dict, host_file_path, user, uuid, i, fio_analyzer_obj, es, index_results)
-    _index_result(es, fio_analyzer_obj.suffix, fio_analyzer_obj.emit_payload())
+    if index_results:
+        _index_result(es, fio_analyzer_obj.suffix, fio_analyzer_obj.emit_payload())
 
 if __name__ == '__main__':
     sys.exit(main())

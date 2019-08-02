@@ -182,6 +182,8 @@ def main():
     user = ""
     database = ""
     pgb_vers = subprocess.check_output("pgbench --version", shell=True).strip()
+    run_start_timestamp = datetime.now()
+    sample_start_timestamp = datetime.now()
 
     if "es" in os.environ:
         server = os.environ["es"]
@@ -196,6 +198,10 @@ def main():
         user = os.environ["test_user"]
     if "database" in os.environ:
         database = os.environ["database"]
+    if "run_start_timestamp" in os.environ:
+        run_start_timestamp = datetime.fromtimestamp(float(os.environ["run_start_timestamp"]))
+    if "sample_start_timestamp" in os.environ:
+        sample_start_timestamp = datetime.fromtimestamp(float(os.environ["sample_start_timestamp"]))
 
     # Initialize json payload shared metadata
     meta_processed = []
@@ -206,6 +212,8 @@ def main():
         "user": user,
         "iteration": int(args.run[0]),
         "database": database,
+        "run_start_timestamp": run_start_timestamp,
+        "sample_start_timestamp": sample_start_timestamp,
     })
 
     output = _run_pgbench()

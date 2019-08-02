@@ -30,7 +30,8 @@ def _index_result(server,port,payload_file):
     scribe_uuid = "NONE"
     for scribed in transcribe(payload_file,'stockpile'):
         try:
-            es.index(index=index, doc_type="result", body=scribed)
+            scribe_module = json.loads(scribed)['module']
+            es.index(index=scribe_module+"-metadata", doc_type="result", body=scribed)
             scribe_uuid = json.loads(scribed)['scribe_uuid']
         except Exception as e:
             print(repr(e) + "occurred for the json document:")

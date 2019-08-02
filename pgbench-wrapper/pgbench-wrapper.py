@@ -181,6 +181,7 @@ def main():
     uuid = ""
     user = ""
     database = ""
+    description = ""
     pgb_vers = subprocess.check_output("pgbench --version", shell=True).strip()
     run_start_timestamp = datetime.now()
     sample_start_timestamp = datetime.now()
@@ -198,6 +199,8 @@ def main():
         user = os.environ["test_user"]
     if "database" in os.environ:
         database = os.environ["database"]
+    if "description" in os.environ:
+        description = os.environ["description"]
     if "run_start_timestamp" in os.environ:
         run_start_timestamp = datetime.fromtimestamp(float(os.environ["run_start_timestamp"]))
     if "sample_start_timestamp" in os.environ:
@@ -214,6 +217,7 @@ def main():
         "database": database,
         "run_start_timestamp": run_start_timestamp,
         "sample_start_timestamp": sample_start_timestamp,
+        "description": description,
     })
 
     output = _run_pgbench()

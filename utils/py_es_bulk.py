@@ -178,7 +178,7 @@ def streaming_bulk(es, actions):
                         "ok": ok,
                         "resp": resp,
                         "retry_count": retry_count,
-                        "timestamp": tstos(time.time())
+                        "timestamp": _tstos(time.time())
                         }
                 jsonstr = json.dumps(doc, indent=4, sort_keys=True)
                 print(jsonstr)

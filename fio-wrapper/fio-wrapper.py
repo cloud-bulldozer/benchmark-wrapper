@@ -71,6 +71,9 @@ def main():
 
         es = elasticsearch.Elasticsearch([
         {'host': es['server'],'port': es['port'] }],send_get_body_as='POST')
+        if not es.ping():
+            logger.warn("Elasticsearch connection failed or passed incorrectly, turning off indexing")
+            args.index_results = False
 
     #call py es bulk using a process generator to feed it ES documents
     res_beg, res_end, res_suc, res_dup, res_fail, res_retry  = streaming_bulk(es, process_generator(args))

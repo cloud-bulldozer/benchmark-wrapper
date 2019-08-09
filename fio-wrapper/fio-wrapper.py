@@ -66,7 +66,8 @@ def main():
         es['server'] = os.environ["es"]
         es['port'] = os.environ["es_port"]
         args.prefix = os.environ["es_index"]
-        args.index_results = True
+        if len(es['server']) > 0 and len(es['port']) > 0 and len(args.prefix) > 0:
+            args.index_results = True
 
         es = elasticsearch.Elasticsearch([
         {'host': es['server'],'port': es['port'] }],send_get_body_as='POST')

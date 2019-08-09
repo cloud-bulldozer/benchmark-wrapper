@@ -97,7 +97,7 @@ def process_generator(args):
         for action, index in object.emit_actions():
 
             es_valid_document = { "_index": index,
-                                  "_type": "result",
+                                  "_type": "_doc",
                                   "_op_type": "create",
                                   "_source": action,
                                   "_id": "" }

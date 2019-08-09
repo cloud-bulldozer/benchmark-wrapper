@@ -62,6 +62,9 @@ def main():
     args.index_results = False
     args.prefix = "ripsaw-fio-"
     es={}
+    args.cluster_name = "mycluster"
+    if "clustername" in os.environ:
+        args.cluster_name = os.environ["clustername"]
     if "es" in os.environ:
         es['server'] = os.environ["es"]
         es['port'] = os.environ["es_port"]
@@ -129,13 +132,14 @@ def process_data(args):
     fio_jobs_dict = _parse_jobs(_fio_job_dict, fio_job_names)
     document_index_prefix = args.prefix
 
-    fio_analyzer_obj = Fio_Analyzer(uuid, user, document_index_prefix)
+    fio_analyzer_obj = Fio_Analyzer(uuid, user, document_index_prefix, args.cluster_name)
     #execute fio for X number of samples, yield the trigger_fio_generator
     for i in range(1, sample + 1):
         sample_dir = working_dir + '/' + str(i)
         if not os.path.exists(sample_dir):
             os.mkdir(sample_dir)
         trigger_fio_generator = trigger_fio._trigger_fio(fio_job_names,
+                                                         args.cluster_name,
                                                          sample_dir,
                                                          fio_jobs_dict,
                                                          host_file_path,

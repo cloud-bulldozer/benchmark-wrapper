@@ -21,13 +21,13 @@ import subprocess
 import sys
 
 def _index_result(server,port,payload):
-    index = "uperf-results"
+    index = "ripsaw-uperf-results"
     es = elasticsearch.Elasticsearch([
         {'host': server,'port': port }],send_get_body_as='POST')
     for result in payload:
-         es.index(index=index, doc_type="result", body=result)
+         es.index(index=index, doc_type="_doc", body=result)
 
-def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client):
+def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,clustername):
     processed = []
     prev_bytes = 0
     prev_ops = 0
@@ -36,6 +36,7 @@ def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client):
             "workload" : "uperf",
             "uuid": uuid,
             "user": user,
+            "cluster_name": clustername,
             "hostnetwork": hostnetwork,
             "iteration" : int(iteration),
             "remote_ip": remote,
@@ -151,7 +152,9 @@ def main():
     remoteip = ""
     hostnetwork = ""
     serviceip = ""
-
+    args.cluster_name = "mycluster"
+    if "clustername" in os.environ:
+        args.cluster_name = os.environ["clustername"]
     if "serviceip" in os.environ:
         serviceip = os.environ['serviceip']
     if "es" in os.environ :
@@ -175,7 +178,7 @@ def main():
             print "UPerf failed to execute a second time, stopping..."
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips)
+    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips,args.cluster_name)
     if server != "" :
         if len(documents) > 0 :
             _index_result(server,port,documents)

@@ -23,7 +23,7 @@ class _trigger_fio:
     """
         Will execute fio with the provided arguments and return normalized results for indexing
     """
-    def __init__(self, fio_jobs, working_dir, fio_jobs_dict, host_file, user, uuid, sample, fio_analyzer_obj, document_index_prefix, indexed=False, numjob=1, process_histogram=False):
+    def __init__(self, fio_jobs, cluster_name, working_dir, fio_jobs_dict, host_file, user, uuid, sample, fio_analyzer_obj, document_index_prefix, indexed=False, numjob=1, process_histogram=False):
         self.fio_jobs = fio_jobs
         self.working_dir = working_dir
         self.fio_jobs_dict = fio_jobs_dict
@@ -36,6 +36,7 @@ class _trigger_fio:
         self.indexed = indexed
         self.numjob = numjob
         self.histogram_process = process_histogram
+        self.cluster_name = cluster_name
 
 
     def _document_payload(self, data, user, uuid, sample, list_hosts, end_time, fio_version, fio_jobs_dict): #pod_details,
@@ -46,6 +47,7 @@ class _trigger_fio:
             document = {
               "uuid": uuid,
               "user": user,
+              "cluster_name": self.cluster_name,
               "hosts": list_hosts,
               "fio-version": fio_version,
               "timestamp_end": int(end_time)*1000, #this is in ms
@@ -101,6 +103,7 @@ class _trigger_fio:
                               "uuid": uuid,
                               "user": user,
                               "host": host,
+                              "cluster_name": self.cluster_name,
                               "fio-version": fio_version,
                               "job_options": job_options,
                               "job_name": str(job),
@@ -131,6 +134,7 @@ class _trigger_fio:
                       "uuid": uuid,
                       "user": user,
                       "hosts": list_hosts,
+                      "cluster_name": self.cluster_name,
                       "fio-version": fio_version,
                       "job_options": fio_jobs_dict[job],
                       "job_name": str(job),

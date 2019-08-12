@@ -31,7 +31,7 @@ def _index_result(index,server,port,payload):
     total_count = 0
     for result in payload:
         try:
-            es.index(index=index, doc_type="result", body=result)
+            es.index(index=index, doc_type="_doc", body=result)
             processed_count += 1
         except Exception as e:
             print(repr(e) + "occurred for the json document:")
@@ -93,7 +93,7 @@ def _num_convert(value):
     except TypeError:
         pass
     return value
-    
+
 
 def _parse_stdout(stdout):
     raw_output_b64 = base64.b64encode(stdout)
@@ -163,7 +163,7 @@ def _summarize_data(data,iteration,uuid,database,pgb_vers):
     # I asked for a mai tai, and they brought me a pina colada,
     # and I said no salt, NO salt on the margarita, but it had salt
     # on it, big grains of salt, floating in the glass.
-    print("TPS report:") 
+    print("TPS report:")
     for line in data['results']:
         print("          {}: {}".format(line[0], line[1]))
     print("")
@@ -182,17 +182,19 @@ def main():
     user = ""
     database = ""
     description = ""
+    args.cluster_name = "mycluster"
+    if "clustername" in os.environ:
+        args.cluster_name = os.environ["clustername"]
     pgb_vers = subprocess.check_output("pgbench --version", shell=True).strip()
     run_start_timestamp = datetime.now()
     sample_start_timestamp = datetime.now()
+    index = "ripsaw-pgbench"
 
     if "es" in os.environ:
         server = os.environ["es"]
         port = os.environ["es_port"]
         if "es_index_prefix" in os.environ:
             index = os.environ["es_index_prefix"]
-        else:
-            index = "snafu-pgbench"
     if "uuid" in os.environ:
         uuid = os.environ["uuid"]
     if "test_user" in os.environ:
@@ -213,6 +215,7 @@ def main():
         "pgb_vers": pgb_vers,
         "uuid": uuid,
         "user": user,
+        "cluster_name": args.cluster_name,
         "iteration": int(args.run[0]),
         "database": database,
         "run_start_timestamp": run_start_timestamp,

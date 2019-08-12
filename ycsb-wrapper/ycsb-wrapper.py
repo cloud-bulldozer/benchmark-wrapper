@@ -26,7 +26,7 @@ def _index_result(server,port,index,payload):
             {'host': server,'port': port }],send_get_body_as='POST')
         for result in payload :
             print result
-            es.index(index=index,doc_type="result", body=result)
+            es.index(index=index,doc_type="_doc", body=result)
     except Exception as e:
         print "An unknown error occured connecting to ElasticSearch: {}".format(e)
         return False
@@ -36,7 +36,7 @@ def _run(cmd):
     stdout,stderr = process.communicate()
     return [ stdout.strip(), stderr.strip(), process.returncode]
 
-def _json_payload(data,iteration,uuid,user,phase,workload,driver,recordcount,operationcount):
+def _json_payload(data,iteration,uuid,user,phase,workload,driver,recordcount,operationcount,clustername):
     processed = []
     summary = []
     for result in data['results'] :
@@ -53,6 +53,7 @@ def _json_payload(data,iteration,uuid,user,phase,workload,driver,recordcount,ope
                     "workload" : "ycsb",
                     "uuid": uuid,
                     "user": user,
+                    "cluster_name": clustername,
                     "phase": phase,
                     "driver": driver,
                     "timestamp": datetime(int(_date[0]),
@@ -133,7 +134,9 @@ def main():
     recordcount = ""
     operationcount = ""
     phase = ""
-
+    args.cluster_name = "mycluster"
+    if "clustername" in os.environ:
+        args.cluster_name = os.environ["clustername"]
     if "es" in os.environ :
         server = os.environ["es"]
         port = os.environ["es_port"]
@@ -177,7 +180,7 @@ def main():
 
     data = _parse_stdout(output)
     print output
-    documents,summary = _json_payload(data,args.run[0],uuid,user,phase,workload,args.driver[0],recordcount,operationcount)
+    documents,summary = _json_payload(data,args.run[0],uuid,user,phase,workload,args.driver[0],recordcount,operationcount,args.cluster_name)
     if server != "" :
         print "Attempting to index results..."
         if len(documents) > 0 :

@@ -10,7 +10,7 @@ class Fio_Analyzer:
     results are analyzed based on operation and io size, this is a static evaluation and future enhancements could evalute results based on
     other properties dynamically.
     """
-    def __init__(self, uuid, user, prefix):
+    def __init__(self, uuid, user, prefix, cluster_name):
         self.uuid = uuid
         self.user = user
         self.prefix = prefix
@@ -19,6 +19,7 @@ class Fio_Analyzer:
         self.operation_list = []
         self.io_size_list = []
         self.sumdoc = {}
+        self.cluster_name = cluster_name
 
     def add_fio_result_documents(self, document_list, starttime):
         """
@@ -130,7 +131,7 @@ class Fio_Analyzer:
                         tmp_doc['std-dev-%s' % io_size] = round((((statistics.stdev(average_read_result_list) + statistics.stdev(average_write_result_list)) / tmp_doc['total-iops'])* 100), 3)
 
                 importdoc['ceph_benchmark_test']['test_data'] = tmp_doc
+                importdoc['cluster_name'] = self.cluster_name
                 #TODO add ID to document
-                index = self.prefix + "-analyzed_result"
+                index = self.prefix + "-analyzed-result"
                 yield importdoc, index
-                

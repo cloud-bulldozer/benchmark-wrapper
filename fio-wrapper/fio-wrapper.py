@@ -62,9 +62,12 @@ def main():
     args.index_results = False
     args.prefix = "ripsaw-fio-"
     es={}
+    # set up a standard format for time
+    FMT = '%Y-%m-%dT%H:%M:%SGMT'
     args.cluster_name = "mycluster"
     if "clustername" in os.environ:
         args.cluster_name = os.environ["clustername"]
+    #if using elasticsearch use streaming bulk, else bypass indexing
     if "es" in os.environ:
         es['server'] = os.environ["es"]
         es['port'] = os.environ["es_port"]
@@ -78,23 +81,30 @@ def main():
             logger.warn("Elasticsearch connection failed or passed incorrectly, turning off indexing")
             args.index_results = False
 
-    #call py es bulk using a process generator to feed it ES documents
-    res_beg, res_end, res_suc, res_dup, res_fail, res_retry  = streaming_bulk(es, process_generator(args))
-
-    # set up a standard format for time
-    FMT = '%Y-%m-%dT%H:%M:%SGMT'
-    start_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_beg))
-    end_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_end))
+        #call py es bulk using a process generator to feed it ES documents
+        res_beg, res_end, res_suc, res_dup, res_fail, res_retry  = streaming_bulk(es, process_generator(args))
+    
+        logger.info("Indexed results - %s success, %s duplicates, %s failures, with %s retries." % (res_suc,
+                                                                                                res_dup,
+                                                                                                res_fail,
+                                                                                                res_retry))
+        start_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_beg))
+        end_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_end))
+    else:
+        start_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime())
+        #need to loop through generator and pass on all yields
+        #this will execute all jobs without elasticsearch
+        for i in process_generator(args):
+            pass
+        end_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime())
+        
     start_t = datetime.datetime.strptime(start_t, FMT)
     end_t = datetime.datetime.strptime(end_t, FMT)
 
     #get time delta for indexing run
     tdelta = end_t - start_t
     logger.info("Duration of indexing - %s" % tdelta)
-    logger.info("Indexed results - %s success, %s duplicates, %s failures, with %s retries." % (res_suc,
-                                                                                                res_dup,
-                                                                                                res_fail,
-                                                                                                res_retry))
+    
 
 def process_generator(args):
 
@@ -154,8 +164,12 @@ def process_data(args):
                                                          index_results,
                                                          args.histogramprocess)
         yield trigger_fio_generator
-
-    yield fio_analyzer_obj
+    
+    #if indexing data into elasticsearch will fio_analyzer
+    #else do not
+    if index_results:
+        logger.info("Indexing analyzed fio data")
+        yield fio_analyzer_obj
 
 def _parse_jobs(job_dict, jobs):
     job_dicts = {}

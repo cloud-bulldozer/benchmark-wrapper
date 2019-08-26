@@ -166,7 +166,7 @@ class _trigger_fio:
         cmd[1] = "--client=" + str(hosts_file)
         cmd[2] = fiojob_file
         cmd[4] = "--output=" + str(fio_output_file)
-        #logger.debug(cmd)
+        logger.debug(cmd)
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=output_dir)
         stdout,stderr = process.communicate()
         return stdout.strip(), process.returncode

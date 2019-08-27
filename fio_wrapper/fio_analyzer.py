@@ -10,10 +10,9 @@ class Fio_Analyzer:
     results are analyzed based on operation and io size, this is a static evaluation and future enhancements could evalute results based on
     other properties dynamically.
     """
-    def __init__(self, uuid, user, prefix, cluster_name):
+    def __init__(self, uuid, user, cluster_name):
         self.uuid = uuid
         self.user = user
-        self.prefix = prefix
         self.fio_processed_results_list = []
         self.sample_list = []
         self.operation_list = []
@@ -133,5 +132,5 @@ class Fio_Analyzer:
                 importdoc['ceph_benchmark_test']['test_data'] = tmp_doc
                 importdoc['cluster_name'] = self.cluster_name
                 #TODO add ID to document
-                index = self.prefix + "-analyzed-result"
+                index = "-analyzed-result"
                 yield importdoc, index

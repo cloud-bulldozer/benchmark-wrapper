@@ -14,7 +14,7 @@ import statistics
 import time
 import logging
 
-logger = logging.getLogger("fio_wrapper")
+logger = logging.getLogger("snafu")
 
 _log_files={'bw':{'metric':'bandwidth'},'iops':{'metric':'iops'},'lat':{'metric':'latency'},'clat':{'metric':'latency'},'slat':{'metric':'latency'}} # ,'clat_hist_processed'
 _data_direction={0:'read',1:'write',2:'trim'}
@@ -23,7 +23,7 @@ class _trigger_fio:
     """
         Will execute fio with the provided arguments and return normalized results for indexing
     """
-    def __init__(self, fio_jobs, cluster_name, working_dir, fio_jobs_dict, host_file, user, uuid, sample, fio_analyzer_obj, document_index_prefix, indexed=False, numjob=1, process_histogram=False):
+    def __init__(self, fio_jobs, cluster_name, working_dir, fio_jobs_dict, host_file, user, uuid, sample, fio_analyzer_obj, numjob=1, process_histogram=False):
         self.fio_jobs = fio_jobs
         self.working_dir = working_dir
         self.fio_jobs_dict = fio_jobs_dict
@@ -32,8 +32,6 @@ class _trigger_fio:
         self.uuid = uuid
         self.sample = sample
         self.fio_analyzer_obj = fio_analyzer_obj
-        self.document_index_prefix = document_index_prefix
-        self.indexed = indexed
         self.numjob = numjob
         self.histogram_process = process_histogram
         self.cluster_name = cluster_name
@@ -166,7 +164,7 @@ class _trigger_fio:
         cmd[1] = "--client=" + str(hosts_file)
         cmd[2] = fiojob_file
         cmd[4] = "--output=" + str(fio_output_file)
-        logger.debug(cmd)
+        #logger.debug(cmd)
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=output_dir)
         stdout,stderr = process.communicate()
         return stdout.strip(), process.returncode
@@ -232,61 +230,56 @@ class _trigger_fio:
                 logger.error("failed to parse the output file")
                 exit(1)
             logger.info("fio has successfully finished sample {} executing for jobname {} and results are in the dir {}\n".format(self.sample, job, job_dir))
-            if self.indexed:
-                with open(fio_output_file) as f:
-                    data = json.load(f)
-                fio_endtime = int(data['timestamp']) # in epoch seconds
-                fio_version = data["fio version"]
 
-                #parse fio json file, return list of normalized documents and structured start times
-                fio_result_documents, fio_starttime, earliest_starttime = self._document_payload(data, self.user, self.uuid, self.sample, hosts, fio_endtime, fio_version, self.fio_jobs_dict) #hosts_metadata
+            with open(fio_output_file) as f:
+                data = json.load(f)
+            fio_endtime = int(data['timestamp']) # in epoch seconds
+            fio_version = data["fio version"]
 
-                # Add fio result document to fio analyzer object
-                self.fio_analyzer_obj.add_fio_result_documents(fio_result_documents, earliest_starttime)
-                #if indexing is turned on yield back normalized data
-                if self.indexed:
-                    #from the returned normalized fio json document yield up for indexing
-                    index = self.document_index_prefix + "-results"
-                    for document in fio_result_documents:
-                        yield document, index
+            #parse fio json file, return list of normalized documents and structured start times
+            fio_result_documents, fio_starttime, earliest_starttime = self._document_payload(data, self.user, self.uuid, self.sample, hosts, fio_endtime, fio_version, self.fio_jobs_dict) #hosts_metadata
 
-                #check to determine if logs can be parsed, if not fail
+            # Add fio result document to fio analyzer object
+            self.fio_analyzer_obj.add_fio_result_documents(fio_result_documents, earliest_starttime)
+            
+            #from the returned normalized fio json document yield up for indexing
+            index = "-results"
+            for document in fio_result_documents:
+                yield document, index
+
+            #check to determine if logs can be parsed, if not fail
+            try:
+                if self.fio_jobs_dict[job]['filename_format'] != 'f.\$jobnum.\$filenum' or int(self.fio_jobs_dict[job]['numjobs']) != 1:
+                    logger.error("filename_format is not 'f.\$jobnum.\$filenum' and/or numjobs is not 1, so can't process logs")
+                    exit(1)
+            except KeyError:
                 try:
-                    if self.fio_jobs_dict[job]['filename_format'] != 'f.\$jobnum.\$filenum' or int(self.fio_jobs_dict[job]['numjobs']) != 1:
+                    if self.fio_jobs_dict['global']['filename_format'] != 'f.\$jobnum.\$filenum' or int(self.fio_jobs_dict['global']['numjobs']) != 1:
                         logger.error("filename_format is not 'f.\$jobnum.\$filenum' and/or numjobs is not 1, so can't process logs")
                         exit(1)
+                except:
+                    logger.error("Error getting filename_format")
+
+            #parse all fio log files, return list of normalized log documents
+            fio_log_documents = self._log_payload(job_dir, self.user, self.uuid, self.sample, self.fio_jobs_dict, fio_version, fio_starttime, hosts, job)
+
+            #if indexing is turned on yield back normalized data
+            index = "-log"
+            for document in fio_log_documents:
+                yield document, index
+            if self.histogram_process:
+                try:
+                    processed_histogram_prefix = self.fio_jobs_dict[job]['write_hist_log'] +'_clat_hist'
                 except KeyError:
                     try:
-                        if self.fio_jobs_dict['global']['filename_format'] != 'f.\$jobnum.\$filenum' or int(self.fio_jobs_dict['global']['numjobs']) != 1:
-                            logger.error("filename_format is not 'f.\$jobnum.\$filenum' and/or numjobs is not 1, so can't process logs")
-                            exit(1)
+                        processed_histogram_prefix = self.fio_jobs_dict['global']['write_hist_log'] +'_clat_hist'
                     except:
-                        logger.error("Error getting filename_format")
-
-                #parse all fio log files, return list of normalized log documents
-                fio_log_documents = self._log_payload(job_dir, self.user, self.uuid, self.sample, self.fio_jobs_dict, fio_version, fio_starttime, hosts, job)
-
+                        logger.error("Error setting processed_histogram_prefix")
+                histogram_output_file = job_dir + '/' + processed_histogram_prefix + '_processed.' + str(self.numjob)
+                self._process_histogram(self.fio_jobs_dict, hosts, job, job_dir, processed_histogram_prefix, histogram_output_file)
+                histogram_documents = self._histogram_payload(histogram_output_file, self.user, self.uuid, self.sample, self.fio_jobs_dict, fio_version, earliest_starttime, hosts, job)
                 #if indexing is turned on yield back normalized data
-                if self.indexed:
-                    index = self.document_index_prefix + "-log"
-                    for document in fio_log_documents:
-                        yield document, index
-                if self.histogram_process:
-                    try:
-                        processed_histogram_prefix = self.fio_jobs_dict[job]['write_hist_log'] +'_clat_hist'
-                    except KeyError:
-                        try:
-                            processed_histogram_prefix = self.fio_jobs_dict['global']['write_hist_log'] +'_clat_hist'
-                        except:
-                            logger.error("Error setting processed_histogram_prefix")
-                    histogram_output_file = job_dir + '/' + processed_histogram_prefix + '_processed.' + str(self.numjob)
-                    self._process_histogram(self.fio_jobs_dict, hosts, job, job_dir, processed_histogram_prefix, histogram_output_file)
-                    histogram_documents = self._histogram_payload(histogram_output_file, self.user, self.uuid, self.sample, self.fio_jobs_dict, fio_version, earliest_starttime, hosts, job)
-                    #if indexing is turned on yield back normalized data
-                    if self.indexed:
-                        index = self.document_index_prefix + "-hist-log"
-                        for document in histogram_documents:
-                            yield document, index
 
-            else:
-                logger.info("Not indexing\n")
+                index = "-hist-log"
+                for document in histogram_documents:
+                    yield document, index

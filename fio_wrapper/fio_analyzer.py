@@ -71,6 +71,30 @@ class Fio_Analyzer:
                 self.sumdoc[sample][rw][bs]['write'] += int(fio_result['document']['fio']["write"]["iops"])
                 self.sumdoc[sample][rw][bs]['read'] += int(fio_result['document']['fio']["read"]["iops"])
 
+    def standardize_units(self, io_size):
+        """
+            Will return value converted to Kib for known io sizes without unit size suffix
+        """
+        
+        if "KiB" in io_size:
+            #remove units on string and return value
+            io_size_KiB = int(io_size.replace('KiB', ''))
+        elif "Mib" in io_size:
+            #convert to Kib and remove units on string
+            io_size_MiB = io_size.replace('MiB', '')
+            #1 MiB = 
+            #XKib = YMiB * 1024KiB
+            io_size_KiB = int(io_size_MiB) * 1024
+        elif "Gib" in io_size:
+            #convert to Kib and remove units on string
+            io_size_GiB = io_size.replace("GiB", "")
+            # 1 GiB = 1048576KiB
+            #XKiB = YGiB * 1048576KiB
+            io_size_KiB = int(io_size_GiB) * 1048576
+            
+        return io_size_KiB 
+        
+
     def emit_actions(self):
         """
         Will calculate the average iops across multiple samples and return list containing items for each result based on operation/io size
@@ -91,6 +115,7 @@ class Fio_Analyzer:
                 total_ary = []
                 tmp_doc = {}
                 tmp_doc['object_size'] = io_size # set document's object size
+                tmp_doc['object_size_kib'] = self.standardize_units(io_size)
                 tmp_doc['operation'] = oper # set documents operation
                 firstrecord = True
                 calcuate_percent_std_dev = False

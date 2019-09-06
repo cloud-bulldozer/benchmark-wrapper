@@ -46,6 +46,7 @@ class _trigger_smallfile:
             json_output_file = os.path.join(self.result_dir, '%s.json' % operation)
 
             cmd = ["python", "smallfile_cli.py", 
+                    "--operation", operation, 
                     "--top", self.working_dir, 
                     "--output-json", json_output_file,
                     "--yaml-input-file", self.yaml_input_file ]

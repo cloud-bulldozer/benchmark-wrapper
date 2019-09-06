@@ -22,19 +22,22 @@ class smallfile_wrapper():
         # it is assumed that the parser was created using argparse and already knows
         # about the --tool option
         parser.add_argument(
-            '-s', '--sample', 
+            '-s', '--samples', 
             type=int, 
             help='number of times to run benchmark, defaults to 1',
             default=1)
         parser.add_argument(
+            '-T', '--top',
+            help='directory to access files in')
+        parser.add_argument(
             '-d', '--dir', 
             help='output parent directory', 
             default=os.path.dirname(os.getcwd()))
-        parse.add_argument(
+        parser.add_argument(
             '-o', '--operations', 
             help='sequence of smallfile operation types to run',
             default='create')
-        parse.add_argument(
+        parser.add_argument(
             '-y', '--yaml-input-file', 
             help='smallfile parameters passed via YAML input file')
         self.args = parser.parse_args()
@@ -53,22 +56,23 @@ class smallfile_wrapper():
         if "test_user" in os.environ:
            self.user = os.environ["test_user"]
 
-        self.sample = self.args.sample
-        self.working_dir = self.args.dir
-    
+        if not self.args.top:
+            raise SnafuSmfException('must supply directory where you access flies')
+        self.samples = self.args.samples
+        self.working_dir = self.args.top
+        self.result_dir = self.args.dir
+        self.yaml_input_file = self.args.yaml_input_file
+        self.operations = self.args.operations
+
     def run(self):
-        analyzer_obj = Smallfile_Analyzer(self.uuid, self.user, self.args.cluster_name)
-        for i in range(1, self.sample + 1):
-            sample_dir = self.working_dir + '/' + str(i)
+        if not os.path.exists(self.result_dir):
+            os.mkdir(self.result_dir)
+        for s in range(1, self.samples + 1):
+            sample_dir = self.result_dir + '/' + str(s)
             if not os.path.exists(sample_dir):
                 os.mkdir(sample_dir)
-            trigger_generator = trigger_smallfile._trigger_smallfile( self.args.cluster_name,
-                                                             sample_dir,
-                                                             self.user,
-                                                             self.uuid,
-                                                             i,
-                                                             analyzer_obj)
+            trigger_generator = trigger_smallfile._trigger_smallfile( 
+                    logger, self.operations, self.yaml_input_file, self.cluster_name, self.working_dir, sample_dir, self.user, self.uuid, s)
             yield trigger_generator
     
-        yield analyzer_obj
-    
+ 

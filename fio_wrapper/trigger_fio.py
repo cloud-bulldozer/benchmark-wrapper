@@ -52,6 +52,7 @@ class _trigger_fio:
               "fio-version": fio_version,
               "timestamp_end": int(end_time)*1000, #this is in ms
               #"nodeName": pod_details["hostname"],
+              "job_options": fio_jobs_dict[job],
               "sample": int(sample),
               "fio": result
             }

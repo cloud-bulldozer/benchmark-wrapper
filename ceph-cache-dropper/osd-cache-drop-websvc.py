@@ -16,7 +16,7 @@ class DropOSDCache(object):
     def drop_osd_caches(self):
         try:
             result = subprocess.check_output(
-                ["/bin/sh", "/drop-osd-cache-within-toolbox.sh"])
+                ["/bin/sh", "drop-osd-cache-within-toolbox.sh"])
         except subprocess.CalledProcessError as e:
             logger.error('failed to drop cache')
             logger.exception(e)

@@ -83,7 +83,6 @@ class _trigger_fs_drift:
         with open(rsptime_file) as rf:
             lines = [ l.strip() for l in rf.readlines() ]
             start_grabbing = False
-            rsp_percentiles = {}
             for l in lines:
                 if l.startswith('time-since-start'):
                     start_grabbing = True
@@ -94,6 +93,7 @@ class _trigger_fs_drift:
                     interval = {}
                     rsptime_date = start_time + int(flds[0])
                     rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(rsptime_date))
+                    interval['date'] = rsptime_date_str
                     interval['samples'] = int(flds[2])
                     interval['min'] = float(flds[3])
                     interval['max'] = float(flds[4])
@@ -102,5 +102,4 @@ class _trigger_fs_drift:
                     interval['90%'] = float(flds[8])
                     interval['95%'] = float(flds[9])
                     interval['99%'] = float(flds[10])
-                    rsp_percentiles[rsptime_date_str] = interval
-            yield rsp_percentiles, '-rsptimes'
+                    yield interval, '-rsptimes'

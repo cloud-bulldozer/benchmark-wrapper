@@ -25,6 +25,12 @@ class DropOSDCache(object):
         return 'SUCCESS'
 
 if __name__ == '__main__':
+    try:
+        result = subprocess.Popen(
+            ["/bin/sh", "-c", "/usr/local/bin/toolbox.sh"])
+    except subprocess.CalledProcessError as e:
+        logger.error('failed to source toolbox')
+        logger.exception(e)
     config = { 
         'global': {
             'server.socket_host': '0.0.0.0' ,

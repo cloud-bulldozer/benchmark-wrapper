@@ -3,6 +3,7 @@
 OK=0
 NOTOK=1
 
+
 osds=$(ceph osd tree | awk '/osd\./{print $4}')
 if [ $? != $OK ] ; then
     exit $NOTOK

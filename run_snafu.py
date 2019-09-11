@@ -54,7 +54,7 @@ def main():
     if "es" in os.environ:
         es['server'] = os.environ["es"]
         es['port'] = os.environ["es_port"]
-        index_args.prefix = "%s-%s" % (os.environ["es_index"], index_args.tool)
+        index_args.prefix = os.environ["es_index"]
         index_args.index_results = True
     
         es = elasticsearch.Elasticsearch([

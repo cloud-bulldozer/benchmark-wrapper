@@ -123,7 +123,7 @@ def streaming_bulk(es, actions):
             # start yielding those actions until we drain the retry queue.
             backoff = 1
             while len(actions_retry_deque) > 0:
-                time.sleep(calc_backoff_sleep(backoff))
+                time.sleep(_calc_backoff_sleep(backoff))
                 retries_tracker['retries'] += 1
                 retry_actions = []
                 # First drain the retry deque entirely so that we know when we

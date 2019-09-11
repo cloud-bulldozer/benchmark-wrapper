@@ -69,6 +69,10 @@ class _trigger_smallfile:
                         self.sample, operation, json_output_file))
             with open(json_output_file) as f:
                 data = json.load(f)
+                data['cluster_name'] = self.cluster_name
+                data['uuid'] = self.uuid
+                data['user'] = self.user
+                data['sample'] = self.sample
                 yield data, '-results'
 
             # process response time data
@@ -100,10 +104,14 @@ class _trigger_smallfile:
                             continue
                         flds = l.split(',')
                         interval = {}
-                        rsptime_date = start_time + int(flds[0])
+                        rsptime_date = int(flds[0])
                         rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(rsptime_date))
+                        interval['cluster_name'] = self.cluster_name
+                        interval['uuid'] = self.uuid
+                        interval['user'] = self.user
+                        interval['sample'] = self.sample
                         interval['date'] = rsptime_date_str
-                        interval['samples'] = int(flds[2])
+                        interval['iops'] = int(flds[2])
                         interval['min'] = float(flds[3])
                         interval['max'] = float(flds[4])
                         interval['mean'] = float(flds[5])

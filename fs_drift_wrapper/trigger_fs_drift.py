@@ -63,14 +63,19 @@ class _trigger_fs_drift:
                     self.sample, json_output_file))
         with open(json_output_file) as f:
             data = json.load(f)
+            data['cluster_name'] = self.cluster_name
+            data['uuid'] = self.uuid
+            data['user'] = self.user
+            data['sample'] = self.sample
             yield data, '-results'
 
         # process response time data
 
         elapsed_time = float(data['results']['elapsed'])
         start_time = data['results']['start-time']
+        sampling_interval = max(int(elapsed_time/120.0), 1)
         cmd = ["python", "rsptime_stats.py",
-                "--time-interval", str(max(int(elapsed_time/120.0), 1)),
+                "--time-interval", str(sampling_interval),
                 rsptime_dir ]
         self.logger.info("process response times with: %s" % ' '.join(cmd))
         try:
@@ -91,10 +96,17 @@ class _trigger_fs_drift:
                         continue
                     flds = l.split(',')
                     interval = {}
+                    interval['cluster_name'] = self.cluster_name
+                    interval['uuid'] = self.uuid
+                    interval['user'] = self.user
+                    interval['sample'] = self.sample
                     rsptime_date = start_time + int(flds[0])
                     rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(rsptime_date))
                     interval['date'] = rsptime_date_str
-                    interval['samples'] = int(flds[2])
+                    # number of fs-drift file operations in this interval
+                    interval['op-count'] = int(flds[2])
+                    # file operations per second in this interval
+                    interval['file-ops-per-sec'] = float(flds[2]) / sampling_interval
                     interval['min'] = float(flds[3])
                     interval['max'] = float(flds[4])
                     interval['mean'] = float(flds[5])

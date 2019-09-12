@@ -54,15 +54,15 @@ def main():
     if "es" in os.environ:
         es['server'] = os.environ["es"]
         es['port'] = os.environ["es_port"]
-        index_args.prefix = "%s-%s" % (os.environ["es_index"], index_args.tool)
+        index_args.prefix = os.environ["es_index"]
         index_args.index_results = True
     
         es = elasticsearch.Elasticsearch([
         {'host': es['server'],'port': es['port'] }],send_get_body_as='POST')
     
-    if not es.ping():
-        logger.warn("Elasticsearch connection failed or passed incorrectly, turning off indexing")
-        index_args.index_results = False
+        if not es.ping():
+            logger.warn("Elasticsearch connection failed or passed incorrectly, turning off indexing")
+            index_args.index_results = False
     
     if index_args.index_results:
         #call py es bulk using a process generator to feed it ES documents

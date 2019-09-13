@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ `id -u` -ge 10000 ]
+then
+#cat /etc/passwd | sed -e "s/^$NB_USER:/builder:/" > tmppasswd
+echo "$UID:x:`id -u`:`id -g`:,,,:/home/$UID:/bin/bash" >> /etc/passwd
+#rm tmppasswd
+fi

@@ -8,4 +8,5 @@ RUN yum install -y pbench-fio
 RUN yum install -y git python-pip
 RUN pip install --upgrade pip
 RUN pip install elasticsearch numpy configparser statistics
-COPY snafu /opt/snafu
+RUN mkdir -p /opt/snafu/
+COPY . /opt/snafu/

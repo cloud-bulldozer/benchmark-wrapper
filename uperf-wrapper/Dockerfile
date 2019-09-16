@@ -10,4 +10,5 @@ RUN yum install -y git python-pip
 RUN pip install --upgrade pip
 RUN pip install "elasticsearch>=6.0.0,<=7.0.2"
 RUN yum install -y numpy
-COPY snafu /opt/snafu
+RUN mkdir -p /opt/snafu/
+COPY . /opt/snafu/

@@ -11,4 +11,5 @@ RUN pip install --upgrade pip
 RUN pip install "elasticsearch>=6.0.0,<=7.0.2"
 RUN yum install -y numpy
 RUN ln -s /usr/pgsql-11/bin/pgbench /usr/bin/pgbench
-COPY snafu /opt/snafu
+RUN mkdir -p /opt/snafu/
+COPY . /opt/snafu/

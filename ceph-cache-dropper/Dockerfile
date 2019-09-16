@@ -2,4 +2,5 @@ FROM rook/ceph:master
 
 USER root
 RUN yum install -y git
-COPY snafu /opt/snafu
+RUN mkdir -p /opt/snafu/
+COPY . /opt/snafu/

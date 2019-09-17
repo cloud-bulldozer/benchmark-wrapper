@@ -5,7 +5,7 @@ import sys
 import json
 import subprocess
 import logging
-
+import shutil
 
 class SmallfileWrapperException(Exception):
     pass
@@ -120,3 +120,10 @@ class _trigger_smallfile:
                         interval['95%'] = float(flds[9])
                         interval['99%'] = float(flds[10])
                         yield interval, '-rsptimes'
+
+        # clean up anything created by smallfile so that the next sample will work
+        # this is brutally inefficient, best way to clean up is to 
+        # include the "cleanup" operation as the last operation in the
+        # operations list.
+
+        shutil.rmtree(self.working_dir)

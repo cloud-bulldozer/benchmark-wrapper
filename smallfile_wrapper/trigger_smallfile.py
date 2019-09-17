@@ -51,7 +51,7 @@ class _trigger_smallfile:
             json_output_file = os.path.join(self.result_dir, '%s.json' % operation)
             network_shared_dir = os.path.join(self.working_dir, 'network_shared')
             rsptime_file = os.path.join(network_shared_dir, 'stats-rsptimes.csv')
-            cmd = ["python", "smallfile_cli.py", 
+            cmd = ["smallfile_cli.py", 
                     "--operation", operation, 
                     "--top", self.working_dir, 
                     "--output-json", json_output_file,
@@ -79,7 +79,7 @@ class _trigger_smallfile:
 
             elapsed_time = float(data['results']['elapsed-time'])
             start_time = data['results']['start-time']
-            cmd = ["python", "smallfile_rsptimes_stats.py",
+            cmd = ["smallfile_rsptimes_stats.py",
                     "--time-interval", str(max(int(elapsed_time/120.0), 1)),
                     "--start-time", str(int(start_time)),
                     rsptime_dir ]

@@ -46,7 +46,7 @@ class _trigger_fs_drift:
         json_output_file = os.path.join(self.result_dir, 'fs-drift.json')
         network_shared_dir = os.path.join(self.working_dir, 'network-shared')
         rsptime_file = os.path.join(network_shared_dir, 'stats-rsptimes.csv')
-        cmd = ["python", "fs-drift.py", 
+        cmd = ["fs-drift.py", 
                 "--top", self.working_dir, 
                 "--output-json", json_output_file,
                 "--response-times", "Y",
@@ -74,7 +74,7 @@ class _trigger_fs_drift:
         elapsed_time = float(data['results']['elapsed'])
         start_time = data['results']['start-time']
         sampling_interval = max(int(elapsed_time/120.0), 1)
-        cmd = ["python", "rsptime_stats.py",
+        cmd = ["rsptime_stats.py",
                 "--time-interval", str(sampling_interval),
                 rsptime_dir ]
         self.logger.info("process response times with: %s" % ' '.join(cmd))

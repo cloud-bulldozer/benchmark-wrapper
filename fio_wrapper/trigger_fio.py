@@ -55,12 +55,14 @@ class _trigger_fio:
             }
             if 'global' in fio_jobs_dict.keys():
                 document['global_options'] = fio_jobs_dict['global']
-            processed.append(document)
+            
             if result['jobname'] != 'All clients':
                 start_time= (int(end_time) * 1000) - result['job_runtime']
                 fio_starttime[result['hostname']] = start_time
+                document['timestamp_start'] = start_time
                 if start_time < earliest_starttime:
                     earliest_starttime = start_time
+            processed.append(document)
         return processed, fio_starttime, earliest_starttime
 
     def _log_payload(self, directory, user, uuid, sample, fio_jobs_dict, fio_version, fio_starttime, list_hosts, job): #pod_details

@@ -59,7 +59,8 @@ class _trigger_fio:
             if result['jobname'] != 'All clients':
                 start_time= (int(end_time) * 1000) - result['job_runtime']
                 fio_starttime[result['hostname']] = start_time
-                document['timestamp_start'] = start_time
+                formatted_starttime = datetime.fromtimestamp(start_time)
+                document['timestamp_start'] = formatted_starttime.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
                 if start_time < earliest_starttime:
                     earliest_starttime = start_time
             processed.append(document)

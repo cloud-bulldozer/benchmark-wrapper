@@ -105,6 +105,13 @@ class _trigger_fs_drift:
                     interval['date'] = rsptime_date_str
                     # number of fs-drift file operations in this interval
                     interval['op-count'] = int(flds[2])
+                    if interval['op-count'] == 0:
+                        self.logger.info(
+                            'no response time data in interval starting at ' + rsptime_date_str)
+                        # no response time data for this interval
+                        # FIXME: how do we indicate to grafana that preceding sample
+                        # is not continuing into this interval.
+                        continue
                     # file operations per second in this interval
                     interval['file-ops-per-sec'] = float(flds[2]) / sampling_interval
                     interval['min'] = float(flds[3])

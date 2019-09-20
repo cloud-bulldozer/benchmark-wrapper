@@ -78,3 +78,57 @@ server that is viewable with Kibana and Grafana!
 
 Look at some of the other benchmarks for examples of how this works.
 
+## how do I integrate snafu wrapper into my ripsaw benchmark?
+
+You just replace the commands to run the workload in your ripsaw benchmark 
+(often in roles/Your_Workload/templates/workload.yml.j2) with the command below.
+
+First, you have to define environment variables used to pass information to
+run_snafu.py for access to Elasticsearch:
+
+
+
+```
+      spec:
+        containers:
+          env:
+{% if es_server is defined %}
+          - name: uuid
+            value: "{{ uuid }}"
+          - name: test_user
+            value: "{{ test_user }}"
+          - name: clustername
+            value: "{{ clustername }}"
+          - name: es
+            value: "{{ es_server }}"
+          - name: es_port
+            value: "{{ es_port }}"
+          - name: es_index
+            value: "{{ es_index }}"
+{% endif %}
+```
+
+Note that you do not have to use elasticsearch with ripsaw, but this is recommended
+so that your results will be accessible outside of the openshift cluster in which
+they were created.
+
+Next you replace the commands that run your workload with a single command to invoke
+run_snafu.py, which in turn invokes the wrapper to run the workload for as many samples
+as you want.
+
+```
+...
+                 args:
+...
+                   python run_snafu.py
+                   --tool Your_Workload
+{% if Your_Workload.samples is defined %}
+                   --samples {{Your_Workload.samples}}
+{% endif %}
+```
+
+The remaining parameters are specific to your workload and wrapper.  run_snafu.py
+has an "object-oriented" parser - the only inherited parameter is the --tool parameter.
+run_snafu.py uses the tool parameter to determine which wrapper to invoke, and
+The remaining parameters are defined and parsed by the workload-specific wrapper.
+

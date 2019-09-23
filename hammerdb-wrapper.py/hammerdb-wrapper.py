@@ -9,7 +9,8 @@ import elasticsearch
 
 
 def _run_hammerdb():
-    cmd = "cd /home/mkarg/Downloads/hammer/HammerDB-3.2/ && ./hammerdbcli auto setupdb.tcl"
+    #cmd = "cd /hammer; ./hammerdbcli auto /workload/workload.tcl"
+    cmd = "cd ~/Downloads/hammer/HammerDB-3.2; ./hammerdbcli auto workload.tcl"
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     stdout,stderr = process.communicate()
     return stdout.strip(), process.returncode
@@ -31,23 +32,25 @@ def _parse_stdout(stdout):
             data.append(entry)
     return data
 
-def _json_payload(data, iteration, uuid, remote_ip, runtime, rampup, workers, warehouses, protocol, test_type):
+def _json_payload(data, iteration, uuid, db_server, db_port, db_warehouses, db_num_workers, transactions, runtime, rampup, samples):
     processed = []
     for i in range(0,len(data)):
         processed.append({
             "workload" : "hammerdb",
             "uuid" : uuid,
             "iteration": int(iteration),
-            "remote_ip" : remote_ip,
+            "db_server" : db_server,
+            "db_port" : db_port,
+            "db_warehouses" : db_warehouses,
+            "db_num_workers" : db_num_workers,
+            "trasactions": transactions,
             "runtime": runtime,
             "rampup": rampup,
+            "samples": samples,
             "num_workers": (len(data) -1),
             "worker": data[i][0],
             "tpm": data[i][1],
-            "nopm": data[i][2],
-            "warehouses": warehouses,
-            "protocol": protocol,
-            "test_type": test_type
+            "nopm": data[i][2]
             })
     return processed
 
@@ -100,17 +103,19 @@ def main():
     protocol = "tcp"
     uuid = ""
     user = ""
-    db = ""
-    workers = ""
-    warehouses = ""
+    db_server = ""
+    db_port = ""
+    db_warehouses = ""
+    db_num_workers = ""
+    transactions = ""
     runtime = ""
     rampup = ""
+    samples = ""
     iteration = "1" # needs to be changed, comes from the caller
     test_type = "tpc-c"
-    remote_ip = ""
 
-    #stdout = _run_hammerdb() 
-    stdout = _fake_run()
+    stdout = _run_hammerdb() 
+    #stdout = _fake_run()
     if stdout[1] == 1:
         print "hammerdbcli failed to execute, trying one more time.."
         stdout = _fake_run()
@@ -118,7 +123,7 @@ def main():
             print "hammerdbcli failed to execute a second time, stopping..."
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = _json_payload(data, iteration, uuid, remote_ip, runtime, rampup, workers, warehouses, protocol, test_type)
+    documents = _json_payload(data, iteration, uuid, db_server, db_port, db_warehouses, db_num_workers, transactions, runtime, rampup, samples)
     if server != "" :
         if len(documents) > 0 :
             print "Indexing data"

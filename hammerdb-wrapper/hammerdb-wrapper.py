@@ -98,7 +98,8 @@ def main():
             help='Rampup time for the run')
     args = parser.parse_args()
 
-    server = "bullwinkle-elk.rdu.openstack.engineering.redhat.com"
+    #server = "bullwinkle-elk.rdu.openstack.engineering.redhat.com"
+    server = ""
     port = "9200"
     protocol = "tcp"
     uuid = ""

@@ -61,8 +61,8 @@ def _summarize_data(data):
         print("+{} HammerDB Results {}+".format("-"*(50), "-"*(50)))
         print("Run : {}".format(entry['iteration']))
         print("HammerDB setup")
-        print("""
-              server: {}""".format(entry['remote_ip']))
+        #print("""
+        #      server: {}""".format(entry['remote_ip']))
         print("")
         print("HammerDB results for:")
         print("""

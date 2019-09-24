@@ -9,7 +9,7 @@ import elasticsearch
 
 
 def _run_hammerdb():
-    cmd = "cd /hammer; ./hammerdbcli auto /workload/workload.tcl"
+    cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload.tcl"
     #cmd = "cd ~/Downloads/hammer/HammerDB-3.2; ./hammerdbcli auto workload.tcl"
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     stdout,stderr = process.communicate()

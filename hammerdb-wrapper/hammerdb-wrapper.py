@@ -115,6 +115,7 @@ def main():
     iteration = "1" # needs to be changed, comes from the caller
     test_type = "tpc-c"
 
+    print "calling run_hammerdb()"
     stdout = _run_hammerdb() 
     #stdout = _fake_run()
     if stdout[1] == 1:
@@ -123,13 +124,16 @@ def main():
         if stdout[1] == 1:
             print "hammerdbcli failed to execute a second time, stopping..."
             exit(1)
+    print "calling parse_stdout"
     data = _parse_stdout(stdout[0])
+    print "calling documents"
     documents = _json_payload(data, iteration, uuid, db_server, db_port, db_warehouses, db_num_workers, transactions, runtime, rampup, samples)
     if server != "" :
         if len(documents) > 0 :
             print "Indexing data"
             _index_result(server,port,documents)
     if len(documents) > 0 :
+        print "calling summarize data"
         _summarize_data(documents)
 
 

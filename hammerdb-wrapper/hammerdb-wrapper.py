@@ -127,7 +127,7 @@ def main():
     print "calling parse_stdout"
     data = _parse_stdout(stdout[0])
     print "calling documents"
-    documents = _json_payload(data, iteration, uuid, db_server, db_port, db_warehouses, db_num_workers, transactions, runtime, rampup, samples)
+    documents = _json_payload(data, iteration, uuid, db_server, db_port, db_warehouses, db_num_workers, transactions, test_type, runtime, rampup, samples)
     if server != "" :
         if len(documents) > 0 :
             print "Indexing data"

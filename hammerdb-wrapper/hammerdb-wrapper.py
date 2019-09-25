@@ -32,7 +32,7 @@ def _parse_stdout(stdout):
             data.append(entry)
     return data
 
-def _json_payload(data, iteration, uuid, db_server, db_port, db_warehouses, db_num_workers, transactions, runtime, rampup, samples):
+def _json_payload(data, iteration, uuid, db_server, db_port, db_warehouses, db_num_workers, transactions, test_type, runtime, rampup, samples):
     processed = []
     for i in range(0,len(data)):
         processed.append({
@@ -44,6 +44,7 @@ def _json_payload(data, iteration, uuid, db_server, db_port, db_warehouses, db_n
             "db_warehouses" : db_warehouses,
             "db_num_workers" : db_num_workers,
             "trasactions": transactions,
+            "test_type": test_type,
             "runtime": runtime,
             "rampup": rampup,
             "samples": samples,

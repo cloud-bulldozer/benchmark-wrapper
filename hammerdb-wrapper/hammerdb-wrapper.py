@@ -66,13 +66,13 @@ def _summarize_data(data):
         #      server: {}""".format(entry['remote_ip']))
         print("")
         print("HammerDB results for:")
-        print("""
-              test_type: {}
-              protocol: {}
-              workers: {}
-              worker: {}""".format(entry['test_type'],
-                                     entry['num_workers'],
-                                     entry['worker']))
+        #print("""
+        #      test_type: {}
+        #      protocol: {}
+        #      workers: {}
+        #      worker: {}""".format(entry['test_type'],
+        #                             entry['num_workers'],
+        #                             entry['worker']))
         print("HammerDB results (TPM):")
         print("""
               TPM: {}""".format(entry['tpm']))

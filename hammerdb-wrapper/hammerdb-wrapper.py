@@ -110,7 +110,7 @@ def main():
     port = "9200"
     protocol = "tcp"
     uuid = ""
-    user = ""
+    db_user = ""
     db_server = ""
     db_port = ""
     db_warehouses = ""
@@ -122,7 +122,28 @@ def main():
     iteration = "1" # needs to be changed, comes from the caller
     test_type = "tpc-c"
 
-    print "calling run_hammerdb()"
+    if "uuid" in os.environ:
+        uuid = os.environ["uuid"]
+    if "db_user" in os.environ:
+        db_user = os.environ["db_user"]
+    if "db_server" in os.environ:
+        db_server = os.environ["db_server"]
+    if "db_port" in os.environ:
+        db_port = os.environ["db_port"]
+    if "db_warehouses" in os.environ:
+        db_warehouses = os.environ["db_warehouses"]
+    if "db_num_workers" in os.environ:
+        db_num_workers = os.environ["db_num_workers"]
+    if "transactions" in os.environ:
+        transactions = os.environ["transactions"]
+    if "runtime" in os.environ:
+        runtime = os.environ["runtime"]
+    if "rampup" in os.environ:
+        rampup = os.environ["rampup"]
+    if "samples" in os.environ:
+        samples = os.environ["samples"]
+
+
     stdout = _run_hammerdb() 
     #stdout = _fake_run()
     if stdout[1] == 1:
@@ -131,18 +152,14 @@ def main():
         if stdout[1] == 1:
             print "hammerdbcli failed to execute a second time, stopping..."
             exit(1)
-    print "calling parse_stdout"
     data = _parse_stdout(stdout[0])
-    print "calling documents"
     documents = _json_payload(data, iteration, uuid, db_server, db_port, db_warehouses, db_num_workers, transactions, test_type, runtime, rampup, samples)
     if server != "" :
         if len(documents) > 0 :
             print "Indexing data"
             _index_result(server,port,documents)
     if len(documents) > 0 :
-        print "calling summarize data"
         _summarize_data(documents)
-        print "done summarizing data"
 
 
 if __name__ == '__main__':

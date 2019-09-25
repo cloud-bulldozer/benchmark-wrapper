@@ -43,7 +43,7 @@ def _json_payload(data, iteration, uuid, db_server, db_port, db_warehouses, db_n
             "db_port" : db_port,
             "db_warehouses" : db_warehouses,
             "db_num_workers" : db_num_workers,
-            "trasactions": transactions,
+            "transactions": transactions,
             "test_type": test_type,
             "runtime": runtime,
             "rampup": rampup,
@@ -66,7 +66,13 @@ def _summarize_data(data):
         #      server: {}""".format(entry['remote_ip']))
         print("")
         print("HammerDB results for:")
+        print("Database server: {}".format(entry['db_server']))
+        print("Database port: {}".format(entry['db_port']))
+        print("Database warehouses: {}".format(entry['db_warehouses']))
+        print("Database workers: {}".format(entry['db_num_workers']))
+        print("Transactions: {}".format(entry['transactions']))
         print("Worker: {}".format(entry['worker']))
+        print("Test type: {}".format(entry['test_type']))
         #print("""
         #      test_type: {}
         #      protocol: {}

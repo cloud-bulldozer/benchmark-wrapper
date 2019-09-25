@@ -66,6 +66,7 @@ def _summarize_data(data):
         #      server: {}""".format(entry['remote_ip']))
         print("")
         print("HammerDB results for:")
+        print("Worker: {}".format(entry['worker']))
         #print("""
         #      test_type: {}
         #      protocol: {}
@@ -135,6 +136,7 @@ def main():
     if len(documents) > 0 :
         print "calling summarize data"
         _summarize_data(documents)
+        print "done summarizing data"
 
 
 if __name__ == '__main__':

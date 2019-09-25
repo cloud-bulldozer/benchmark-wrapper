@@ -71,7 +71,6 @@ def _summarize_data(data):
               protocol: {}
               workers: {}
               worker: {}""".format(entry['test_type'],
-                                     entry['protocol'],
                                      entry['num_workers'],
                                      entry['worker']))
         print("HammerDB results (TPM):")

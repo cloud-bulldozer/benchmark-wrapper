@@ -72,6 +72,7 @@ def _summarize_data(data):
         print("Database workers: {}".format(entry['db_num_workers']))
         print("Transactions: {}".format(entry['transactions']))
         print("Worker: {}".format(entry['worker']))
+        print("Samples: {}".format(entry['samples']))
         print("Test type: {}".format(entry['test_type']))
         #print("""
         #      test_type: {}

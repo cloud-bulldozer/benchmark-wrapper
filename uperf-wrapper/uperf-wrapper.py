@@ -146,7 +146,7 @@ def _summarize_data(data):
                              np.percentile(op_result, 95)))
 
     print("")
-    print("UPerf Latecny results (microseconds):")
+    print("UPerf Latency results (microseconds):")
     print("""
           min: {}
           max: {}

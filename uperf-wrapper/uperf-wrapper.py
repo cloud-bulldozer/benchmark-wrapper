@@ -31,7 +31,13 @@ def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,c
     processed = []
     prev_bytes = 0
     prev_ops = 0
+    prev_timestamp = 0.0
     for result in data['results'] :
+        norm_ops = int(result[2])-prev_ops
+        if norm_ops == 0:
+            norm_ltcy = 0.0
+        else:
+            norm_ltcy = ((float(result[0]) - prev_timestamp)/(norm_ops))*1000
         processed.append({
             "workload" : "uperf",
             "uuid": uuid,
@@ -51,8 +57,10 @@ def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,c
             "bytes": int(result[1]),
             "norm_byte": int(result[1])-prev_bytes,
             "ops": int(result[2]),
-            "norm_ops": int(result[2])-prev_ops
+            "norm_ops": norm_ops,
+            "norm_ltcy": norm_ltcy
         })
+        prev_timestamp = float(result[0])
         prev_bytes = int(result[1])
         prev_ops = int(result[2])
     return processed
@@ -81,13 +89,16 @@ def _summarize_data(data):
 
     byte = []
     op = []
+    ltcy = []
 
     for entry in data :
         byte.append(entry["norm_byte"])
         op.append(entry["norm_ops"])
+        ltcy.append(entry["norm_ltcy"])
 
     byte_result = np.array(byte)
     op_result = np.array(op)
+    ltcy_result = np.array(ltcy)
 
     data = data[0]
     print("+{} UPerf Results {}+".format("-"*(50), "-"*(50)))
@@ -133,6 +144,19 @@ def _summarize_data(data):
                              np.median(op_result),
                              np.average(op_result),
                              np.percentile(op_result, 95)))
+
+    print("")
+    print("UPerf Latency results (microseconds):")
+    print("""
+          min: {}
+          max: {}
+          median: {}
+          average: {}
+          95th: {}""".format(np.amin(ltcy_result),
+                             np.amax(ltcy_result),
+                             np.median(ltcy_result),
+                             np.average(ltcy_result),
+                             np.percentile(ltcy_result, 95)))
     print("+{}+".format("-"*(115)))
 
 def main():

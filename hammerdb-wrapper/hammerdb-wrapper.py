@@ -58,8 +58,7 @@ def _json_payload(data, iteration, uuid, db_server, db_port, db_warehouses, db_n
 
 def _summarize_data(data):
     for i in range(0,len(data)):
-        entry = data[0]
-
+        entry = data[i]
         print("+{} HammerDB Results {}+".format("-"*(50), "-"*(50)))
         print("Run : {}".format(entry['iteration']))
         print("HammerDB setup")

@@ -150,7 +150,6 @@ def main():
     #stdout = _fake_run()
     if stdout[1] == 1:
         print "hammerdbcli failed to execute, trying one more time.."
-        stdout = _fake_run()
         if stdout[1] == 1:
             print "hammerdbcli failed to execute a second time, stopping..."
             exit(1)

@@ -16,10 +16,10 @@ def _run_hammerdb():
     stdout,stderr = process.communicate()
     return stdout.strip(), process.returncode
 
-def _fake_run():
-    with open("hammerdb.log", "r") as input:
-        stdout = input.read()
-    return stdout,0
+#def _fake_run():
+#    with open("hammerdb.log", "r") as input:
+#        stdout = input.read()
+#    return stdout,0
 
 def _parse_stdout(stdout):
     data = []

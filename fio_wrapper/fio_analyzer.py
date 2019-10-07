@@ -30,6 +30,66 @@ class Fio_Analyzer:
             fio_result["starttime"] = starttime
             self.fio_processed_results_list.append(fio_result)
 
+    def standardize_units(self, io_size):
+        """
+            Will return value converted to Kib for known io sizes without unit size suffix
+            edge case - switching the kb_base value
+        """
+        #handle base 2 
+        if ("KiB" in io_size and self.kb_base is 1000) or ("KB" in io_size and self.kb_base is 1024):
+            
+            if "KiB" in io_size:
+                io_size_KiB = int(io_size.replace('KiB', ''))
+            elif "KB" in io_size:
+                io_size_KiB = int(io_size.replace('KB', ''))
+            
+        elif ("MiB" in io_size and self.kb_base is 1000) or ("MB" in io_size and self.kb_base is 1024):
+            
+            if "MiB" in io_size:
+                io_size_value = int(io_size.replace('MiB', ''))
+            elif "MB" in io_size:
+                io_size_value = int(io_size.replace('MB', ''))
+            
+            io_size_KiB = int(io_size_value) * 1024
+            
+        elif ("GiB" in io_size and self.kb_base is 1000) or ("GB" in io_size and self.kb_base is 1024):
+            
+            if "GiB" in io_size:
+                io_size_value = int(io_size.replace('GiB', ''))
+            elif "GB" in io_size:
+                io_size_value = int(io_size.replace('GB', ''))
+            
+            io_size_KiB = int(io_size_value) * 1048576
+            
+        #handle base 10
+        elif ("KiB" in io_size and self.kb_base is 1024) or ("KB" in io_size and self.kb_base is 1000):
+            if "KiB" in io_size:
+                io_size_KiB = int(io_size.replace('KiB', ''))
+            elif "KB" in io_size:
+                io_size_KiB = int(io_size.replace('KB', ''))
+                
+            io_size_KiB = int(io_size_KB) * 0.9765625
+            
+        elif ("MiB" in io_size and self.kb_base is 1024) or ("MB" in io_size and self.kb_base is 1000):
+            if "MiB" in io_size:
+                io_size_value = int(io_size.replace('MiB', ''))
+            elif "MB" in io_size:
+                io_size_value = int(io_size.replace('MB', ''))
+                
+            io_size_KiB = int(io_size_value) * 976.5625
+            
+        elif ("GiB" in io_size and self.kb_base is 1024) or ("GB" in io_size and self.kb_base is 1000):
+            if "GiB" in io_size:
+                io_size_value = int(io_size.replace('GiB', ''))
+            elif "GB" in io_size:
+                io_size_value = int(io_size.replace('GB', ''))
+                
+            io_size_KiB = int(io_size_GB) * 976562.5
+            
+        else:
+            io_size_KiB = -1
+            
+        return io_size_KiB 
 
     def calculate_iops_sum(self):
         """
@@ -39,6 +99,9 @@ class Fio_Analyzer:
 
         for fio_result in self.fio_processed_results_list:
             if fio_result['document']['fio']['jobname'] != 'All clients':
+                self.kb_base = fio_result['document']['global_options']['kb_base']
+                if fio_result['document']['fio']['job options']['kb_base']:
+                    self.kb_base = fio_result['document']['fio']['job options']['kb_base']
                 sample = fio_result['document']['sample']
                 bs = fio_result['document']['global_options']['bs']
                 rw = fio_result['document']['fio']['job options']['rw']
@@ -91,6 +154,7 @@ class Fio_Analyzer:
                 total_ary = []
                 tmp_doc = {}
                 tmp_doc['object_size'] = io_size # set document's object size
+                tmp_doc['object_size_kib'] = self.standardize_units(io_size)
                 tmp_doc['operation'] = oper # set documents operation
                 firstrecord = True
                 calcuate_percent_std_dev = False

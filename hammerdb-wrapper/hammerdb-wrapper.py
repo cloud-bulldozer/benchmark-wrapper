@@ -144,6 +144,16 @@ def main():
     if "samples" in os.environ:
         samples = os.environ["samples"]
 
+    # ElasticSeach env variables
+    if "es_server" in os.environ:
+        server = os.environ["es_server"]
+    if "es_port" in os.environ:
+        port = os.environ["es_port"]
+    if "es_clustername" in os.environ:
+        clustername = os.environ["es_clustername"]
+    if "es_user" in os.environ:
+        user = os.environ["es_user"]
+
 
     stdout = _run_hammerdb() 
     #stdout = _fake_run()

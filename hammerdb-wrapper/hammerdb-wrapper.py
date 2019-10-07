@@ -60,8 +60,8 @@ def _summarize_data(data):
     for i in range(0,len(data)):
         entry = data[i]
         print("+{} HammerDB Results {}+".format("-"*(50), "-"*(50)))
-        print("Run : {}".format(i))
         print("HammerDB setup")
+        print("Run : {}".format(i))
         #print("""
         #      server: {}""".format(entry['remote_ip']))
         print("")
@@ -106,8 +106,8 @@ def main():
             help='Rampup time for the run')
     args = parser.parse_args()
 
-    #server = "bullwinkle-elk.rdu.openstack.engineering.redhat.com"
-    server = ""
+    server = "bullwinkle-elk.rdu.openstack.engineering.redhat.com"
+    #server = ""
     port = "9200"
     protocol = "tcp"
     uuid = ""

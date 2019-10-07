@@ -56,7 +56,7 @@ def _json_payload(data, iteration, uuid, db_server, db_port, db_warehouses, db_n
             })
     return processed
 
-def _summarize_data(data):
+def _summarize_data(data,uuid,server):
     for i in range(0,len(data)):
         entry = data[i]
         print("+{} HammerDB Results {}+".format("-"*(50), "-"*(50)))
@@ -106,8 +106,8 @@ def main():
             help='Rampup time for the run')
     args = parser.parse_args()
 
-    server = "bullwinkle-elk.rdu.openstack.engineering.redhat.com"
-    #server = ""
+    #server = "bullwinkle-elk.rdu.openstack.engineering.redhat.com"
+    server = ""
     port = "9200"
     protocol = "tcp"
     uuid = ""
@@ -169,7 +169,7 @@ def main():
             print "Indexing data"
             _index_result(server,port,documents)
     if len(documents) > 0 :
-        _summarize_data(documents)
+        _summarize_data(documents,uuid,server)
 
 
 if __name__ == '__main__':

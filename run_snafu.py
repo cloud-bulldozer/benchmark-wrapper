@@ -38,7 +38,7 @@ urllib3_log.setLevel(logging.CRITICAL)
 setup_loggers("snafu", logging.DEBUG)
 
 def main():
-    
+
     #collect arguments
     parser = argparse.ArgumentParser(description="run script")
     parser.add_argument(
@@ -48,30 +48,30 @@ def main():
     index_args.prefix = "snafu-%s" % index_args.tool
     # set up a standard format for time
     FMT = '%Y-%m-%dT%H:%M:%SGMT'
-    
-    #instantiate elasticsearch instance and check connection 
+
+    #instantiate elasticsearch instance and check connection
     es={}
     if "es" in os.environ:
         es['server'] = os.environ["es"]
         es['port'] = os.environ["es_port"]
         index_args.prefix = os.environ["es_index"]
         index_args.index_results = True
-    
-        es = elasticsearch.Elasticsearch([
-        {'host': es['server'],'port': es['port'] }],send_get_body_as='POST')
-    
-        if not es.ping():
-            logger.warn("Elasticsearch connection failed or passed incorrectly, turning off indexing")
+        try:
+            _es_connection_string = str(host) + ':' + str(port)
+            es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
+            logger.info("Connected to the elasticsearch cluster with info as follows:" + str(es.info()))
+        except Exception as e:
+            logger.warn("Elasticsearch connection caused an exception :" +  str(e))
             index_args.index_results = False
-    
+
     if index_args.index_results:
         #call py es bulk using a process generator to feed it ES documents
         res_beg, res_end, res_suc, res_dup, res_fail, res_retry  = streaming_bulk(es, process_generator(index_args, parser))
-               
+
         logger.info("Indexed results - %s success, %s duplicates, %s failures, with %s retries." % (res_suc,
                                                                                                     res_dup,
                                                                                                     res_fail,
-                                                                                                    res_retry)) 
+                                                                                                    res_retry))
 
         start_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_beg))
         end_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_end))
@@ -84,10 +84,10 @@ def main():
             pass
         end_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime())
 
-    
+
     start_t = datetime.datetime.strptime(start_t, FMT)
     end_t = datetime.datetime.strptime(end_t, FMT)
-    
+
     #get time delta for indexing run
     tdelta = end_t - start_t
     logger.info("Duration of execution - %s" % tdelta)
@@ -95,16 +95,15 @@ def main():
 
 
 def process_generator(index_args, parser):
-    
+
     benchmark_wrapper_object_generator = generate_wrapper_object(index_args, parser)
-    
+
     for wrapper_object in benchmark_wrapper_object_generator:
         for data_object in wrapper_object.run():
             for action, index in data_object.emit_actions():
-                
+
                 es_index = index_args.prefix + index
                 es_valid_document = { "_index": es_index,
-                                      "_type": "_doc",
                                       "_op_type": "create",
                                       "_source": action,
                                       "_id": "" }
@@ -120,4 +119,3 @@ def generate_wrapper_object(index_args, parser):
 
 if __name__ == '__main__':
     sys.exit(main())
-    

@@ -104,22 +104,23 @@ class _trigger_smallfile:
                             continue
                         flds = l.split(',')
                         interval = {}
-                        rsptime_date = int(flds[0])
-                        rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(rsptime_date))
-                        interval['cluster_name'] = self.cluster_name
-                        interval['uuid'] = self.uuid
-                        interval['user'] = self.user
-                        interval['sample'] = self.sample
-                        interval['date'] = rsptime_date_str
                         interval['iops'] = int(flds[2])
-                        interval['min'] = float(flds[3])
-                        interval['max'] = float(flds[4])
-                        interval['mean'] = float(flds[5])
-                        interval['50%'] = float(flds[7])
-                        interval['90%'] = float(flds[8])
-                        interval['95%'] = float(flds[9])
-                        interval['99%'] = float(flds[10])
-                        yield interval, '-rsptimes'
+                        if interval['iops'] > 0.0:
+                            rsptime_date = int(flds[0])
+                            rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(rsptime_date))
+                            interval['cluster_name'] = self.cluster_name
+                            interval['uuid'] = self.uuid
+                            interval['user'] = self.user
+                            interval['sample'] = self.sample
+                            interval['date'] = rsptime_date_str
+                            interval['min'] = float(flds[3])
+                            interval['max'] = float(flds[4])
+                            interval['mean'] = float(flds[5])
+                            interval['50%'] = float(flds[7])
+                            interval['90%'] = float(flds[8])
+                            interval['95%'] = float(flds[9])
+                            interval['99%'] = float(flds[10])
+                            yield interval, '-rsptimes'
 
         # clean up anything created by smallfile so that the next sample will work
         # this is brutally inefficient, best way to clean up is to 

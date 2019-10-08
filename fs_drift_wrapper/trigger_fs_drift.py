@@ -5,7 +5,10 @@ import sys
 import json
 import subprocess
 import logging
+import re
 
+regex = 'counters.([0-9]{2}).[0-9,\-,a-z,A-Z]*.json'
+counters_regex_prog = re.compile(regex)
 
 class FsDriftWrapperException(Exception):
     pass
@@ -122,3 +125,70 @@ class _trigger_fs_drift:
                     interval['95%'] = float(flds[9])
                     interval['99%'] = float(flds[10])
                     yield interval, '-rsptimes'
+
+        # process counter data
+
+        previous_obj = None
+        for fn in os.listdir(rsptime_dir):
+            if fn.startswith('counters') and fn.endswith('json'):
+                pathnm = os.path.join(rsptime_dir, fn)
+                matched = counters_regex_prog.match(fn)
+                thread_id = matched.group(1)
+                with open(pathnm, 'r') as f:
+                    records = [ l.strip() for l in f.readlines() ]
+                json_start = 0
+                for k, l in enumerate(records):
+                    if l == '{':
+                        json_start = k
+                    if l == '}{' or l == '}':
+                        # extract next JSON string from counter logfile
+
+                        json_str = ' '.join(records[json_start:k])
+                        json_str += ' }' 
+                        if l == '}{':
+                            records[k] = '{'
+                        json_start = k
+                        json_obj = json.loads(json_str)
+                        rate_obj = self.compute_rates(json_obj, previous_obj)
+                        previous_obj = json_obj
+
+                        # timestamp this sample
+
+                        time_since_test_start = float(rate_obj['elapsed-time'])
+                        counter_time = time_since_test_start + start_time
+                        timestamp_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(counter_time))
+                        rate_obj['date'] = timestamp_str
+
+                        # add other info needed to display data in elastic search
+
+                        rate_obj['thread'] = thread_id
+                        rate_obj['cluster_name'] = self.cluster_name
+                        rate_obj['user'] = self.user
+                        rate_obj['uuid'] = self.uuid
+                        rate_obj['sample'] = self.sample
+                        yield rate_obj, '-rates-over-time'
+
+    # assumes that the input dictionaries have same fields
+    # and that all fields other than 'elapsed_time' are integer counters
+    # so we can compute rate from them and delta_time
+    # if previous sample is None, then this is the first sample
+    # so previous sample counter is implicitly zero
+
+    def compute_rates(self, current_sample, previous_sample):
+        time_since_test_start = float(current_sample['elapsed-time'])
+        if previous_sample != None:
+            previous_time_since_test_start = float(previous_sample['elapsed-time'])
+        else:
+            previous_time_since_test_start = 0
+        delta_time = time_since_test_start - previous_time_since_test_start
+        assert delta_time > 0.5
+        rate_dict = {}
+        for k in current_sample.keys():
+            if k != 'elapsed-time':
+                if previous_sample:
+                    rate_dict[k] = (int(current_sample[k]) - int(previous_sample[k])) / delta_time
+                else:
+                    rate_dict[k] = int(current_sample[k]) / delta_time
+            else:
+                rate_dict[k] = current_sample[k]
+        return rate_dict

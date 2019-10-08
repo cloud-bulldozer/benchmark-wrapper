@@ -6,6 +6,7 @@ import json
 import subprocess
 import logging
 import shutil
+import socket
 
 class SmallfileWrapperException(Exception):
     pass
@@ -24,6 +25,7 @@ class _trigger_smallfile:
         self.uuid = uuid
         self.sample = sample
         self.cluster_name = cluster_name
+        self.host = socket.gethostname()
 
     def ensure_dir_exists(self, directory):
         if not os.path.exists(directory):
@@ -73,6 +75,7 @@ class _trigger_smallfile:
                 data['uuid'] = self.uuid
                 data['user'] = self.user
                 data['sample'] = self.sample
+                data['host'] = self.host
                 yield data, '-results'
 
             # process response time data
@@ -112,6 +115,7 @@ class _trigger_smallfile:
                             interval['uuid'] = self.uuid
                             interval['user'] = self.user
                             interval['sample'] = self.sample
+                            interval['host'] = self.host
                             interval['date'] = rsptime_date_str
                             interval['min'] = float(flds[3])
                             interval['max'] = float(flds[4])

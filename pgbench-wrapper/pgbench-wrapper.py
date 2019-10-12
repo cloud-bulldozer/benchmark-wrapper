@@ -23,7 +23,7 @@ import copy
 import base64
 
 def _index_result(index,server,port,payload):
-    _es_connection_string = str(host) + ':' + str(port)
+    _es_connection_string = str(server) + ':' + str(port)
     es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
     indexed=True
     processed_count = 0

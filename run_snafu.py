@@ -57,7 +57,7 @@ def main():
         index_args.prefix = os.environ["es_index"]
         index_args.index_results = True
         try:
-            _es_connection_string = str(host) + ':' + str(port)
+            _es_connection_string = str(es['server']) + ':' + str(es['port'])
             es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
             logger.info("Connected to the elasticsearch cluster with info as follows:" + str(es.info()))
         except Exception as e:

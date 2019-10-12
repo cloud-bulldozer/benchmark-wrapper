@@ -90,7 +90,7 @@ def _summarize_data(data):
         print("+{}+".format("-"*(115)))
 
 def _index_result(index,server,port,payload):
-    _es_connection_string = str(host) + ':' + str(port)
+    _es_connection_string = str(server) + ':' + str(port)
     es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
     for result in payload:
         es.index(index=index, body=result)

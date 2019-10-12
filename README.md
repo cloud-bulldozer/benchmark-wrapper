@@ -78,9 +78,13 @@ server that is viewable with Kibana and Grafana!
 
 Look at some of the other benchmarks for examples of how this works.
 
+Note: Please tag @aakarshg for review when adding a new benchmark wrapper especially ones that index data into elasticsearch and mention:
+* which field(key) in the document will be of the type date(time)
+* highly recommend that the key of the type date(time) use epoch format (helps a lot when dealing with tool run in multiple timezones like snafu)
+
 ## how do I integrate snafu wrapper into my ripsaw benchmark?
 
-You just replace the commands to run the workload in your ripsaw benchmark 
+You just replace the commands to run the workload in your ripsaw benchmark
 (often in roles/Your_Workload/templates/workload.yml.j2) with the command below.
 
 First, you have to define environment variables used to pass information to
@@ -131,4 +135,3 @@ The remaining parameters are specific to your workload and wrapper.  run_snafu.p
 has an "object-oriented" parser - the only inherited parameter is the --tool parameter.
 run_snafu.py uses the tool parameter to determine which wrapper to invoke, and
 The remaining parameters are defined and parsed by the workload-specific wrapper.
-

@@ -20,23 +20,19 @@ import os
 import subprocess
 import sys
 
-def _index_result(server,port,index,payload):
-    try :
-        es = elasticsearch.Elasticsearch([
-            {'host': server,'port': port }],send_get_body_as='POST')
-        for result in payload :
-            print result
-            es.index(index=index,doc_type="result", body=result)
-    except Exception as e:
-        print "An unknown error occured connecting to ElasticSearch: {}".format(e)
-        return False
+def _index_result(index,server,port,payload):
+    _es_connection_string = str(server) + ':' + str(port)
+    es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
+    for result in payload :
+        print result
+        es.index(index=index,body=result)
 
 def _run(cmd):
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout,stderr = process.communicate()
     return [ stdout.strip(), stderr.strip(), process.returncode]
 
-def _json_payload(data,iteration,uuid,user,phase,workload,driver,recordcount,operationcount):
+def _json_payload(data,iteration,uuid,user,phase,workload,driver,recordcount,operationcount,clustername):
     processed = []
     summary = []
     for result in data['results'] :
@@ -53,6 +49,7 @@ def _json_payload(data,iteration,uuid,user,phase,workload,driver,recordcount,ope
                     "workload" : "ycsb",
                     "uuid": uuid,
                     "user": user,
+                    "cluster_name": clustername,
                     "phase": phase,
                     "driver": driver,
                     "timestamp": datetime(int(_date[0]),
@@ -76,7 +73,7 @@ def _json_payload(data,iteration,uuid,user,phase,workload,driver,recordcount,ope
     summary_dict = {}
     if 'summary' in data :
         for summ in data['summary'] :
-            if summ[0][0].isdigit() :
+            if summ[0][0].isdigit() or summ[0][0] is "I" :
                 continue
             if not summ[0].strip('[').strip(']') in summary_dict :
                 summary_dict[summ[0].strip('[').strip(']')] = {}
@@ -133,7 +130,9 @@ def main():
     recordcount = ""
     operationcount = ""
     phase = ""
-
+    args.cluster_name = "mycluster"
+    if "clustername" in os.environ:
+        args.cluster_name = os.environ["clustername"]
     if "es" in os.environ :
         server = os.environ["es"]
         port = os.environ["es_port"]
@@ -177,15 +176,15 @@ def main():
 
     data = _parse_stdout(output)
     print output
-    documents,summary = _json_payload(data,args.run[0],uuid,user,phase,workload,args.driver[0],recordcount,operationcount)
+    documents,summary = _json_payload(data,args.run[0],uuid,user,phase,workload,args.driver[0],recordcount,operationcount,args.cluster_name)
     if server != "" :
         print "Attempting to index results..."
         if len(documents) > 0 :
             index = "ripsaw-ycsb-results"
-            _index_result(server,port,index,documents)
+            _index_result(index,server,port,documents)
         if len(summary) > 0 :
             index = "ripsaw-ycsb-summary"
-            _index_result(server,port,index,summary)
+            _index_result(index,server,port,summary)
 
 if __name__ == '__main__':
     sys.exit(main())

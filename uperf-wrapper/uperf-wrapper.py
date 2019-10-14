@@ -20,22 +20,28 @@ import os
 import subprocess
 import sys
 
-def _index_result(server,port,payload):
-    index = "uperf-results"
-    es = elasticsearch.Elasticsearch([
-        {'host': server,'port': port }],send_get_body_as='POST')
+def _index_result(index,server,port,payload):
+    _es_connection_string = str(server) + ':' + str(port)
+    es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
     for result in payload:
-         es.index(index=index, doc_type="result", body=result)
+         es.index(index=index, body=result)
 
-def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client):
+def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,clustername):
     processed = []
     prev_bytes = 0
     prev_ops = 0
+    prev_timestamp = 0.0
     for result in data['results'] :
+        norm_ops = int(result[2])-prev_ops
+        if norm_ops == 0:
+            norm_ltcy = 0.0
+        else:
+            norm_ltcy = ((float(result[0]) - prev_timestamp)/(norm_ops))*1000
         processed.append({
             "workload" : "uperf",
             "uuid": uuid,
             "user": user,
+            "cluster_name": clustername,
             "hostnetwork": hostnetwork,
             "iteration" : int(iteration),
             "remote_ip": remote,
@@ -45,12 +51,15 @@ def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client):
             "protocol": data['protocol'],
             "service_ip": serviceip,
             "message_size": int(data['message_size']),
+            "num_threads": int(data['num_threads']),
             "duration": len(data['results']),
             "bytes": int(result[1]),
             "norm_byte": int(result[1])-prev_bytes,
             "ops": int(result[2]),
-            "norm_ops": int(result[2])-prev_ops
+            "norm_ops": norm_ops,
+            "norm_ltcy": norm_ltcy
         })
+        prev_timestamp = float(result[0])
         prev_bytes = int(result[1])
         prev_ops = int(result[2])
     return processed
@@ -68,23 +77,27 @@ def _parse_stdout(stdout):
     test = re.split("-",config[0])[0]
     protocol = re.split("-",config[0])[1]
     size = re.split("-",config[0])[2]
+    nthr = re.split("-",config[0])[3]
     # This will yeild us this structure :
     #     timestamp, number of bytes, number of operations
     # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
     results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)",stdout)
-    return { "test": test, "protocol": protocol, "message_size": size, "results" : results }
+    return { "test": test, "protocol": protocol, "message_size": size, "num_threads": nthr, "results" : results }
 
 def _summarize_data(data):
 
     byte = []
     op = []
+    ltcy = []
 
     for entry in data :
         byte.append(entry["norm_byte"])
         op.append(entry["norm_ops"])
+        ltcy.append(entry["norm_ltcy"])
 
     byte_result = np.array(byte)
     op_result = np.array(op)
+    ltcy_result = np.array(ltcy)
 
     data = data[0]
     print("+{} UPerf Results {}+".format("-"*(50), "-"*(50)))
@@ -101,9 +114,11 @@ def _summarize_data(data):
     print("""
           test_type: {}
           protocol: {}
-          message_size: {}""".format(data['test_type'],
+          message_size: {}
+          num_threads: {}""".format(data['test_type'],
                                      data['protocol'],
-                                     data['message_size']))
+                                     data['message_size'],
+                                     data['num_threads']))
     print("")
     print("UPerf results (bytes/sec):")
     print("""
@@ -128,6 +143,19 @@ def _summarize_data(data):
                              np.median(op_result),
                              np.average(op_result),
                              np.percentile(op_result, 95)))
+
+    print("")
+    print("UPerf Latency results (microseconds):")
+    print("""
+          min: {}
+          max: {}
+          median: {}
+          average: {}
+          95th: {}""".format(np.amin(ltcy_result),
+                             np.amax(ltcy_result),
+                             np.median(ltcy_result),
+                             np.average(ltcy_result),
+                             np.percentile(ltcy_result, 95)))
     print("+{}+".format("-"*(115)))
 
 def main():
@@ -147,7 +175,9 @@ def main():
     remoteip = ""
     hostnetwork = ""
     serviceip = ""
-
+    args.cluster_name = "mycluster"
+    if "clustername" in os.environ:
+        args.cluster_name = os.environ["clustername"]
     if "serviceip" in os.environ:
         serviceip = os.environ['serviceip']
     if "es" in os.environ :
@@ -171,10 +201,10 @@ def main():
             print "UPerf failed to execute a second time, stopping..."
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips)
+    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips,args.cluster_name)
     if server != "" :
         if len(documents) > 0 :
-            _index_result(server,port,documents)
+            _index_result("ripsaw-uperf-results",server,port,documents)
     print stdout[0]
     if len(documents) > 0 :
       _summarize_data(documents)

@@ -6,6 +6,7 @@ import json
 import subprocess
 import logging
 import shutil
+import socket
 
 class SmallfileWrapperException(Exception):
     pass
@@ -24,6 +25,7 @@ class _trigger_smallfile:
         self.uuid = uuid
         self.sample = sample
         self.cluster_name = cluster_name
+        self.host = socket.gethostname()
 
     def ensure_dir_exists(self, directory):
         if not os.path.exists(directory):
@@ -73,6 +75,7 @@ class _trigger_smallfile:
                 data['uuid'] = self.uuid
                 data['user'] = self.user
                 data['sample'] = self.sample
+                data['host'] = self.host
                 yield data, '-results'
 
             # process response time data
@@ -104,22 +107,24 @@ class _trigger_smallfile:
                             continue
                         flds = l.split(',')
                         interval = {}
-                        rsptime_date = int(flds[0])
-                        rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(rsptime_date))
-                        interval['cluster_name'] = self.cluster_name
-                        interval['uuid'] = self.uuid
-                        interval['user'] = self.user
-                        interval['sample'] = self.sample
-                        interval['date'] = rsptime_date_str
                         interval['iops'] = int(flds[2])
-                        interval['min'] = float(flds[3])
-                        interval['max'] = float(flds[4])
-                        interval['mean'] = float(flds[5])
-                        interval['50%'] = float(flds[7])
-                        interval['90%'] = float(flds[8])
-                        interval['95%'] = float(flds[9])
-                        interval['99%'] = float(flds[10])
-                        yield interval, '-rsptimes'
+                        if interval['iops'] > 0.0:
+                            rsptime_date = int(flds[0])
+                            rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(rsptime_date))
+                            interval['cluster_name'] = self.cluster_name
+                            interval['uuid'] = self.uuid
+                            interval['user'] = self.user
+                            interval['sample'] = self.sample
+                            interval['host'] = self.host
+                            interval['date'] = rsptime_date_str
+                            interval['min'] = float(flds[3])
+                            interval['max'] = float(flds[4])
+                            interval['mean'] = float(flds[5])
+                            interval['50%'] = float(flds[7])
+                            interval['90%'] = float(flds[8])
+                            interval['95%'] = float(flds[9])
+                            interval['99%'] = float(flds[10])
+                            yield interval, '-rsptimes'
 
         # clean up anything created by smallfile so that the next sample will work
         # this is brutally inefficient, best way to clean up is to 

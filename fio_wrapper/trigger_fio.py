@@ -23,7 +23,7 @@ class _trigger_fio:
     """
         Will execute fio with the provided arguments and return normalized results for indexing
     """
-    def __init__(self, fio_jobs, cluster_name, working_dir, fio_jobs_dict, host_file, user, uuid, sample, fio_analyzer_obj, numjob=1, process_histogram=False):
+    def __init__(self, fio_jobs, cluster_name, working_dir, fio_jobs_dict, host_file, user, uuid, sample, fio_analyzer_obj, numjob, process_histogram=False):
         self.fio_jobs = fio_jobs
         self.working_dir = working_dir
         self.fio_jobs_dict = fio_jobs_dict
@@ -63,7 +63,7 @@ class _trigger_fio:
                     earliest_starttime = start_time
         return processed, fio_starttime, earliest_starttime
 
-    def _log_payload(self, directory, user, uuid, sample, fio_jobs_dict, fio_version, fio_starttime, list_hosts, job): #pod_details
+    def _log_payload(self, directory, user, uuid, sample, fio_jobs_dict, fio_version, fio_starttime, list_hosts, job, numjob): #pod_details
         logs = []
         _current_log_files = deepcopy(_log_files)
         job_options = fio_jobs_dict[job]
@@ -85,10 +85,10 @@ class _trigger_fio:
                 if log in ['clat','slat']:
                     log_file_prefix_string = 'write_lat_log'
                 try:
-                    log_file_name = str(job_options[log_file_prefix_string]) + '_' + str(log) + '.1.log.' + str(host)
+                    log_file_name = str(job_options[log_file_prefix_string]) + '_' + str(log) + '.' + str(numjob) + '.log.' + str(host)
                 except KeyError:
                     try:
-                        log_file_name = str(fio_jobs_dict['global'][log_file_prefix_string]) + '_' + str(log) + '.1.log.' + str(host)
+                        log_file_name = str(fio_jobs_dict['global'][log_file_prefix_string]) + '_' + str(log) + '.' + str(numjob) + '.log.' + str(host)
                     except:
                         logger.info("Error setting log_file_name")
                 with open(directory+'/'+str(log_file_name), 'r') as log_file:
@@ -119,7 +119,7 @@ class _trigger_fio:
                             logs.append(log_dict)
         return logs
 
-    def _histogram_payload(self, processed_histogram_file, user, uuid, sample, fio_jobs_dict, fio_version, longest_fio_startime, list_hosts, job, numjob=1): #pod_details
+    def _histogram_payload(self, processed_histogram_file, user, uuid, sample, fio_jobs_dict, fio_version, longest_fio_startime, list_hosts, job): #pod_details
         logs = []
         with open(processed_histogram_file, 'r') as log_file:
             for log_line in log_file:
@@ -169,7 +169,7 @@ class _trigger_fio:
         stdout,stderr = process.communicate()
         return stdout.strip(), process.returncode
 
-    def _process_histogram(self, job_dict, hosts, job, working_dir, processed_histogram_prefix, histogram_output_file, numjob=1):
+    def _process_histogram(self, job_dict, hosts, job, working_dir, processed_histogram_prefix, histogram_output_file, numjob):
         histogram_input_file_list = []
         for host in hosts:
             input_file = working_dir + '/' + processed_histogram_prefix + '.' + str(numjob) + '.log.' + str(host)
@@ -241,7 +241,7 @@ class _trigger_fio:
 
             # Add fio result document to fio analyzer object
             self.fio_analyzer_obj.add_fio_result_documents(fio_result_documents, earliest_starttime)
-            
+
             #from the returned normalized fio json document yield up for indexing
             index = "-results"
             for document in fio_result_documents:
@@ -249,19 +249,19 @@ class _trigger_fio:
 
             #check to determine if logs can be parsed, if not fail
             try:
-                if self.fio_jobs_dict[job]['filename_format'] != 'f.\$jobnum.\$filenum' or int(self.fio_jobs_dict[job]['numjobs']) != 1:
-                    logger.error("filename_format is not 'f.\$jobnum.\$filenum' and/or numjobs is not 1, so can't process logs")
+                if self.fio_jobs_dict[job]['filename_format'] != 'f.\$jobnum.\$filenum':
+                    logger.error("filename_format is not 'f.\$jobnum.\$filenum', so can't process logs")
                     exit(1)
             except KeyError:
                 try:
-                    if self.fio_jobs_dict['global']['filename_format'] != 'f.\$jobnum.\$filenum' or int(self.fio_jobs_dict['global']['numjobs']) != 1:
-                        logger.error("filename_format is not 'f.\$jobnum.\$filenum' and/or numjobs is not 1, so can't process logs")
+                    if self.fio_jobs_dict['global']['filename_format'] != 'f.\$jobnum.\$filenum':
+                        logger.error("filename_format is not 'f.\$jobnum.\$filenum', so can't process logs")
                         exit(1)
                 except:
                     logger.error("Error getting filename_format")
 
             #parse all fio log files, return list of normalized log documents
-            fio_log_documents = self._log_payload(job_dir, self.user, self.uuid, self.sample, self.fio_jobs_dict, fio_version, fio_starttime, hosts, job)
+            fio_log_documents = self._log_payload(job_dir, self.user, self.uuid, self.sample, self.fio_jobs_dict, fio_version, fio_starttime, hosts, job, self.numjob)
 
             #if indexing is turned on yield back normalized data
             index = "-log"
@@ -276,7 +276,7 @@ class _trigger_fio:
                     except:
                         logger.error("Error setting processed_histogram_prefix")
                 histogram_output_file = job_dir + '/' + processed_histogram_prefix + '_processed.' + str(self.numjob)
-                self._process_histogram(self.fio_jobs_dict, hosts, job, job_dir, processed_histogram_prefix, histogram_output_file)
+                self._process_histogram(self.fio_jobs_dict, hosts, job, job_dir, processed_histogram_prefix, histogram_output_file, self.numjob)
                 histogram_documents = self._histogram_payload(histogram_output_file, self.user, self.uuid, self.sample, self.fio_jobs_dict, fio_version, earliest_starttime, hosts, job)
                 #if indexing is turned on yield back normalized data
 

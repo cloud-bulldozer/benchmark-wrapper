@@ -57,7 +57,7 @@ class _trigger_fio:
                 document['global_options'] = fio_jobs_dict['global']
             processed.append(document)
             if result['jobname'] != 'All clients':
-                start_time= (int(end_time) * 1000) - result['job_runtime']
+                start_time= (int(end_time) * 1000)
                 fio_starttime[result['hostname']] = start_time
                 if start_time < earliest_starttime:
                     earliest_starttime = start_time

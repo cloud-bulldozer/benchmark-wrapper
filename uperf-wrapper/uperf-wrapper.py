@@ -20,12 +20,11 @@ import os
 import subprocess
 import sys
 
-def _index_result(server,port,payload):
-    index = "ripsaw-uperf-results"
-    es = elasticsearch.Elasticsearch([
-        {'host': server,'port': port }],send_get_body_as='POST')
+def _index_result(index,server,port,payload):
+    _es_connection_string = str(server) + ':' + str(port)
+    es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
     for result in payload:
-         es.index(index=index, doc_type="_doc", body=result)
+         es.index(index=index, body=result)
 
 def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,clustername):
     processed = []
@@ -205,7 +204,7 @@ def main():
     documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips,args.cluster_name)
     if server != "" :
         if len(documents) > 0 :
-            _index_result(server,port,documents)
+            _index_result("ripsaw-uperf-results",server,port,documents)
     print stdout[0]
     if len(documents) > 0 :
       _summarize_data(documents)

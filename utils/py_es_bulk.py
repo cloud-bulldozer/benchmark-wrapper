@@ -114,7 +114,6 @@ def streaming_bulk(es, actions):
         for cl_action in cl_actions:
             assert '_id' in cl_action
             assert '_index' in cl_action
-            assert '_type' in cl_action
             assert _op_type == cl_action['_op_type']
 
             actions_deque.append((0, cl_action))   # Append to the right side ...

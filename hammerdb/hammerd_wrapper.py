@@ -89,12 +89,11 @@ def _summarize_data(data):
               NOPM: {}""".format(entry['nopm']))
         print("+{}+".format("-"*(115)))
 
-def _index_result(server, port, payload):
-    index = "hammerdb-results"
-    es = elasticsearch.Elasticsearch([
-        {'host': server, 'port': port}], send_get_body_as='POST')
+def _index_result(index,server,port,payload):
+    _es_connection_string = str(server) + ':' + str(port)
+    es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
     for result in payload:
-        es.index(index=index, doc_type="result", body=result)
+        es.index(index=index, body=result)
 
 def main():
     parser = argparse.ArgumentParser(description="HammerDB Wrapper script")
@@ -145,7 +144,7 @@ def main():
         samples = os.environ["samples"]
 
 
-    stdout = _run_hammerdb() 
+    stdout = _run_hammerdb()
     #stdout = _fake_run()
     if stdout[1] == 1:
         print "hammerdbcli failed to execute, trying one more time.."
@@ -158,7 +157,7 @@ def main():
     if server != "" :
         if len(documents) > 0 :
             print "Indexing data"
-            _index_result(server,port,documents)
+            _index_result("ripsaw-hammerdb-results",server,port,documents)
     if len(documents) > 0 :
         _summarize_data(documents)
 

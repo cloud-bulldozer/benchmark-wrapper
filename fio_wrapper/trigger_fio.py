@@ -79,44 +79,54 @@ class _trigger_fio:
             del _current_log_files['clat']
         if 'disable_bw' in job_options or 'disable_bw_measurement' in job_options:
             del _current_log_files['bw']
+        #find the number of jobs either in the job options or global options
+        if 'numjobs' in job_options:
+            numjob_list = job_options['numjobs']
+        else:
+            numjob_list = fio_jobs_dict['global']['numjobs']
+            
         for log in _current_log_files.keys():
             for host in list_hosts:
-                log_file_prefix_string = 'write_' + str(log) + '_log'
-                if log in ['clat','slat']:
-                    log_file_prefix_string = 'write_lat_log'
-                try:
-                    log_file_name = str(job_options[log_file_prefix_string]) + '_' + str(log) + '.1.log.' + str(host)
-                except KeyError:
+                for numjob in range(int(numjob_list)):
+                    numjob = numjob + 1
+                    log_file_prefix_string = 'write_' + str(log) + '_log'
+                    if log in ['clat','slat']:
+                        log_file_prefix_string = 'write_lat_log'
                     try:
-                        log_file_name = str(fio_jobs_dict['global'][log_file_prefix_string]) + '_' + str(log) + '.1.log.' + str(host)
-                    except:
-                        logger.info("Error setting log_file_name")
-                with open(directory+'/'+str(log_file_name), 'r') as log_file:
-                    for log_line in log_file:
-                        log_line_values = str(log_line).split(", ")
-                        if len(log_line_values) == 4:
-                            timestamp_ms = int(fio_starttime[host]) + int(log_line_values[0])
-                            newtime = datetime.fromtimestamp(timestamp_ms / 1000.0)
-                            log_dict = {
-                              "uuid": uuid,
-                              "user": user,
-                              "host": host,
-                              "cluster_name": self.cluster_name,
-                              "fio-version": fio_version,
-                              "job_options": job_options,
-                              "job_name": str(job),
-                              "sample": int(sample),
-                              "log_name": str(log),
-                              "timestamp": timestamp_ms, #this is in ms
-                              "date": newtime.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-                              str(_current_log_files[log]['metric']): int(log_line_values[1]),
-                              #"nodeName": pod_details["hostname"],
-                              "data_direction": _data_direction[int(log_line_values[2])],
-                              "offset": int(log_line_values[3])
-                            }
-                            if 'global' in fio_jobs_dict.keys():
-                                log_dict['global_options'] = fio_jobs_dict['global']
-                            logs.append(log_dict)
+                        log_file_name = str(job_options[log_file_prefix_string]) + '_' + str(log) + '.' + str(numjob) + '.log.' + str(host)
+                    except KeyError:
+                        try:
+                            log_file_name = str(fio_jobs_dict['global'][log_file_prefix_string]) + '_' + str(log) + '.' + str(numjob) + '.log.' + str(host)
+                        except:
+                            logger.info("Error setting log_file_name")
+                    with open(directory+'/'+str(log_file_name), 'r') as log_file:
+                        for log_line in log_file:
+                            log_line_values = str(log_line).split(", ")
+                            if len(log_line_values) == 4:
+                                timestamp_ms = int(fio_starttime[host]) + int(log_line_values[0])
+                                newtime = datetime.fromtimestamp(timestamp_ms / 1000.0)
+                                log_dict = {
+                                  "uuid": uuid,
+                                  "user": user,
+                                  "host": host,
+                                  "cluster_name": self.cluster_name,
+                                  "job_number": numjob,
+                                  "fio-version": fio_version,
+                                  "job_options": job_options,
+                                  "job_name": str(job),
+                                  "log_file": log_file_name,
+                                  "sample": int(sample),
+                                  "log_name": str(log),
+                                  "timestamp": timestamp_ms, #this is in ms
+                                  "date": newtime.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                                  str(_current_log_files[log]['metric']): int(log_line_values[1]),
+                                  #"nodeName": pod_details["hostname"],
+                                  "data_direction": _data_direction[int(log_line_values[2])],
+                                  "offset": int(log_line_values[3])
+                                }
+                                if 'global' in fio_jobs_dict.keys():
+                                    log_dict['global_options'] = fio_jobs_dict['global']
+                                logs.append(log_dict)
         return logs
 
     def _histogram_payload(self, processed_histogram_file, user, uuid, sample, fio_jobs_dict, fio_version, longest_fio_startime, list_hosts, job, numjob=1): #pod_details
@@ -249,13 +259,13 @@ class _trigger_fio:
 
             #check to determine if logs can be parsed, if not fail
             try:
-                if self.fio_jobs_dict[job]['filename_format'] != 'f.\$jobnum.\$filenum' or int(self.fio_jobs_dict[job]['numjobs']) != 1:
-                    logger.error("filename_format is not 'f.\$jobnum.\$filenum' and/or numjobs is not 1, so can't process logs")
+                if self.fio_jobs_dict[job]['filename_format'] != 'f.\$jobnum.\$filenum':
+                    logger.error("filename_format is not 'f.\$jobnum.\$filenum'")
                     exit(1)
             except KeyError:
                 try:
-                    if self.fio_jobs_dict['global']['filename_format'] != 'f.\$jobnum.\$filenum' or int(self.fio_jobs_dict['global']['numjobs']) != 1:
-                        logger.error("filename_format is not 'f.\$jobnum.\$filenum' and/or numjobs is not 1, so can't process logs")
+                    if self.fio_jobs_dict['global']['filename_format'] != 'f.\$jobnum.\$filenum':
+                        logger.error("filename_format is not 'f.\$jobnum.\$filenum'")
                         exit(1)
                 except:
                     logger.error("Error getting filename_format")

@@ -110,6 +110,7 @@ class _trigger_smallfile:
                         interval['uuid'] = self.uuid
                         interval['user'] = self.user
                         interval['sample'] = self.sample
+                        interval['op-type'] = operation
                         interval['date'] = rsptime_date_str
                         interval['iops'] = int(flds[2])
                         interval['min'] = float(flds[3])

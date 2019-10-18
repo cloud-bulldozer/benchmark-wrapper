@@ -57,10 +57,28 @@ class _trigger_fio:
                 document['global_options'] = fio_jobs_dict['global']
             processed.append(document)
             if result['jobname'] != 'All clients':
-                start_time= (int(end_time) * 1000)
-                fio_starttime[result['hostname']] = start_time
+                
+                ramp_time = 0 
+                if 'ramp_time' in result['job options']:
+                    ramp_time = int(result['job options']['ramp_time'])
+                elif 'ramp_time' in document['global_options']:
+                    ramp_time = int(document['global_options']['ramp_time'])
+                    
+                #set start time from s to ms 
+                start_time = (int(end_time) * 1000)
+                logging_start_time = start_time
+                
+                if ramp_time > 0:
+                    #set logging start time by adding ramp time to start time (in ms)
+                    logging_start_time = start_time + (ramp_time * 1000)
+                
+                #The only external method that uses fio_starttime is _log_payload,
+                #so we can set time to logging_start_time
+                fio_starttime[result['hostname']] = logging_start_time
+                
                 if start_time < earliest_starttime:
                     earliest_starttime = start_time
+                    
         return processed, fio_starttime, earliest_starttime
 
     def _log_payload(self, directory, user, uuid, sample, fio_jobs_dict, fio_version, fio_starttime, list_hosts, job): #pod_details

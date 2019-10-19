@@ -69,18 +69,26 @@ class _trigger_smallfile:
                     'smallfile_cli.py non-zero process return code %d' % e.returncode)
             self.logger.info("completed sample {} for operation {} , results in {}".format(
                         self.sample, operation, json_output_file))
+            if operation == 'cleanup':
+                continue  # skip reporting data
             with open(json_output_file) as f:
                 data = json.load(f)
-                data['cluster_name'] = self.cluster_name
-                data['uuid'] = self.uuid
-                data['user'] = self.user
-                data['sample'] = self.sample
-                data['host'] = self.host
-                yield data, '-results'
+                timestamp = data['results']['date']
+                for tid in data['results']['in-thread'].keys():
+                    thrd = data['results']['in-thread'][tid]
+                    thrd['cluster_name'] = self.cluster_name
+                    thrd['uuid'] = self.uuid
+                    thrd['user'] = self.user
+                    thrd['sample'] = self.sample
+                    thrd['optype'] = operation
+                    thrd['host'] = self.host
+                    thrd['tid'] = tid
+                    thrd['date'] = timestamp
+                    yield thrd, '-results'
 
             # process response time data
 
-            elapsed_time = float(data['results']['elapsed-time'])
+            elapsed_time = float(data['results']['elapsed'])
             start_time = data['results']['start-time']
             cmd = ["smallfile_rsptimes_stats.py",
                     "--time-interval", str(max(int(elapsed_time/120.0), 1)),

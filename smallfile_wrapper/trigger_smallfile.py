@@ -74,8 +74,10 @@ class _trigger_smallfile:
             with open(json_output_file) as f:
                 data = json.load(f)
                 timestamp = data['results']['date']
+                params = data['params']
                 for tid in data['results']['in-thread'].keys():
                     thrd = data['results']['in-thread'][tid]
+                    thrd['params'] = params
                     thrd['cluster_name'] = self.cluster_name
                     thrd['uuid'] = self.uuid
                     thrd['user'] = self.user

@@ -35,17 +35,23 @@ es_log.setLevel(logging.CRITICAL)
 urllib3_log = logging.getLogger("urllib3")
 urllib3_log.setLevel(logging.CRITICAL)
 
-setup_loggers("snafu", logging.DEBUG)
 
 def main():
 
     #collect arguments
     parser = argparse.ArgumentParser(description="run script")
     parser.add_argument(
-        '-t', '--tool', action='store', dest='tool', help='Provide tool name')
+        '-v', '--verbose', action='store_const', dest='loglevel', const=logging.DEBUG, default=logging.INFO, help='enables verbose wrapper debugging info')
+    parser.add_argument(
+        '-t', '--tool', help='Provide tool name')
     index_args, unknown = parser.parse_known_args()
     index_args.index_results = False
     index_args.prefix = "snafu-%s" % index_args.tool
+
+    setup_loggers("snafu", index_args.loglevel)
+    log_level_str = 'DEBUG' if index_args.loglevel == logging.DEBUG else 'INFO'
+    logger.info("logging level is %s" % log_level_str)
+
     # set up a standard format for time
     FMT = '%Y-%m-%dT%H:%M:%SGMT'
 
@@ -108,7 +114,7 @@ def process_generator(index_args, parser):
                                       "_source": action,
                                       "_id": "" }
                 es_valid_document["_id"] = hashlib.md5(str(action).encode()).hexdigest()
-                #logger.debug(json.dumps(es_valid_document, indent=4))
+                logger.debug(json.dumps(es_valid_document, indent=4))
                 yield es_valid_document
 
 def generate_wrapper_object(index_args, parser):

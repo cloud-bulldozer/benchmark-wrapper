@@ -23,7 +23,7 @@ environments, develop in SNAFU and then write ripsaw benchmark to integrate with
 
 | Storage        | Status   |
 | -------------- | -------- |
-| Elasticserach  | Working  |
+| Elasticsearch  | Working  |
 | Prom           | Planned  |
 
 ## how do I develop a snafu extension for my benchmark?

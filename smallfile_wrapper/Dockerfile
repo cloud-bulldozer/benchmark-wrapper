@@ -4,6 +4,7 @@ RUN yum install git epel-release -y
 RUN yum install python2-pip python2-numpy scipy python2-configparser python2-redis -y
 RUN pip install --upgrade pip
 RUN pip install elasticsearch statistics
+ADD https://api.github.com/repos/distributed-system-analysis/smallfile/git/refs/heads/master /tmp/bustcache
 RUN git clone https://github.com/distributed-system-analysis/smallfile
 RUN mv smallfile /opt/
 RUN ln -sv /opt/smallfile/smallfile_cli.py /usr/local/bin/

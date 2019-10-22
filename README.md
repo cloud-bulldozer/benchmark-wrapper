@@ -16,8 +16,8 @@ environments, develop in SNAFU and then write ripsaw benchmark to integrate with
 | fio                            | Storage IO             | Working            |
 | YCSB                           | Database Performance   | Working            |
 | Pgbench                        | Postgres Performance   | Working            |
-| smallfile                      | metadata-intensive fs  | no Grafana yet     |
-| fs-drift                       | metadata-intensive mixed | no Grafana yet   |
+| smallfile                      | metadata-intensive ops | Working            |
+| fs-drift                       | metadata-intensive mix | Working            |
 
 ## What backend storage do we support?
 

@@ -4,6 +4,10 @@ Most Performance workload tools were written to tell you the performance at a gi
 
 These scripts are to help enable these legacy tools store their data for long term investigations.
 
+Note: SNAFU does not depend upon Kubernetes, so you can use run_snafu.py on a bare-metal or VM cluster without relying
+on Kubernetes to start/stop pods.  So if you need your benchmark to collect data for both Kubernetes and non-Kubernetes
+environments, develop in SNAFU and then write ripsaw benchmark to integrate with Kubernetes.
+
 ## What workloads do we support?
 
 | Workload                       | Use                    | Status             |
@@ -12,13 +16,14 @@ These scripts are to help enable these legacy tools store their data for long te
 | fio                            | Storage IO             | Working            |
 | YCSB                           | Database Performance   | Working            |
 | Pgbench                        | Postgres Performance   | Working            |
-
+| smallfile                      | metadata-intensive ops | Working            |
+| fs-drift                       | metadata-intensive mix | Working            |
 
 ## What backend storage do we support?
 
 | Storage        | Status   |
 | -------------- | -------- |
-| Elasticserach  | Working  |
+| Elasticsearch  | Working  |
 | Prom           | Planned  |
 
 ## how do I develop a snafu extension for my benchmark?
@@ -45,6 +50,7 @@ Additional parameters are benchmark-specific and are passed to the wrapper to be
 common parameters:
 
 * --tool - which benchmark you want to run
+* --verbose - turns on DEBUG-level logging, including ES docs posted
 * --samples - how many times you want to run the benchmark (for variance measurement)
 * --dir -- where results should be placed
 

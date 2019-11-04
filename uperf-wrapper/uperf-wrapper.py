@@ -26,7 +26,7 @@ def _index_result(index,server,port,payload):
     for result in payload:
          es.index(index=index, body=result)
 
-def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,clustername):
+def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,clustername,resource_type):
     processed = []
     prev_bytes = 0
     prev_ops = 0
@@ -57,7 +57,8 @@ def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,c
             "norm_byte": int(result[1])-prev_bytes,
             "ops": int(result[2]),
             "norm_ops": norm_ops,
-            "norm_ltcy": norm_ltcy
+            "norm_ltcy": norm_ltcy,
+            "kind": str(resource_type)
         })
         prev_timestamp = float(result[0])
         prev_bytes = int(result[1])
@@ -166,6 +167,9 @@ def main():
     parser.add_argument(
         '-r', '--run', nargs=1,
         help='Provide the iteration for the run')
+    parser.add_argument(
+        '--resourcetype', nargs=1,
+        help='Provide the resource type for this uperf run - pod/vm/baremetal')
     args = parser.parse_args()
 
     server = ""
@@ -201,7 +205,7 @@ def main():
             print "UPerf failed to execute a second time, stopping..."
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips,args.cluster_name)
+    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips,args.cluster_name,args.resourcetype[0])
     if server != "" :
         if len(documents) > 0 :
             _index_result("ripsaw-uperf-results",server,port,documents)

@@ -26,7 +26,7 @@ def _index_result(index,server,port,payload):
     for result in payload:
          es.index(index=index, body=result)
 
-def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,clustername,resource_type):
+def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,clustername,resource_type,server_node,client_node):
     processed = []
     prev_bytes = 0
     prev_ops = 0
@@ -58,7 +58,9 @@ def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,c
             "ops": int(result[2]),
             "norm_ops": norm_ops,
             "norm_ltcy": norm_ltcy,
-            "kind": str(resource_type)
+            "kind": str(resource_type),
+            "client_node": client_node,
+            "server_node": server_node
         })
         prev_timestamp = float(result[0])
         prev_bytes = int(result[1])
@@ -159,6 +161,8 @@ def _summarize_data(data):
                              np.percentile(ltcy_result, 95)))
     print("+{}+".format("-"*(115)))
 
+
+
 def main():
     parser = argparse.ArgumentParser(description="UPerf Wrapper script")
     parser.add_argument(
@@ -179,6 +183,8 @@ def main():
     remoteip = ""
     hostnetwork = ""
     serviceip = ""
+    server_node = ""
+    client_node = ""
     args.cluster_name = "mycluster"
     if "clustername" in os.environ:
         args.cluster_name = os.environ["clustername"]
@@ -196,6 +202,10 @@ def main():
         remoteip = os.environ["h"]
     if "ips" in os.environ:
         clientips = os.environ["ips"]
+    if "server_node" in os.environ:
+        server_node = os.environ["server_node"]
+    if "client_node" in os.environ:
+        client_node = os.environ["client_node"]
 
     stdout = _run_uperf(args.workload[0])
     if stdout[1] == 1 :
@@ -205,7 +215,7 @@ def main():
             print "UPerf failed to execute a second time, stopping..."
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips,args.cluster_name,args.resourcetype[0])
+    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips,args.cluster_name,args.resourcetype[0],server_node,client_node)
     if server != "" :
         if len(documents) > 0 :
             _index_result("ripsaw-uperf-results",server,port,documents)
@@ -215,3 +225,4 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
+

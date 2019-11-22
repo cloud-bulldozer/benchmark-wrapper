@@ -46,7 +46,7 @@ def main():
         '-t', '--tool', help='Provide tool name')
     index_args, unknown = parser.parse_known_args()
     index_args.index_results = False
-    index_args.prefix = "snafu-%s" % index_args.tool
+    index_args.prefix = "ripsaw-%s" % index_args.tool
 
     setup_loggers("snafu", index_args.loglevel)
     log_level_str = 'DEBUG' if index_args.loglevel == logging.DEBUG else 'INFO'
@@ -60,7 +60,8 @@ def main():
     if "es" in os.environ:
         es['server'] = os.environ["es"]
         es['port'] = os.environ["es_port"]
-        index_args.prefix = os.environ["es_index"]
+        if os.environ.has_key('es_index'):
+            index_args.prefix = os.environ["es_index"]
         index_args.index_results = True
         try:
             _es_connection_string = str(es['server']) + ':' + str(es['port'])
@@ -108,7 +109,7 @@ def process_generator(index_args, parser):
         for data_object in wrapper_object.run():
             for action, index in data_object.emit_actions():
 
-                es_index = index_args.prefix + index
+                es_index = index_args.prefix + '-' + index
                 es_valid_document = { "_index": es_index,
                                       "_op_type": "create",
                                       "_source": action,

@@ -86,7 +86,7 @@ class _trigger_smallfile:
                     thrd['host'] = self.host
                     thrd['tid'] = tid
                     thrd['date'] = timestamp
-                    yield thrd, '-results'
+                    yield thrd, 'results'
 
             # process response time data
 
@@ -135,7 +135,7 @@ class _trigger_smallfile:
                             interval['90%'] = float(flds[8])
                             interval['95%'] = float(flds[9])
                             interval['99%'] = float(flds[10])
-                            yield interval, '-rsptimes'
+                            yield interval, 'rsptimes'
 
         # clean up anything created by smallfile so that the next sample will work
         # this is brutally inefficient, best way to clean up is to 

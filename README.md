@@ -35,10 +35,10 @@ You must supply a "wrapper", which provides these functions:
 * build the container image for your benchmark, with all the packages, python modules, etc. that are required to run it.
 * runs the benchmark and stores the benchmark-specific results to an elasticsearch server
 
-Your ripsaw benchmark will define several environment variables:
+Your ripsaw benchmark will define several environment variables relevant to Elasticsearch:
 * es - hostname of elasticsearch server
 * es_port - port number of elasticsearch server (default 9020)
-* es_index - prefix of index name for your results in elasticsearch (default "ripsaw")
+* es_index - OPTIONAL - default is "ripsaw-tool" - define the prefix of the ES index name
 
 It will then invoke your wrapper via the command:
 
@@ -84,6 +84,32 @@ server that is viewable with Kibana and Grafana!
 
 Look at some of the other benchmarks for examples of how this works.
 
+## how do I post results to Elasticsearch from my wrapper?
+
+Every snafu benchmark will use Elasticsearch index name of the form **orchestrator-benchmark-doctype**, consisting of the 3
+components:
+
+* orchestrator - software running the benchmark - usually "ripsaw" at this point
+* benchmark - typically the tool name, something like "iperf" or "fio"
+* doctype - type of documents being placed in this index.
+
+If you are using run_snafu.py, construct an elastic search document in the usual way, and then use the python "yield" statement (do not return!) a **document** and **doctype**, where **document** is a python dictionary representing an Elasticsearch document, and **doctype** is the end of the index name.  For example, any ripsaw benchmark will be defining an index name that begins with ripsaw, but your wrapper can create whatever indexes it wants with that prefix.  For example, to create an index named ripsaw-iperf-results, you just do something like this:
+
+- optionally, in roles/your-benchmark/defaults/main.yml, you can override the default if you need to:
+
+```
+es_index: ripsaw-iperf
+```
+
+- in your snafu wrapper, to post a document to Elasticsearch, you **MUST**:
+
+```
+    yield my_doc, 'results'
+```
+
+run_snafu.py concatenates the doctype with the es_index component associated with the benchmark to generate the
+full index name, and posts document **my__doc** to it.
+
 ## how do I integrate snafu wrapper into my ripsaw benchmark?
 
 You just replace the commands to run the workload in your ripsaw benchmark 
@@ -98,19 +124,17 @@ run_snafu.py for access to Elasticsearch:
       spec:
         containers:
           env:
-{% if es_server is defined %}
           - name: uuid
             value: "{{ uuid }}"
           - name: test_user
             value: "{{ test_user }}"
           - name: clustername
             value: "{{ clustername }}"
+{% if elasticsearch.server is defined %}
           - name: es
-            value: "{{ es_server }}"
+            value: "{{ elasticsearch.server }}"
           - name: es_port
-            value: "{{ es_port }}"
-          - name: es_index
-            value: "{{ es_index }}"
+            value: "{{ elasticsearch.port }}"
 {% endif %}
 ```
 

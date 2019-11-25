@@ -46,7 +46,7 @@ def main():
         '-t', '--tool', help='Provide tool name')
     index_args, unknown = parser.parse_known_args()
     index_args.index_results = False
-    index_args.prefix = "ripsaw-%s" % index_args.tool
+    index_args.prefix = "snafu-%s" % index_args.tool
 
     setup_loggers("snafu", index_args.loglevel)
     log_level_str = 'DEBUG' if index_args.loglevel == logging.DEBUG else 'INFO'

@@ -55,6 +55,9 @@ class smallfile_wrapper():
         if "test_user" in os.environ:
             self.user = os.environ["test_user"]
 
+        self.redis_host = os.environ["redis_host"] if "redis_host" in os.environ else None
+        self.redis_timeout = os.environ["redis_timeout"] if "redis_timeout" in os.environ else 60
+        self.clients = os.environ["clients"] if "clients" in os.environ else 1
         if not self.args.top:
             raise SnafuSmfException('must supply directory where you access flies')  # noqa
         self.samples = self.args.samples
@@ -74,6 +77,10 @@ class smallfile_wrapper():
                                                                      self.yaml_input_file,
                                                                      self.cluster_name,
                                                                      self.working_dir, sample_dir,
-                                                                     self.user, self.uuid,
+                                                                     self.user,
+                                                                     self.uuid,
+                                                                     self.redis_host,
+                                                                     self.redis_timeout,
+                                                                     self.clients,
                                                                      s)
             yield trigger_generator

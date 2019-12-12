@@ -5,6 +5,7 @@ import subprocess
 import shutil
 import socket
 from vfs_stat import get_vfs_stat_dict
+import redis
 
 
 class SmallfileWrapperException(Exception):
@@ -17,7 +18,7 @@ class _trigger_smallfile:
     """
 
     def __init__(self, logger, operations, yaml_input_file, cluster_name, working_dir,
-                 result_dir, user, uuid, sample):
+                 result_dir, user, uuid, redis_host, redis_timeout, clients, sample):
         self.logger = logger
         self.operations = operations
         self.yaml_input_file = yaml_input_file
@@ -27,6 +28,9 @@ class _trigger_smallfile:
         self.uuid = uuid
         self.sample = sample
         self.cluster_name = cluster_name
+        self.redis_host = redis_host
+        self.redis_timeout = int(redis_timeout)
+        self.clients = int(clients)
         self.host = socket.gethostname()
 
     def ensure_dir_exists(self, directory):
@@ -144,6 +148,27 @@ class _trigger_smallfile:
                             interval['99%'] = float(flds[10])
                             yield interval, 'rsptimes'
 
+            if self.clients > 1 and self.redis_host:
+                channel = "smallfile-%s" % self.uuid
+                self.logger.info("Number of smallfile clients > 1, synchronizing them for the next operation")
+                self.logger.info("Redis %s channel at %s:6379" % (channel, self.redis_host))
+                r = redis.StrictRedis(self.redis_host, 6379, socket_timeout=self.redis_timeout)
+                p = r.pubsub()
+                p.subscribe(channel)
+                subscribers = int(r.pubsub_numsub(channel)[0][1])
+                if subscribers == self.clients:
+                    r.publish(channel, "continue")
+                    r.connection_pool.disconnect()
+                    self.logger.info("Continue with next workload")
+                    continue
+                self.logger.info("Waiting for continue message on %s channel" % channel)
+                for msg in p.listen():
+                    self.logger.info("Complete message from channel: %s" % msg)
+                    if isinstance(msg["data"], bytes) and msg["data"].decode("utf-8") == "continue":
+                        self.logger.info("Continue message received. Go ahead with the next workload")
+                        break
+                r.publish(channel, "running")
+                r.connection_pool.disconnect()
         # clean up anything created by smallfile so that the next sample will work
         # this is brutally inefficient, best way to clean up is to
         # include the "cleanup" operation as the last operation in the

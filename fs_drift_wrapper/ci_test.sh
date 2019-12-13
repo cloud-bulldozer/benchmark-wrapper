@@ -11,7 +11,7 @@ build_wrapper_image $image_spec fs_drift_wrapper
 
 cd ripsaw
 
-sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/fs-drift/templates/*
+sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/fs-drift/templates/* roles/fs-drift/tasks/*
 
 # Build new ripsaw image
 update_operator_image

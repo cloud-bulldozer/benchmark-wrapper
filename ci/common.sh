@@ -89,6 +89,10 @@ function get_uuid() {
   # Get UUID
   uuid=`kubectl -n my-ripsaw get benchmarks -o jsonpath='{.items[0].status.uuid}'`
 
+  # while we're here, let's verify that right image location and account got used
+
+  kubectl -n my-ripsaw describe pods | grep -i pulled
+
   finish
   echo $uuid > uuid
   )

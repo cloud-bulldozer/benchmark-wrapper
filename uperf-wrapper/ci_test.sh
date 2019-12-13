@@ -11,7 +11,7 @@ build_wrapper_image $image_spec uperf-wrapper
 
 cd ripsaw
 
-sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/uperf/templates/*
+sed -si "s#$default_ripsaw_image_spec#$image_spec#g" roles/uperf-bench/templates/*
 
 # Build new ripsaw image
 update_operator_image

@@ -11,7 +11,7 @@ build_wrapper_image $image_spec smallfile_wrapper
 
 cd ripsaw
 
-sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/smallfile-bench/templates/*
+sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/smallfile-bench/templates/* roles/smallfile-bench/tasks/*
 
 # Build new ripsaw image
 update_operator_image

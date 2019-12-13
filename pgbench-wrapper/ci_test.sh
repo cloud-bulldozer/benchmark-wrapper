@@ -5,14 +5,18 @@ set -x
 source ci/common.sh
 
 # Build image for ci
-podman build --tag=quay.io/cloud-bulldozer/pgbench:snafu_ci -f pgbench-wrapper/Dockerfile . && podman push quay.io/cloud-bulldozer/pgbench:snafu_ci
+default_ripsaw_image="quay.io/cloud-bulldozer/pgbench"
+default_ripsaw_tag="latest"
+image=$SNAFU_WRAPPER_IMAGE_PREFIX/pgbench
+build_wrapper_image $image_spec pgbench-wrapper
 
 cd ripsaw
 
-sed -i 's/latest/snafu_ci/g' roles/pgbench/defaults/main.yml
+sed -i "s#$default_ripsaw_image#$image#" roles/pgbench/defaults/main.yml
+sed -i "s#$default_ripsaw_tag#$SNAFU_IMAGE_TAG#" roles/pgbench/defaults/main.yml
 
 # Build new ripsaw image
-update_operator_image snafu_ci
+update_operator_image
 
 get_uuid test_pgbench.sh
 uuid=`cat uuid`

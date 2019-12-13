@@ -5,14 +5,16 @@ set -x
 source ci/common.sh
 
 # Build image for ci
-podman build --tag=quay.io/cloud-bulldozer/smallfile:snafu_ci -f smallfile_wrapper/Dockerfile . && podman push quay.io/cloud-bulldozer/smallfile:snafu_ci
+default_ripsaw_image_spec="quay.io/cloud-bulldozer/smallfile:master"
+image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/smallfile:$SNAFU_IMAGE_TAG
+build_wrapper_image $image_spec smallfile_wrapper
 
 cd ripsaw
 
-sed -i 's/smallfile:master/smallfile:snafu_ci/g' roles/smallfile-bench/templates/*
+sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/smallfile-bench/templates/*
 
 # Build new ripsaw image
-update_operator_image snafu_ci
+update_operator_image
 
 get_uuid test_smallfile.sh
 uuid=`cat uuid`
@@ -23,3 +25,4 @@ index="ripsaw-smallfile-results ripsaw-smallfile-rsptimes"
 
 check_es $uuid $index
 exit $?
+

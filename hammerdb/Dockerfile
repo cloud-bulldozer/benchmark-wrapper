@@ -10,9 +10,8 @@ RUN ACCEPT_EULA=Y yum -y install msodbcsql
 RUN yum remove -y unixODBC-utf16 unixODBC-utf16-devel && yum -y clean all
 RUN yum clean all -y 
 
-# clone the snafu repo 
-#RUN cd /opt/; git clone https://github.com/mkarg75/snafu.git
-RUN cd /opt/; git clone https://github.com/cloud-bulldozer/snafu.git
+RUN mkdir -p /opt/snafu
+COPY . /opt/snafu
 
 # Download and install the hammer suite
 RUN wget 'https://downloads.sourceforge.net/project/hammerdb/HammerDB/HammerDB-3.2/HammerDB-3.2-Linux-x86-64-Install?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fhammerdb%2Ffiles%2FHammerDB%2FHammerDB-3.2%2FHammerDB-3.2-Linux-x86-64-Install%2Fdownload&ts=1564587940&use_mirror=autoselect' -O hammer_installer
@@ -20,7 +19,7 @@ RUN mkdir /hammer
 RUN chmod 755 hammer_installer
 RUN ./hammer_installer --prefix /hammer --mode silent
 
-COPY uid_entrypoint /usr/local/bin/
+COPY hammerdb/uid_entrypoint /usr/local/bin/
 
 RUN chmod g+w /etc/passwd
 RUN chmod 755 /usr/local/bin/uid_entrypoint

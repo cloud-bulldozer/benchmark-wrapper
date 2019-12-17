@@ -106,7 +106,7 @@ def main():
     args = parser.parse_args()
 
     #server = "bullwinkle-elk.rdu.openstack.engineering.redhat.com"
-    server = ""
+    server = "marquez.perf.lab.eng.rdu2.redhat.com"
     port = "9200"
     protocol = "tcp"
     uuid = ""

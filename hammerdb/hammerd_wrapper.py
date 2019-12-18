@@ -6,7 +6,7 @@ import subprocess
 import os
 import re
 import elasticsearch
-
+from datetime import datetime
 
 def _run_hammerdb():
     cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload.tcl"
@@ -27,10 +27,10 @@ def _parse_stdout(stdout):
         print (line)
         if "TEST RESULT" in line:
             worker = (line.split(":"))[0]
-            print (worker)
             tpm = (line.split(" "))[6]
             nopm = (line.split(" "))[-2]
-            entry = [ worker, tpm, nopm]
+            timestamp = datetime.now()
+            entry = [ worker, tpm, nopm, timestamp]
             data.append(entry)
     return data
 
@@ -70,6 +70,7 @@ def _summarize_data(data):
         #      server: {}""".format(entry['remote_ip']))
         print("")
         print("HammerDB results for:")
+        print("UUID: {}".format(entry['uuid']))
         print("Database server: {}".format(entry['db_server']))
         print("Database port: {}".format(entry['db_port']))
         print("Number of database warehouses: {}".format(entry['db_warehouses']))
@@ -96,6 +97,8 @@ def _summarize_data(data):
         print("HammerDB results (NOPM):")
         print("""
               NOPM: {}""".format(entry['nopm']))
+        print("""
+              Timestamp: {}""".format(entry['timestamp']))
         print("+{}+".format("-"*(115)))
 
 def _index_result(index,server,port,payload):

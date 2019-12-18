@@ -162,8 +162,8 @@ def main():
         timed_test = os.environ["timed_test"]
 
 
-    #stdout = _run_hammerdb()
-    stdout = _fake_run()
+    stdout = _run_hammerdb()
+    #stdout = _fake_run()
     if stdout[1] == 1:
         print ("hammerdbcli failed to execute, trying one more time..")
         stdout = _run_hammerdb()

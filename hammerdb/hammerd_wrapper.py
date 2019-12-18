@@ -165,8 +165,8 @@ def main():
         timed_test = os.environ["timed_test"]
 
 
-    stdout = _run_hammerdb()
-    #stdout = _fake_run()
+    #stdout = _run_hammerdb()
+    stdout = _fake_run()
     if stdout[1] == 1:
         print ("hammerdbcli failed to execute, trying one more time..")
         stdout = _run_hammerdb()
@@ -175,9 +175,9 @@ def main():
             exit(1)
     data = _parse_stdout(stdout[0])
     documents = _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user, transactions, test_type, runtime, rampup, samples, timed_test)
-    if server != "" :
+    if es_server != "" :
         if len(documents) > 0 :
-            _index_result("ripsaw-hammerdb-results",server,port,documents)
+            _index_result("ripsaw-hammerdb-results", es_server, es_port, documents)
     if len(documents) > 0 :
         _summarize_data(documents)
 

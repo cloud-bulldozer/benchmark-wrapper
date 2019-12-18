@@ -52,7 +52,6 @@ def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers,
             "rampup": rampup,
             "samples": samples,
             "timed_test": timed_test,
-            "num_workers": (len(data) -1),
             "worker": data[i][0],
             "tpm": data[i][1],
             "nopm": data[i][2],
@@ -101,8 +100,8 @@ def _summarize_data(data):
         print("Timestamp: {}".format(entry['timestamp']))
         print("+{}+".format("-"*(115)))
 
-def _index_result(index,server,port,payload):
-    _es_connection_string = str(server) + ':' + str(port)
+def _index_result(index, es_server, es_port, payload):
+    _es_connection_string = str(es_server) + ':' + str(es_port)
     es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
     for result in payload:
         es.index(index=index, body=result)

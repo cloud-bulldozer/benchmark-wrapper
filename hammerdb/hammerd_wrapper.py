@@ -99,7 +99,7 @@ def _summarize_data(data):
         print("Timestamp: {}".format(entry['timestamp']))
         print("+{}+".format("-"*(115)))
 
-def _index_result(index, es_server, es_port, payload):
+def _index_result(index,es_server,es_port,payload):
     _es_connection_string = str(es_server) + ':' + str(es_port)
     es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
     indexed = True
@@ -176,8 +176,8 @@ def main():
 
 
     timestamp = datetime.now()
-    stdout = _run_hammerdb()
-    #stdout = _fake_run()
+    #stdout = _run_hammerdb()
+    stdout = _fake_run()
     if stdout[1] == 1:
         print ("hammerdbcli failed to execute, trying one more time..")
         stdout = _run_hammerdb()
@@ -188,7 +188,9 @@ def main():
     documents = _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user, transactions, test_type, runtime, rampup, samples, timed_test, timestamp)
     if es_server != "" :
         if len(documents) > 0 :
-            _index_result("ripsaw-hammerdb-results", es_server, es_port, documents)
+            print("Calling index result with these arguments: ripsaw-hammerdb-results", es_server, es_port, documents)
+            rc = _index_result("ripsaw-hammerdb-results", es_server, es_port, documents)
+            print("Returncode: ", rc)
     if len(documents) > 0 :
         _summarize_data(documents)
 

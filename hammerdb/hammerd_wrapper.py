@@ -29,12 +29,11 @@ def _parse_stdout(stdout):
             worker = (line.split(":"))[0]
             tpm = (line.split(" "))[6]
             nopm = (line.split(" "))[-2]
-            timestamp = datetime.now()
-            entry = [ worker, tpm, nopm, timestamp]
+            entry = [ worker, tpm, nopm ]
             data.append(entry)
     return data
 
-def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user, transactions, test_type, runtime, rampup, samples, timed_test):
+def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user, transactions, test_type, runtime, rampup, samples, timed_test, timestamp):
     processed = []
     for i in range(0,len(data)):
         processed.append({
@@ -55,7 +54,7 @@ def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers,
             "worker": data[i][0],
             "tpm": data[i][1],
             "nopm": data[i][2],
-            "timestamp": data[i][3]
+            "timestamp": timestamp
             })
     return processed
 
@@ -142,6 +141,7 @@ def main():
     samples = ""
     iteration = "" 
     test_type = ""
+    timestamp = ""
 
     if "es_server" in os.environ:
         es_server = os.environ["es_server"]
@@ -175,6 +175,7 @@ def main():
         timed_test = os.environ["timed_test"]
 
 
+    timestamp = datetime.now()
     stdout = _run_hammerdb()
     #stdout = _fake_run()
     if stdout[1] == 1:
@@ -184,7 +185,7 @@ def main():
             print ("hammerdbcli failed to execute a second time, stopping...")
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user, transactions, test_type, runtime, rampup, samples, timed_test)
+    documents = _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user, transactions, test_type, runtime, rampup, samples, timed_test, timestamp)
     if es_server != "" :
         if len(documents) > 0 :
             _index_result("ripsaw-hammerdb-results", es_server, es_port, documents)

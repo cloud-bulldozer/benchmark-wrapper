@@ -24,8 +24,10 @@ def _parse_stdout(stdout):
     data = []
     iteration = 0
     for line in stdout.splitlines():
+        print (line)
         if "TEST RESULT" in line:
             worker = (line.split(":"))[0]
+            print (worker)
             tpm = (line.split(" "))[6]
             nopm = (line.split(" "))[-2]
             entry = [ worker, tpm, nopm]
@@ -147,16 +149,15 @@ def main():
     stdout = _run_hammerdb()
     #stdout = _fake_run()
     if stdout[1] == 1:
-        print "hammerdbcli failed to execute, trying one more time.."
+        print ("hammerdbcli failed to execute, trying one more time..")
         stdout = _fake_run()
         if stdout[1] == 1:
-            print "hammerdbcli failed to execute a second time, stopping..."
+            print ("hammerdbcli failed to execute a second time, stopping...")
             exit(1)
     data = _parse_stdout(stdout[0])
     documents = _json_payload(data, iteration, uuid, db_server, db_port, db_warehouses, db_num_workers, transactions, test_type, runtime, rampup, samples)
     if server != "" :
         if len(documents) > 0 :
-            print "Indexing data"
             _index_result("ripsaw-hammerdb-results",server,port,documents)
     if len(documents) > 0 :
         _summarize_data(documents)

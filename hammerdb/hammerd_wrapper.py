@@ -103,8 +103,19 @@ def _summarize_data(data):
 def _index_result(index, es_server, es_port, payload):
     _es_connection_string = str(es_server) + ':' + str(es_port)
     es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
+    indexed = True
+    processed_count = 0
+    total_count = 0
     for result in payload:
-        es.index(index=index, body=result)
+        try:
+            es.index(index=index, body=result)
+            processed_count += 1
+        except Exception as e:
+            print (repr(e) + "occured for the json document:")
+            print(str(result))
+            indexed = False
+        total_count += 1
+    return indexed, processed_count, total_count
 
 def main():
     parser = argparse.ArgumentParser(description="HammerDB Wrapper script")
@@ -116,8 +127,8 @@ def main():
             help='Rampup time for the run')
     args = parser.parse_args()
 
-    server = ""
-    port = ""
+    es_server = ""
+    es_port = ""
     protocol = ""
     uuid = ""
     db_user = ""

@@ -55,7 +55,8 @@ def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers,
             "num_workers": (len(data) -1),
             "worker": data[i][0],
             "tpm": data[i][1],
-            "nopm": data[i][2]
+            "nopm": data[i][2],
+            "timestamp": data[i][3]
             })
     return processed
 
@@ -97,8 +98,7 @@ def _summarize_data(data):
         print("HammerDB results (NOPM):")
         print("""
               NOPM: {}""".format(entry['nopm']))
-        print("""
-              Timestamp: {}""".format(entry['timestamp']))
+        print("Timestamp: {}".format(entry['timestamp']))
         print("+{}+".format("-"*(115)))
 
 def _index_result(index,server,port,payload):

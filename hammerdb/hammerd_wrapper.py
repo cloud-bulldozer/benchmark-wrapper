@@ -11,7 +11,6 @@ from datetime import datetime
 
 def _run_hammerdb():
     cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload.tcl"
-    #cmd = "cd ~/Downloads/hammer/HammerDB-3.2; ./hammerdbcli auto workload.tcl"
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     stdout,stderr = process.communicate()
     return stdout.strip(), process.returncode
@@ -64,10 +63,7 @@ def _summarize_data(data):
         entry = data[0]
 
         print("+{} HammerDB Results {}+".format("-"*(50), "-"*(50)))
-        #print("Run : {}".format(entry['iteration']))
         print("HammerDB setup")
-        #print("""
-        #      server: {}""".format(entry['remote_ip']))
         print("")
         print("HammerDB results for:")
         print("UUID: {}".format(entry['uuid']))
@@ -84,13 +80,6 @@ def _summarize_data(data):
         print("Worker: {}".format(entry['worker']))
         print("Samples: {}".format(entry['samples']))
         print("Timed test: {}".format(entry['timed_test']))
-        #print("""
-        #      test_type: {}
-        #      protocol: {}
-        #      workers: {}
-        #      worker: {}""".format(entry['test_type'],
-        #                             entry['num_workers'],
-        #                             entry['worker']))
         print("HammerDB results (TPM):")
         print("""
               TPM: {}""".format(entry['tpm']))
@@ -101,17 +90,13 @@ def _summarize_data(data):
         print("+{}+".format("-"*(115)))
 
 def _index_result(index,es_server,es_port,payload):
-    print("Index: ", index, "ES server: ", es_server, "ES port: ", es_port, "Payload: ", payload)
     _es_connection_string = str(es_server) + ':' + str(es_port)
     es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
     indexed = True
     processed_count = 0
     total_count = 0
     for result in payload:
-        print ("Current result: ", result)
         try:
-            print("Type index: ", type(index))
-            print("Type body: ", type(result))
             es.index(index=index, body=result)
             processed_count += 1
         except Exception as e:
@@ -122,14 +107,6 @@ def _index_result(index,es_server,es_port,payload):
     return indexed, processed_count, total_count
 
 def main():
-    #parser = argparse.ArgumentParser(description="HammerDB Wrapper script")
-    #parser.add_argument(
-    #        '-d', '--duration', nargs=1,
-    #        help='Duration of a test run')
-    #parser.add_argument(
-    #        '-r', '--rampup', nargs=1,
-    #        help='Rampup time for the run')
-    #args = parser.parse_args()
 
     es_server = ""
     es_port = ""
@@ -180,7 +157,6 @@ def main():
         timed_test = os.environ["timed_test"]
 
 
-    #timestamp = datetime.now()
     timestamp = str(int(time.time()))
     stdout = _run_hammerdb()
     #stdout = _fake_run()
@@ -194,9 +170,7 @@ def main():
     documents = _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user, transactions, test_type, runtime, rampup, samples, timed_test, timestamp)
     if es_server != "" :
         if len(documents) > 0 :
-            print("Calling index result with these arguments: ripsaw-hammerdb-results", es_server, es_port, documents)
-            rc = _index_result("ripsaw-hammerdb-results", es_server, es_port, documents)
-            print("Returncode: ", rc)
+            _index_result("ripsaw-hammerdb-results", es_server, es_port, documents)
     if len(documents) > 0 :
         _summarize_data(documents)
 

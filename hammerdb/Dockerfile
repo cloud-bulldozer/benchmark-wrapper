@@ -2,13 +2,16 @@ FROM centos/tools
 
 # install requirements
 RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-RUN yum install -y expect python-elasticsearch wget tcl unixODBC-devel unixODBC
+RUN yum install -y expect git wget tcl unixODBC-devel unixODBC python-pip
 
 RUN curl https://packages.microsoft.com/config/rhel/7/prod.repo > /etc/yum.repos.d/mssql-release.repo
 RUN ACCEPT_EULA=Y yum -y install msodbcsql17
 RUN ACCEPT_EULA=Y yum -y install msodbcsql
 RUN yum remove -y unixODBC-utf16 unixODBC-utf16-devel && yum -y clean all
 RUN yum clean all -y 
+
+RUN pip install --upgrade pip
+RUN pip install "elasticsearch>=6.0.0,<=7.0.2"
 
 RUN mkdir -p /opt/snafu
 COPY . /opt/snafu

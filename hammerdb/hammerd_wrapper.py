@@ -24,7 +24,6 @@ def _parse_stdout(stdout):
     data = []
     iteration = 0
     for line in stdout.splitlines():
-        print (line)
         if "TEST RESULT" in line:
             worker = (line.split(":"))[0]
             tpm = (line.split(" "))[6]

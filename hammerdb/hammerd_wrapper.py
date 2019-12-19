@@ -100,13 +100,17 @@ def _summarize_data(data):
         print("+{}+".format("-"*(115)))
 
 def _index_result(index,es_server,es_port,payload):
+    print("Index: ", index, "ES server: ", es_server, "ES port: ", es_port, "Payload: ", payload)
     _es_connection_string = str(es_server) + ':' + str(es_port)
     es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
     indexed = True
     processed_count = 0
     total_count = 0
     for result in payload:
+        print "Current result: ", result)
         try:
+            print("Type index: ", type(index))
+            print("Type body: ", type(result))
             es.index(index=index, body=result)
             processed_count += 1
         except Exception as e:
@@ -117,14 +121,14 @@ def _index_result(index,es_server,es_port,payload):
     return indexed, processed_count, total_count
 
 def main():
-    parser = argparse.ArgumentParser(description="HammerDB Wrapper script")
-    parser.add_argument(
-            '-d', '--duration', nargs=1,
-            help='Duration of a test run')
-    parser.add_argument(
-            '-r', '--rampup', nargs=1,
-            help='Rampup time for the run')
-    args = parser.parse_args()
+    #parser = argparse.ArgumentParser(description="HammerDB Wrapper script")
+    #parser.add_argument(
+    #        '-d', '--duration', nargs=1,
+    #        help='Duration of a test run')
+    #parser.add_argument(
+    #        '-r', '--rampup', nargs=1,
+    #        help='Rampup time for the run')
+    #args = parser.parse_args()
 
     es_server = ""
     es_port = ""

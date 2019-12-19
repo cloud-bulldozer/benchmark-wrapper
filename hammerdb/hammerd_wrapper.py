@@ -108,7 +108,7 @@ def _index_result(index,es_server,es_port,payload):
     processed_count = 0
     total_count = 0
     for result in payload:
-        print "Current result: ", result)
+        print ("Current result: ", result)
         try:
             print("Type index: ", type(index))
             print("Type body: ", type(result))

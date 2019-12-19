@@ -181,7 +181,7 @@ def main():
 
 
     #timestamp = datetime.now()
-    timestamp = int(time.time())
+    timestamp = str(int(time.time()))
     stdout = _run_hammerdb()
     #stdout = _fake_run()
     if stdout[1] == 1:

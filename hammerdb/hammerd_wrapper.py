@@ -6,6 +6,7 @@ import subprocess
 import os
 import re
 import elasticsearch
+import time 
 from datetime import datetime
 
 def _run_hammerdb():
@@ -179,7 +180,8 @@ def main():
         timed_test = os.environ["timed_test"]
 
 
-    timestamp = datetime.now()
+    #timestamp = datetime.now()
+    timestamp = int(time.time())
     stdout = _run_hammerdb()
     #stdout = _fake_run()
     if stdout[1] == 1:

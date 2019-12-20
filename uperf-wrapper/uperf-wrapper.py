@@ -71,12 +71,12 @@ def _run_uperf(workload):
     cmd = "uperf -v -a -x -i 1 -m {}".format(workload)
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     stdout,stderr = process.communicate()
-    return stdout.strip(), process.returncode
+    return stdout.strip().decode("utf-8"), process.returncode
 
 def _parse_stdout(stdout):
     # This will effectivly give us:
     # ripsaw-test-stream-udp-16384
-    config = re.findall(r"running profile:(.*) \.\.\.",stdout)
+    config = re.findall(r"running profile:(.*) \.\.\.", stdout)
     test = re.split("-",config[0])[0]
     protocol = re.split("-",config[0])[1]
     size = re.split("-",config[0])[2]
@@ -84,7 +84,7 @@ def _parse_stdout(stdout):
     # This will yeild us this structure :
     #     timestamp, number of bytes, number of operations
     # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
-    results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)",stdout)
+    results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)", stdout)
     return { "test": test, "protocol": protocol, "message_size": size, "num_threads": nthr, "results" : results }
 
 def _summarize_data(data):
@@ -209,17 +209,17 @@ def main():
 
     stdout = _run_uperf(args.workload[0])
     if stdout[1] == 1 :
-        print "UPerf failed to execute, trying one more time.."
+        print("UPerf failed to execute, trying one more time..")
         stdout = _run_uperf(args.workload[0])
         if stdout[1] == 1:
-            print "UPerf failed to execute a second time, stopping..."
+            print("UPerf failed to execute a second time, stopping...")
             exit(1)
     data = _parse_stdout(stdout[0])
     documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips,args.cluster_name,args.resourcetype[0],server_node,client_node)
     if server != "" :
         if len(documents) > 0 :
             _index_result("ripsaw-uperf-results",server,port,documents)
-    print stdout[0]
+    print(stdout[0])
     if len(documents) > 0 :
       _summarize_data(documents)
 

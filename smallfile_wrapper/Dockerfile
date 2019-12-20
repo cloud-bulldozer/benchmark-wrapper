@@ -1,14 +1,11 @@
-FROM centos/tools
+FROM ubi8:latest
 
-RUN yum install git epel-release -y
-RUN yum install python2-pip python2-numpy scipy python2-configparser python2-redis -y
-RUN pip install --upgrade pip
-RUN pip install elasticsearch statistics
+RUN dnf install --nodocs -y git python3-pip python3-numpy python3-requests python3-scipy
+RUN pip3 install --upgrade-strategy=only-if-needed "elasticsearch>=6.0.0,<=7.0.2" redis pyyaml
+RUN ln -s /usr/bin/python3 /usr/bin/python
 ADD https://api.github.com/repos/distributed-system-analysis/smallfile/git/refs/heads/master /tmp/bustcache
-RUN git clone https://github.com/distributed-system-analysis/smallfile
-RUN mv smallfile /opt/
+RUN git clone https://github.com/distributed-system-analysis/smallfile /opt/smallfile --depth 1
 RUN ln -sv /opt/smallfile/smallfile_cli.py /usr/local/bin/
 RUN ln -sv /opt/smallfile/smallfile_rsptimes_stats.py /usr/local/bin/
-RUN mkdir -pv /opt/snafu
 # assumption: docker build -f smallfile_wrapper/Dockerfile .
 COPY . /opt/snafu/

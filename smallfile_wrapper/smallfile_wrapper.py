@@ -10,7 +10,7 @@ import argparse
 import configparser
 import logging
 
-import trigger_smallfile
+from smallfile_wrapper import trigger_smallfile
 
 logger = logging.getLogger("snafu")
 

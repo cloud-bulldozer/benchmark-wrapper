@@ -31,7 +31,7 @@ diff_list=`git diff origin/master --name-only`
 if [[ `echo $diff_list | grep -v / | wc -l` -gt 0 || `echo $diff_list | grep ci/` || `echo $diff_list | grep utils/` ]]
 then
   echo "Running full test"
-  test_list=`ls -d */ | grep -v utils/ | grep -v ci/ | grep -v ripsaw/`
+  test_list=`ls -d */ | grep -Ev "(utils|ci|ripsaw|image_resources)/"`
 else
   echo "Running specific tests"
   echo $diff_list

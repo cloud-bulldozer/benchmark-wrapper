@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from copy import deepcopy
-from fio_hist_parser import compute_percentiles_from_logs
 import re
 import os
 import sys
@@ -13,6 +12,7 @@ import configparser
 import statistics
 import time
 import logging
+from fio_wrapper.fio_hist_parser import compute_percentiles_from_logs
 
 logger = logging.getLogger("snafu")
 

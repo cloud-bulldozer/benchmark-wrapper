@@ -10,7 +10,7 @@ import argparse
 import configparser
 import logging
 
-import trigger_fs_drift
+from fs_drift_wrapper import fs_drift_wrapper, trigger_fs_drift
 
 logger = logging.getLogger("snafu")
 

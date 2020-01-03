@@ -58,10 +58,10 @@ def main():
     #instantiate elasticsearch instance and check connection
     es={}
     if "es" in os.environ:
-        if os.environ["es"] != ""
+        if os.environ["es"] != "":
             es['server'] = os.environ["es"]
             logger.info("Using elasticsearch server with host:" + str(es['server']))
-        if os.environ["es_port"] != ""
+        if os.environ["es_port"] != "":
             es['port'] = os.environ["es_port"]
             logger.info("Using elasticsearch server with port:" + str(es['port']))
     if len(es.keys()) == 2:

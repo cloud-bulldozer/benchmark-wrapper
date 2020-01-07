@@ -58,10 +58,16 @@ def main():
     #instantiate elasticsearch instance and check connection
     es={}
     if "es" in os.environ:
-        es['server'] = os.environ["es"]
-        es['port'] = os.environ["es_port"]
-        if os.environ.has_key('es_index'):
+        if os.environ["es"] != "":
+            es['server'] = os.environ["es"]
+            logger.info("Using elasticsearch server with host:" + str(es['server']))
+        if os.environ["es_port"] != "":
+            es['port'] = os.environ["es_port"]
+            logger.info("Using elasticsearch server with port:" + str(es['port']))
+    if len(es.keys()) == 2:
+        if os.environ["es_index"] != "":
             index_args.prefix = os.environ["es_index"]
+            logger.info("Using index prefix for ES:" + str(index_args.prefix))
         index_args.index_results = True
         try:
             _es_connection_string = str(es['server']) + ':' + str(es['port'])

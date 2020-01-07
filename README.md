@@ -38,7 +38,7 @@ You must supply a "wrapper", which provides these functions:
 Your ripsaw benchmark will define several environment variables relevant to Elasticsearch:
 * es - hostname of elasticsearch server
 * es_port - port number of elasticsearch server (default 9020)
-* es_index - OPTIONAL - default is "ripsaw-tool" - define the prefix of the ES index name
+* es_index - OPTIONAL - default is "snafu-tool" - define the prefix of the ES index name
 
 It will then invoke your wrapper via the command:
 

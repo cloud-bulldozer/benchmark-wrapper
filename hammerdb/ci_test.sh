@@ -5,7 +5,7 @@ set -x
 source ci/common.sh
 
 # Build image for ci
-podman build --tag=quay.io/cloud-bulldozer/hammerdb:snafu_ci -f hammerdb/Dockerfile . && podman push quay.io/cloud-bulldozer/hammerdb:snafu_ci
+build_and_push hammerdb/Dockerfile quay.io/cloud-bulldozer/hammerdb:snafu_ci
 
 cd ripsaw
 

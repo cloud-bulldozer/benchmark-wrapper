@@ -71,3 +71,18 @@ function get_uuid() {
   echo $uuid > uuid
   )
 }
+
+# Takes 2 argumentes. $1 is the Dockerfile path and $2 is the image name
+function build_and_push() {
+  if ! podman build --tag=${2} -f ${1} . ; then
+    echo "Image building error. Exiting"
+    exit 1
+  fi
+  for i in {1..3}; do
+    podman push ${2} && break
+    if [[ ${i} == 3 ]]; then
+      echo "Could not upload image to registry. Exiting"
+      exit 1
+    fi
+  done
+}

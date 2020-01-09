@@ -7,7 +7,7 @@ source ci/common.sh
 # Build image for ci
 default_ripsaw_image_spec="quay.io/cloud-bulldozer/fs-drift:master"
 image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/fs-drift:$SNAFU_IMAGE_TAG
-build_wrapper_image $image_spec fs_drift_wrapper
+build_and_push fs_drift_wrapper/Dockerfile $image_spec
 
 cd ripsaw
 

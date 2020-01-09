@@ -43,21 +43,23 @@ test_rc=0
 
 for dir in `echo $test_list`
 do
-  start_time=`date`
   my_dir=${dir::-1}
-  figlet "CI test for "$my_dir
-  if $my_dir/ci_test.sh
-  then
-    end_time=`date`
-    duration=`date -ud@$(($(date -ud"$end_time" +%s)-$(date -ud"$start_time" +%s))) +%T`
-    echo ${dir::-1}" | PASS | "$duration >> results.markdown
-  else
-    end_time=`date`
-    duration=`date -ud@$(($(date -ud"$end_time" +%s)-$(date -ud"$start_time" +%s))) +%T`
-    echo ${dir::-1}" | FAIL | "$duration >> results.markdown
-    test_rc=1
+  if [ -f $my_dir/ci_test.sh ]; then
+    start_time=`date`
+    figlet "CI test for "$my_dir
+    if $my_dir/ci_test.sh
+    then
+      end_time=`date`
+      duration=`date -ud@$(($(date -ud"$end_time" +%s)-$(date -ud"$start_time" +%s))) +%T`
+      echo ${dir::-1}" | PASS | "$duration >> results.markdown
+    else
+      end_time=`date`
+      duration=`date -ud@$(($(date -ud"$end_time" +%s)-$(date -ud"$start_time" +%s))) +%T`
+      echo ${dir::-1}" | FAIL | "$duration >> results.markdown
+      test_rc=1
+    fi
+    wait_clean
   fi
-  wait_clean
 done
 
 echo "Summary of CI Test"

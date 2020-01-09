@@ -10,7 +10,9 @@ export SNAFU_IMAGE_TAG=${SNAFU_IMAGE_TAG:-snafu_ci}
 export SNAFU_WRAPPER_IMAGE_PREFIX="$image_location/$image_account"
 echo "posting container images to $image_location with account $image_account"
 export image_builder=${SNAFU_IMAGE_BUILDER:-podman}
-
+if [ "$USER" != "root" ] ; then
+  SUDO=sudo
+fi
 NOTOK=1
 
 # see kubernetes initialization on last line of this script
@@ -18,13 +20,13 @@ NOTOK=1
 
 function update_operator_image() {
   image_spec=$image_location/$image_account/benchmark-operator:$SNAFU_IMAGE_TAG
-  operator-sdk build $image_spec --image-builder $image_builder
+  $SUDO operator-sdk build $image_spec --image-builder $image_builder
 
   # In case we have issues uploading to quay we will retry a few times
   try_count=0
   while [ $try_count -le 2 ]
   do
-    if $image_builder push $image_spec
+    if $SUDO $image_builder push $image_spec
     then
       try_count=2
     elif [[ $try_count -eq 2 ]]
@@ -45,7 +47,7 @@ function build_wrapper_image() {
   if [ "$image_builder" = "docker" ] ; then
     docker build --tag=$image_spec -f $wrapper_dir/Dockerfile . && docker push $image_spec
   elif [ "$image_builder" = "podman" ] ; then
-    buildah bud --tag $image_spec -f $wrapper_dir/Dockerfile . && podman push $image_spec
+    $SUDO buildah bud --tag $image_spec -f $wrapper_dir/Dockerfile . && $SUDO podman push $image_spec
   fi
 }
 
@@ -98,6 +100,19 @@ function get_uuid() {
   )
 }
 
-# initialization of K8S for ripsaw
+# Takes 2 argumentes. $1 is the Dockerfile path and $2 is the image name
+function build_and_push() {
+  if ! $SUDO podman build --tag=${2} -f ${1} . ; then
+    echo "Image building error. Exiting"
+    exit 1
+  fi
+  for i in {1..3}; do
+    $SUDO podman push ${2} && break
+    if [[ ${i} == 3 ]]; then
+      echo "Could not upload image to registry. Exiting"
+      exit 1
+    fi
+  done
+}
 
 wait_clean

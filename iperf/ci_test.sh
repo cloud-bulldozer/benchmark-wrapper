@@ -6,8 +6,8 @@ source ci/common.sh
 
 # Build image for ci
 default_ripsaw_image_spec="quay.io/cloud-bulldozer/iperf3:latest"
-image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/iperf:$SNAFU_IMAGE_TAG
-build_wrapper_image $image_spec iperf
+image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/iperf3:$SNAFU_IMAGE_TAG
+build_and_push iperf/Dockerfile $image_spec
 
 cd ripsaw
 

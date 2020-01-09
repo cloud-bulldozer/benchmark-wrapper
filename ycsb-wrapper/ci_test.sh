@@ -7,7 +7,7 @@ source ci/common.sh
 # Build image for ci
 default_ripsaw_image_spec="quay.io/cloud-bulldozer/ycsb-server:latest"
 image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/ycsb-server:$SNAFU_IMAGE_TAG
-build_wrapper_image $image_spec ycsb-wrapper
+build_and_push ycsb-wrapper/Dockerfile $image_spec
 
 cd ripsaw
 

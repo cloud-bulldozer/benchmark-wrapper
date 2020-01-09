@@ -7,7 +7,7 @@ source ci/common.sh
 # Build image for ci
 default_ripsaw_image_spec="quay.io/cloud-bulldozer/sysbench:latest"
 image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/sysbench:$SNAFU_IMAGE_TAG
-build_wrapper_image $image_spec sysbench
+build_and_push sysbench/Dockerfile $image_spec
 
 cd ripsaw
 

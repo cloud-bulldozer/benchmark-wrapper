@@ -4,9 +4,10 @@ set -x
 
 source ci/common.sh
 
+# Build image for ci
 default_ripsaw_image_spec="quay.io/cloud-bulldozer/fio:latest"
 image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/fio:$SNAFU_IMAGE_TAG
-build_wrapper_image $image_spec fio_wrapper
+build_and_push fio_wrapper/Dockerfile $image_spec
 
 cd ripsaw
 

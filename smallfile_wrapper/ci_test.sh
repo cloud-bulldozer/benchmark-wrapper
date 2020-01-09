@@ -7,7 +7,7 @@ source ci/common.sh
 # Build image for ci
 default_ripsaw_image_spec="quay.io/cloud-bulldozer/smallfile:master"
 image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/smallfile:$SNAFU_IMAGE_TAG
-build_wrapper_image $image_spec smallfile_wrapper
+build_and_push smallfile_wrapper/Dockerfile $image_spec
 
 cd ripsaw
 

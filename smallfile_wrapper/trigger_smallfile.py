@@ -7,6 +7,7 @@ import subprocess
 import logging
 import shutil
 import socket
+from vfs_stat import get_vfs_stat_dict
 
 class SmallfileWrapperException(Exception):
     pass
@@ -71,6 +72,9 @@ class _trigger_smallfile:
                         self.sample, operation, json_output_file))
             if operation == 'cleanup':
                 continue  # skip reporting data
+
+            fsdict = get_vfs_stat_dict(self.working_dir)
+
             with open(json_output_file) as f:
                 data = json.load(f)
                 timestamp = data['results']['date']
@@ -78,6 +82,7 @@ class _trigger_smallfile:
                 for tid in data['results']['in-thread'].keys():
                     thrd = data['results']['in-thread'][tid]
                     thrd['params'] = params
+                    thrd['fsinfo'] = fsdict
                     thrd['cluster_name'] = self.cluster_name
                     thrd['uuid'] = self.uuid
                     thrd['user'] = self.user

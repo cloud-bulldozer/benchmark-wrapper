@@ -5,7 +5,7 @@ set -x
 source ci/common.sh
 
 # Build image for ci
-podman build --tag=quay.io/cloud-bulldozer/smallfile:snafu_ci -f smallfile_wrapper/Dockerfile . && podman push quay.io/cloud-bulldozer/smallfile:snafu_ci
+build_and_push smallfile_wrapper/Dockerfile quay.io/cloud-bulldozer/smallfile:snafu_ci
 
 cd ripsaw
 

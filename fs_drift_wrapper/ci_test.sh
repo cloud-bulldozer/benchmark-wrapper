@@ -5,7 +5,7 @@ set -x
 source ci/common.sh
 
 # Build image for ci
-podman build --tag=quay.io/cloud-bulldozer/fs-drift:snafu_ci -f fs_drift_wrapper/Dockerfile . && podman push quay.io/cloud-bulldozer/fs-drift:snafu_ci
+build_and_push fs_drift_wrapper/Dockerfile quay.io/cloud-bulldozer/fs-drift:snafu_ci
 
 cd ripsaw
 

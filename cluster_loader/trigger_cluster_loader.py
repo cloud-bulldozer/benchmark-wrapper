@@ -83,4 +83,4 @@ class _trigger_cluster_loader:
         output_template['sample'] = self.sample
         output_template['test_name'] = self.test_name
         output_template.update(cl_output_dict)
-        yield output_template, 'snafu-cl'
+        yield output_template, 'cl'

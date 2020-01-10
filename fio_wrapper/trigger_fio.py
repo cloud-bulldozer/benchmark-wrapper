@@ -271,7 +271,7 @@ class _trigger_fio:
             self.fio_analyzer_obj.add_fio_result_documents(fio_result_documents, earliest_starttime)
             
             #from the returned normalized fio json document yield up for indexing
-            index = "-results"
+            index = "results"
             for document in fio_result_documents:
                 yield document, index
 
@@ -292,7 +292,7 @@ class _trigger_fio:
             fio_log_documents = self._log_payload(job_dir, self.user, self.uuid, self.sample, self.fio_jobs_dict, fio_version, fio_starttime, hosts, job)
 
             #if indexing is turned on yield back normalized data
-            index = "-log"
+            index = "log"
             for document in fio_log_documents:
                 yield document, index
             if self.histogram_process:
@@ -308,6 +308,6 @@ class _trigger_fio:
                 histogram_documents = self._histogram_payload(histogram_output_file, self.user, self.uuid, self.sample, self.fio_jobs_dict, fio_version, earliest_starttime, hosts, job)
                 #if indexing is turned on yield back normalized data
 
-                index = "-hist-log"
+                index = "hist-log"
                 for document in histogram_documents:
                     yield document, index

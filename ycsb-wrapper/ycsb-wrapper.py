@@ -20,16 +20,12 @@ import os
 import subprocess
 import sys
 
-def _index_result(server,port,index,payload):
-    try :
-        es = elasticsearch.Elasticsearch([
-            {'host': server,'port': port }],send_get_body_as='POST')
-        for result in payload :
-            print result
-            es.index(index=index,doc_type="_doc", body=result)
-    except Exception as e:
-        print "An unknown error occured connecting to ElasticSearch: {}".format(e)
-        return False
+def _index_result(index,server,port,payload):
+    _es_connection_string = str(server) + ':' + str(port)
+    es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
+    for result in payload :
+        print result
+        es.index(index=index,body=result)
 
 def _run(cmd):
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -185,10 +181,10 @@ def main():
         print "Attempting to index results..."
         if len(documents) > 0 :
             index = "ripsaw-ycsb-results"
-            _index_result(server,port,index,documents)
+            _index_result(index,server,port,documents)
         if len(summary) > 0 :
             index = "ripsaw-ycsb-summary"
-            _index_result(server,port,index,summary)
+            _index_result(index,server,port,summary)
 
 if __name__ == '__main__':
     sys.exit(main())

@@ -20,18 +20,23 @@ import os
 import subprocess
 import sys
 
-def _index_result(server,port,payload):
-    index = "ripsaw-uperf-results"
-    es = elasticsearch.Elasticsearch([
-        {'host': server,'port': port }],send_get_body_as='POST')
+def _index_result(index,server,port,payload):
+    _es_connection_string = str(server) + ':' + str(port)
+    es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
     for result in payload:
-         es.index(index=index, doc_type="_doc", body=result)
+         es.index(index=index, body=result)
 
-def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,clustername):
+def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,clustername,resource_type,server_node,client_node):
     processed = []
     prev_bytes = 0
     prev_ops = 0
+    prev_timestamp = 0.0
     for result in data['results'] :
+        norm_ops = int(result[2])-prev_ops
+        if norm_ops == 0:
+            norm_ltcy = 0.0
+        else:
+            norm_ltcy = ((float(result[0]) - prev_timestamp)/(norm_ops))*1000
         processed.append({
             "workload" : "uperf",
             "uuid": uuid,
@@ -51,8 +56,13 @@ def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,c
             "bytes": int(result[1]),
             "norm_byte": int(result[1])-prev_bytes,
             "ops": int(result[2]),
-            "norm_ops": int(result[2])-prev_ops
+            "norm_ops": norm_ops,
+            "norm_ltcy": norm_ltcy,
+            "kind": str(resource_type),
+            "client_node": client_node,
+            "server_node": server_node
         })
+        prev_timestamp = float(result[0])
         prev_bytes = int(result[1])
         prev_ops = int(result[2])
     return processed
@@ -81,13 +91,16 @@ def _summarize_data(data):
 
     byte = []
     op = []
+    ltcy = []
 
     for entry in data :
         byte.append(entry["norm_byte"])
         op.append(entry["norm_ops"])
+        ltcy.append(entry["norm_ltcy"])
 
     byte_result = np.array(byte)
     op_result = np.array(op)
+    ltcy_result = np.array(ltcy)
 
     data = data[0]
     print("+{} UPerf Results {}+".format("-"*(50), "-"*(50)))
@@ -133,7 +146,22 @@ def _summarize_data(data):
                              np.median(op_result),
                              np.average(op_result),
                              np.percentile(op_result, 95)))
+
+    print("")
+    print("UPerf Latency results (microseconds):")
+    print("""
+          min: {}
+          max: {}
+          median: {}
+          average: {}
+          95th: {}""".format(np.amin(ltcy_result),
+                             np.amax(ltcy_result),
+                             np.median(ltcy_result),
+                             np.average(ltcy_result),
+                             np.percentile(ltcy_result, 95)))
     print("+{}+".format("-"*(115)))
+
+
 
 def main():
     parser = argparse.ArgumentParser(description="UPerf Wrapper script")
@@ -143,6 +171,9 @@ def main():
     parser.add_argument(
         '-r', '--run', nargs=1,
         help='Provide the iteration for the run')
+    parser.add_argument(
+        '--resourcetype', nargs=1,
+        help='Provide the resource type for this uperf run - pod/vm/baremetal')
     args = parser.parse_args()
 
     server = ""
@@ -152,6 +183,8 @@ def main():
     remoteip = ""
     hostnetwork = ""
     serviceip = ""
+    server_node = ""
+    client_node = ""
     args.cluster_name = "mycluster"
     if "clustername" in os.environ:
         args.cluster_name = os.environ["clustername"]
@@ -169,6 +202,10 @@ def main():
         remoteip = os.environ["h"]
     if "ips" in os.environ:
         clientips = os.environ["ips"]
+    if "server_node" in os.environ:
+        server_node = os.environ["server_node"]
+    if "client_node" in os.environ:
+        client_node = os.environ["client_node"]
 
     stdout = _run_uperf(args.workload[0])
     if stdout[1] == 1 :
@@ -178,13 +215,14 @@ def main():
             print "UPerf failed to execute a second time, stopping..."
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips,args.cluster_name)
+    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips,args.cluster_name,args.resourcetype[0],server_node,client_node)
     if server != "" :
         if len(documents) > 0 :
-            _index_result(server,port,documents)
+            _index_result("ripsaw-uperf-results",server,port,documents)
     print stdout[0]
     if len(documents) > 0 :
       _summarize_data(documents)
 
 if __name__ == '__main__':
     sys.exit(main())
+

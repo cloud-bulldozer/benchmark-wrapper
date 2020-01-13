@@ -66,11 +66,19 @@ class _trigger_fs_drift:
                     self.sample, json_output_file))
         with open(json_output_file) as f:
             data = json.load(f)
-            data['cluster_name'] = self.cluster_name
-            data['uuid'] = self.uuid
-            data['user'] = self.user
-            data['sample'] = self.sample
-            yield data, '-results'
+            params = data['parameters']
+            timestamp = data['results']['date']
+            threads = data['results']['in-thread']
+            for tid in threads.keys():
+                thrd = threads[tid]
+                thrd['date'] = timestamp
+                thrd['thr-id'] = tid
+                thrd['sample'] = self.sample
+                thrd['cluster_name'] = self.cluster_name
+                thrd['uuid'] = self.uuid
+                thrd['user'] = self.user
+                thrd['params'] = params
+                yield thrd, 'results'
 
         # process response time data
 
@@ -99,13 +107,6 @@ class _trigger_fs_drift:
                         continue
                     flds = l.split(',')
                     interval = {}
-                    interval['cluster_name'] = self.cluster_name
-                    interval['uuid'] = self.uuid
-                    interval['user'] = self.user
-                    interval['sample'] = self.sample
-                    rsptime_date = start_time + int(flds[0])
-                    rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(rsptime_date))
-                    interval['date'] = rsptime_date_str
                     # number of fs-drift file operations in this interval
                     interval['op-count'] = int(flds[2])
                     if interval['op-count'] == 0:
@@ -115,6 +116,13 @@ class _trigger_fs_drift:
                         # FIXME: how do we indicate to grafana that preceding sample
                         # is not continuing into this interval.
                         continue
+                    interval['cluster_name'] = self.cluster_name
+                    interval['uuid'] = self.uuid
+                    interval['user'] = self.user
+                    interval['sample'] = self.sample
+                    rsptime_date = start_time + int(flds[0])
+                    rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(rsptime_date))
+                    interval['date'] = rsptime_date_str
                     # file operations per second in this interval
                     interval['file-ops-per-sec'] = float(flds[2]) / sampling_interval
                     interval['min'] = float(flds[3])
@@ -124,7 +132,7 @@ class _trigger_fs_drift:
                     interval['90%'] = float(flds[8])
                     interval['95%'] = float(flds[9])
                     interval['99%'] = float(flds[10])
-                    yield interval, '-rsptimes'
+                    yield interval, 'rsptimes'
 
         # process counter data
 

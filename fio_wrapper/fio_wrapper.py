@@ -18,6 +18,7 @@ import os
 import argparse
 import configparser
 import logging
+import urllib2
 
 from fio_analyzer import Fio_Analyzer
 import trigger_fio
@@ -49,11 +50,14 @@ class fio_wrapper():
         self.uuid = ""
         self.user = ""
         self.server = ""
+        self.cache_drop_ip = ""
     
         if "uuid" in os.environ:
             self.uuid = os.environ["uuid"]
         if "test_user" in os.environ:
            self.user = os.environ["test_user"]
+        if "ceph_cache_drop_pod_ip" in os.environ:
+           self.cache_drop_ip = os.environ["ceph_cache_drop_pod_ip"]
         # if "pod_details" in os.environ:
         #     hosts_metadata = os.environ["pod_details"]
         self.sample = self.args.sample
@@ -72,6 +76,15 @@ class fio_wrapper():
             sample_dir = self.working_dir + '/' + str(i)
             if not os.path.exists(sample_dir):
                 os.mkdir(sample_dir)
+            if self.cache_drop_ip:
+                try:
+                    drop = urllib2.urlopen("http://{}:9432/drop_osd_caches".format(self.cache_drop_ip)).read()
+                except:
+                    logger.error("Failed HTTP request to Ceph OSD cache drop pod {}".format(self.cache_drop_ip))
+                if "SUCCESS" in drop:
+                    logger.info("Ceph OSD cache successfully dropped")
+                else:
+                    logger.error("Request to drop Ceph OSD cache failed")
             trigger_fio_generator = trigger_fio._trigger_fio(self.fio_job_names,
                                                              self.args.cluster_name,
                                                              sample_dir,

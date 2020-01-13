@@ -132,5 +132,5 @@ class Fio_Analyzer:
                 importdoc['ceph_benchmark_test']['test_data'] = tmp_doc
                 importdoc['cluster_name'] = self.cluster_name
                 #TODO add ID to document
-                index = "-analyzed-result"
+                index = "analyzed-result"
                 yield importdoc, index

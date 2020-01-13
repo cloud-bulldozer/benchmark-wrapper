@@ -23,15 +23,14 @@ import copy
 import base64
 
 def _index_result(index,server,port,payload):
-    index = index
-    es = elasticsearch.Elasticsearch([
-        {'host': server,'port': port }],send_get_body_as='POST')
+    _es_connection_string = str(server) + ':' + str(port)
+    es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
     indexed=True
     processed_count = 0
     total_count = 0
     for result in payload:
         try:
-            es.index(index=index, doc_type="_doc", body=result)
+            es.index(index=index, body=result)
             processed_count += 1
         except Exception as e:
             print(repr(e) + "occurred for the json document:")

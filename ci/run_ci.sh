@@ -21,7 +21,7 @@ echo "" >> results.markdown
 echo 'Test | Result | Runtime' >> results.markdown
 echo '-----|--------|--------' >> results.markdown
 
-diff_list=`git diff master --name-only`
+diff_list=`git diff origin/master --name-only`
 
 # Run a full test if:
 # - anything in . has been changed (ie run_snafu.py)

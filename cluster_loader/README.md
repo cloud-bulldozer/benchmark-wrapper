@@ -47,4 +47,6 @@ Note: additional arguments that can be passed are:
 
 `--cl-output` description=print the cl output to console ( helps with CI ) defaults to False if not provided
 
+`--invocation` description=control using serial or parallel invocation defaults to serial if not provided
+
 The output of the run will be in `curr_dir/<sample_number>/cl_output.txt` so you can also see what's happening by tailing the file even if `--cl-output` flag is set to false.

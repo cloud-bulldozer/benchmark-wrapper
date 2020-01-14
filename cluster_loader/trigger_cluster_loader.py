@@ -14,7 +14,7 @@ class _trigger_cluster_loader:
     """
         Will execute with the provided arguments and return normalized results for indexing
     """
-    def __init__(self, logger, cluster_name, result_dir, user, uuid, sample, path_binary, test_name, console_cl_output):
+    def __init__(self, logger, cluster_name, result_dir, user, uuid, sample, path_binary, test_name, invocation, console_cl_output):
         self.logger = logger
         self.result_dir = result_dir
         self.user = user
@@ -24,6 +24,7 @@ class _trigger_cluster_loader:
         self.path_binary = path_binary
         self.test_name = test_name
         self.console_cl_output = console_cl_output
+        self.invocation = invocation
 
     def emit_actions(self):
         """
@@ -32,8 +33,16 @@ class _trigger_cluster_loader:
         execution_output_file = os.path.join(self.result_dir, 'cl_output.txt')
         file_stdout = open(execution_output_file, "w")
         cmd = [str(self.path_binary),
-               'run-test',
-               '"[Feature:Performance][Serial][Slow] Load cluster should load the cluster [Suite:openshift]"']
+               'run-test']
+        if self.invocation == 'serial':
+            self.logger.info('Invoking the serial cluster loader')
+            cmd.append('"[Feature:Performance][Serial][Slow] Load cluster should load the cluster [Suite:openshift]"')
+        elif self.invocation == 'parallel':
+            self.logger.info('Invoking the parallel cluster loader')
+            cmd.append('"[Feature:Performance][Serial][Slow] Load cluster concurrently with templates [Suite:openshift]"')
+        else:
+            self.logger.error("Unknown option for invocation choose between parallel or serial")
+            exit(1)
         command_string = ""
         for _string in cmd:
             command_string =  command_string + ' ' + _string

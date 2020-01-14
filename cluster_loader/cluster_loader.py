@@ -35,6 +35,12 @@ class cluster_loader_wrapper():
             help='absolute path to openshift-tests binary',
             default='/root/go/src/github.com/openshift/origin/_output/local/bin/linux/amd64/openshift-tests')
         parser.add_argument(
+            '--invocation',
+            help='control using serial or parallel invocation',
+            type=str,
+            choices=['serial','parallel'],
+            default='serial')
+        parser.add_argument(
             '--cl-output',
             help='print the cl output to console ( helps with CI )',
             type=bool)
@@ -60,6 +66,7 @@ class cluster_loader_wrapper():
         self.result_dir = self.args.dir
         self.path_binary = self.args.path_binary
         self.test_name = self.args.test_name
+        self.invocation = self.args.invocation
         if self.args.cl_output is not None:
             self.console_cl_output = True
         else:
@@ -73,5 +80,5 @@ class cluster_loader_wrapper():
             if not os.path.exists(sample_dir):
                 os.mkdir(sample_dir)
             trigger_generator = trigger_cluster_loader._trigger_cluster_loader(
-                    logger, self.cluster_name, sample_dir, self.user, self.uuid, s, self.path_binary, self.test_name, self.console_cl_output)
+                    logger, self.cluster_name, sample_dir, self.user, self.uuid, s, self.path_binary, self.test_name, self.invocation, self.console_cl_output)
             yield trigger_generator

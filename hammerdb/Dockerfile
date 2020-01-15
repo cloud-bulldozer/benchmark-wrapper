@@ -24,12 +24,12 @@ RUN mkdir /hammer
 RUN chmod 755 hammer_installer
 RUN ./hammer_installer --prefix /hammer --mode silent
 
-COPY createdb.tcl /hammer
-COPY run_test.tcl /hammer
-COPY uid_entrypoint /usr/local/bin/
-COPY script.exp /hammer
-COPY test.exp /hammer
-COPY entrypoint /usr/local/bin/
+COPY hammerdb/createdb.tcl /hammer
+COPY hammerdb/run_test.tcl /hammer
+COPY hammerdb/uid_entrypoint /usr/local/bin/
+COPY hammerdb/script.exp /hammer
+COPY hammerdb/test.exp /hammer
+COPY hammerdb/entrypoint /usr/local/bin/
 
 RUN chmod g+w /etc/passwd
 RUN chmod 755 /hammer/script.exp

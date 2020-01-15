@@ -6,6 +6,8 @@ import json
 import subprocess
 import logging
 import shutil
+import socket
+from vfs_stat import get_vfs_stat_dict
 
 class SmallfileWrapperException(Exception):
     pass
@@ -24,6 +26,7 @@ class _trigger_smallfile:
         self.uuid = uuid
         self.sample = sample
         self.cluster_name = cluster_name
+        self.host = socket.gethostname()
 
     def ensure_dir_exists(self, directory):
         if not os.path.exists(directory):
@@ -67,17 +70,32 @@ class _trigger_smallfile:
                     'smallfile_cli.py non-zero process return code %d' % e.returncode)
             self.logger.info("completed sample {} for operation {} , results in {}".format(
                         self.sample, operation, json_output_file))
+            if operation == 'cleanup':
+                continue  # skip reporting data
+
+            fsdict = get_vfs_stat_dict(self.working_dir)
+
             with open(json_output_file) as f:
                 data = json.load(f)
-                data['cluster_name'] = self.cluster_name
-                data['uuid'] = self.uuid
-                data['user'] = self.user
-                data['sample'] = self.sample
-                yield data, '-results'
+                timestamp = data['results']['date']
+                params = data['params']
+                for tid in data['results']['in-thread'].keys():
+                    thrd = data['results']['in-thread'][tid]
+                    thrd['params'] = params
+                    thrd['fsinfo'] = fsdict
+                    thrd['cluster_name'] = self.cluster_name
+                    thrd['uuid'] = self.uuid
+                    thrd['user'] = self.user
+                    thrd['sample'] = self.sample
+                    thrd['optype'] = operation
+                    thrd['host'] = self.host
+                    thrd['tid'] = tid
+                    thrd['date'] = timestamp
+                    yield thrd, 'results'
 
             # process response time data
 
-            elapsed_time = float(data['results']['elapsed-time'])
+            elapsed_time = float(data['results']['elapsed'])
             start_time = data['results']['start-time']
             cmd = ["smallfile_rsptimes_stats.py",
                     "--time-interval", str(max(int(elapsed_time/120.0), 1)),
@@ -104,22 +122,25 @@ class _trigger_smallfile:
                             continue
                         flds = l.split(',')
                         interval = {}
-                        rsptime_date = int(flds[0])
-                        rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(rsptime_date))
-                        interval['cluster_name'] = self.cluster_name
-                        interval['uuid'] = self.uuid
-                        interval['user'] = self.user
-                        interval['sample'] = self.sample
-                        interval['date'] = rsptime_date_str
                         interval['iops'] = int(flds[2])
-                        interval['min'] = float(flds[3])
-                        interval['max'] = float(flds[4])
-                        interval['mean'] = float(flds[5])
-                        interval['50%'] = float(flds[7])
-                        interval['90%'] = float(flds[8])
-                        interval['95%'] = float(flds[9])
-                        interval['99%'] = float(flds[10])
-                        yield interval, '-rsptimes'
+                        if interval['iops'] > 0.0:
+                            rsptime_date = int(flds[0])
+                            rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(rsptime_date))
+                            interval['cluster_name'] = self.cluster_name
+                            interval['uuid'] = self.uuid
+                            interval['user'] = self.user
+                            interval['sample'] = self.sample
+                            interval['optype'] = operation
+                            interval['host'] = self.host
+                            interval['date'] = rsptime_date_str
+                            interval['min'] = float(flds[3])
+                            interval['max'] = float(flds[4])
+                            interval['mean'] = float(flds[5])
+                            interval['50%'] = float(flds[7])
+                            interval['90%'] = float(flds[8])
+                            interval['95%'] = float(flds[9])
+                            interval['99%'] = float(flds[10])
+                            yield interval, 'rsptimes'
 
         # clean up anything created by smallfile so that the next sample will work
         # this is brutally inefficient, best way to clean up is to 

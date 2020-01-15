@@ -35,26 +35,39 @@ es_log.setLevel(logging.CRITICAL)
 urllib3_log = logging.getLogger("urllib3")
 urllib3_log.setLevel(logging.CRITICAL)
 
-setup_loggers("snafu", logging.DEBUG)
 
 def main():
 
     #collect arguments
     parser = argparse.ArgumentParser(description="run script")
     parser.add_argument(
-        '-t', '--tool', action='store', dest='tool', help='Provide tool name')
+        '-v', '--verbose', action='store_const', dest='loglevel', const=logging.DEBUG, default=logging.INFO, help='enables verbose wrapper debugging info')
+    parser.add_argument(
+        '-t', '--tool', help='Provide tool name')
     index_args, unknown = parser.parse_known_args()
     index_args.index_results = False
     index_args.prefix = "snafu-%s" % index_args.tool
+
+    setup_loggers("snafu", index_args.loglevel)
+    log_level_str = 'DEBUG' if index_args.loglevel == logging.DEBUG else 'INFO'
+    logger.info("logging level is %s" % log_level_str)
+
     # set up a standard format for time
     FMT = '%Y-%m-%dT%H:%M:%SGMT'
 
     #instantiate elasticsearch instance and check connection
     es={}
     if "es" in os.environ:
-        es['server'] = os.environ["es"]
-        es['port'] = os.environ["es_port"]
-        index_args.prefix = os.environ["es_index"]
+        if os.environ["es"] != "":
+            es['server'] = os.environ["es"]
+            logger.info("Using elasticsearch server with host:" + str(es['server']))
+        if os.environ["es_port"] != "":
+            es['port'] = os.environ["es_port"]
+            logger.info("Using elasticsearch server with port:" + str(es['port']))
+    if len(es.keys()) == 2:
+        if os.environ["es_index"] != "":
+            index_args.prefix = os.environ["es_index"]
+            logger.info("Using index prefix for ES:" + str(index_args.prefix))
         index_args.index_results = True
         try:
             _es_connection_string = str(es['server']) + ':' + str(es['port'])
@@ -102,13 +115,13 @@ def process_generator(index_args, parser):
         for data_object in wrapper_object.run():
             for action, index in data_object.emit_actions():
 
-                es_index = index_args.prefix + index
+                es_index = index_args.prefix + '-' + index
                 es_valid_document = { "_index": es_index,
                                       "_op_type": "create",
                                       "_source": action,
                                       "_id": "" }
                 es_valid_document["_id"] = hashlib.md5(str(action).encode()).hexdigest()
-                #logger.debug(json.dumps(es_valid_document, indent=4))
+                logger.debug(json.dumps(es_valid_document, indent=4))
                 yield es_valid_document
 
 def generate_wrapper_object(index_args, parser):

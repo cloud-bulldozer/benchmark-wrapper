@@ -170,6 +170,8 @@ def main():
     if es_server != "" :
         if len(documents) > 0 :
             _index_result("ripsaw-hammerdb-results", es_server, es_port, documents)
+        else: 
+            raise Exception("Failed to produce hammerdb results document")
     if len(documents) > 0 :
         _summarize_data(documents)
 

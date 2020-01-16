@@ -1,4 +1,4 @@
-FROM ubi8:latest
+FROM registry.access.redhat.com/ubi8:latest
 
 RUN dnf copr enable ndokos/pbench -y
 COPY image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo

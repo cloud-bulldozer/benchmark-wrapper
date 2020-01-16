@@ -1,4 +1,4 @@
-FROM ubi8:latest
+FROM registry.access.redhat.com/ubi8:latest
 
 RUN dnf install --nodocs -y git python3-pip python3-numpy python3-requests python3-scipy
 RUN pip3 install --upgrade-strategy=only-if-needed "elasticsearch>=6.0.0,<=7.0.2" redis pyyaml

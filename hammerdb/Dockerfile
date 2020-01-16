@@ -1,4 +1,4 @@
-FROM ubi8:latest
+FROM registry.access.redhat.com/ubi8:latest
 
 # install requirements
 RUN dnf install --nodocs -y tcl unixODBC python3-pip python3-requests

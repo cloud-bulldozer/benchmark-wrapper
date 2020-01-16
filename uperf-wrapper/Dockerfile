@@ -1,4 +1,4 @@
-FROM ubi8:latest
+FROM registry.access.redhat.com/ubi8:latest
 
 RUN dnf copr enable ndokos/pbench -y
 RUN dnf install -y --nodocs git python3-pip python3-numpy python3-requests python3-numpy pbench-uperf

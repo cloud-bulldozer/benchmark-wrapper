@@ -43,7 +43,7 @@ test_rc=0
 
 for dir in `echo $test_list`
 do
-  my_dir=${dir::-1}
+  my_dir=${dir}
   if [ -f $my_dir/ci_test.sh ]; then
     start_time=`date`
     figlet "CI test for "$my_dir

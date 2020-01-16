@@ -10,7 +10,7 @@ kubectl create namespace my-ripsaw
 
 # Clone ripsaw so we can use it for testing
 rm -rf ripsaw
-git clone https://github.com/cloud-bulldozer/ripsaw.git
+git clone https://github.com/cloud-bulldozer/ripsaw.git --depth 1
 
 if [[ $ghprbPullLongDescription = *"Depends-On:"* ]]; then
   ripsaw_change_id="$(echo $ghprbPullLongDescription | sed -n -e 's/^.*Depends-On: //p')"
@@ -23,10 +23,12 @@ fi
 
 
 # Prep results.markdown file
-echo "Results for SNAFU CI Test" > results.markdown
-echo "" >> results.markdown
-echo 'Test | Result | Runtime' >> results.markdown
-echo '-----|--------|--------' >> results.markdown
+cat > results.markdown << EOF
+Results for SNAFU CI Test
+
+Test | Result | Runtime
+-----|--------|--------
+EOF
 
 diff_list=`git diff origin/master --name-only`
 
@@ -35,38 +37,31 @@ diff_list=`git diff origin/master --name-only`
 # - anything in ci has been changed
 # - anything in utils has been changed
 # Else only run tests on directories that have changed
-if [[ `echo $diff_list | grep -v / | wc -l` -gt 0 || `echo $diff_list | grep ci/` || `echo $diff_list | grep utils/` ]]
-then
+if [[ `echo ${diff_list} | grep -cv /` -gt 0 || `echo ${diff_list} | grep -E "(ci|utils|image_resources)/"` ]]; then
   echo "Running full test"
-  test_list=`ls -d */ | grep -Ev "(utils|ci|ripsaw|image_resources)/"`
+  test_list=`find * -maxdepth 1 -name ci_test.sh -type f -exec dirname {} \;`
 else
   echo "Running specific tests"
   echo $diff_list
-  test_list=`echo $diff_list | awk -F "/" '{print $1}' | uniq`
+  test_list=`echo "${diff_list}" | awk -F "/" '{print $1}' | uniq`
 fi
 
-echo "Running tests in the following directories: "$test_list
+echo -e "Running tests in the following directories:\n${test_list}"
 test_rc=0
 
-for dir in `echo $test_list`
-do
-  my_dir=${dir}
-  if [ -f $my_dir/ci_test.sh ]; then
-    start_time=`date`
-    figlet "CI test for "$my_dir
-    if $my_dir/ci_test.sh
-    then
-      end_time=`date`
-      duration=`date -ud@$(($(date -ud"$end_time" +%s)-$(date -ud"$start_time" +%s))) +%T`
-      echo ${dir::-1}" | PASS | "$duration >> results.markdown
-    else
-      end_time=`date`
-      duration=`date -ud@$(($(date -ud"$end_time" +%s)-$(date -ud"$start_time" +%s))) +%T`
-      echo ${dir::-1}" | FAIL | "$duration >> results.markdown
-      test_rc=1
-    fi
-    wait_clean
+for dir in ${test_list}; do
+  start_time=`date`
+  figlet "CI test for ${dir}"
+  if $dir/ci_test.sh; then
+    result="PASS"
+  else
+    result="FAIL"
+    test_rc=1
   fi
+  end_time=`date`
+  duration=`date -ud@$(($(date -ud"$end_time" +%s)-$(date -ud"$start_time" +%s))) +%T`
+  echo "${dir} | ${result} | ${duration}" >> results.markdown
+  wait_clean
 done
 
 echo "Summary of CI Test"

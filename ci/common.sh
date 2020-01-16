@@ -23,18 +23,12 @@ function update_operator_image() {
   $SUDO operator-sdk build $image_spec --image-builder $image_builder
 
   # In case we have issues uploading to quay we will retry a few times
-  try_count=0
-  while [ $try_count -le 2 ]
-  do
-    if $SUDO $image_builder push $image_spec
-    then
-      try_count=2
-    elif [[ $try_count -eq 2 ]]
-    then
+  for i in {1..3}; do
+    $SUDO ${image_builder} push ${image_spec} && break
+    if [[ ${i} == 3 ]]; then
       echo "Could not upload image to $image_location. Exiting"
       exit $NOTOK
     fi
-    ((try_count++))
   done
   sed -i \
     "s|          image: $default_operator_image|          image: $image_spec # |" \

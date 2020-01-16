@@ -21,7 +21,7 @@ echo "" >> results.markdown
 echo 'Test | Result | Runtime' >> results.markdown
 echo '-----|--------|--------' >> results.markdown
 
-diff_list=`git diff master --name-only`
+diff_list=`git diff origin/master --name-only`
 
 # Run a full test if:
 # - anything in . has been changed (ie run_snafu.py)
@@ -31,7 +31,7 @@ diff_list=`git diff master --name-only`
 if [[ `echo $diff_list | grep -v / | wc -l` -gt 0 || `echo $diff_list | grep ci/` || `echo $diff_list | grep utils/` ]]
 then
   echo "Running full test"
-  test_list=`ls -d */ | grep -v utils/ | grep -v ci/ | grep -v ripsaw/`
+  test_list=`ls -d */ | grep -Ev "(utils|ci|ripsaw|image_resources)/"`
 else
   echo "Running specific tests"
   echo $diff_list
@@ -43,7 +43,7 @@ test_rc=0
 
 for dir in `echo $test_list`
 do
-  my_dir=${dir::-1}
+  my_dir=${dir}
   if [ -f $my_dir/ci_test.sh ]; then
     start_time=`date`
     figlet "CI test for "$my_dir

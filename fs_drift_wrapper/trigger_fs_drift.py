@@ -75,7 +75,7 @@ class _trigger_fs_drift:
                 thrd['uuid'] = self.uuid
                 thrd['user'] = self.user
                 thrd['params'] = params
-                yield thrd, '-results'
+                yield thrd, 'results'
 
         # process response time data
 
@@ -129,4 +129,4 @@ class _trigger_fs_drift:
                     interval['90%'] = float(flds[8])
                     interval['95%'] = float(flds[9])
                     interval['99%'] = float(flds[10])
-                    yield interval, '-rsptimes'
+                    yield interval, 'rsptimes'

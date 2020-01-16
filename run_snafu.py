@@ -115,7 +115,7 @@ def process_generator(index_args, parser):
         for data_object in wrapper_object.run():
             for action, index in data_object.emit_actions():
 
-                es_index = index_args.prefix + index
+                es_index = index_args.prefix + '-' + index
                 es_valid_document = { "_index": es_index,
                                       "_op_type": "create",
                                       "_source": action,

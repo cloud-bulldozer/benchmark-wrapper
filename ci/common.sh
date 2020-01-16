@@ -102,7 +102,7 @@ function get_uuid() {
 
 # Takes 2 argumentes. $1 is the Dockerfile path and $2 is the image name
 function build_and_push() {
-  if ! $SUDO podman build --tag=${2} -f ${1} . ; then
+  if ! $SUDO podman build --no-cache --tag=${2} -f ${1} . ; then
     echo "Image building error. Exiting"
     exit 1
   fi

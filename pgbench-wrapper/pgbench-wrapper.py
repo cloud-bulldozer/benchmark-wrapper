@@ -58,7 +58,7 @@ def _json_payload_raw(meta_processed,data):
             "{}".format(line[0]): _num_convert(line[1])
         })
     processed[0].update({
-        "raw_output_b64": str(data['raw_output_b64'])
+        "raw_output_b64": data['raw_output_b64'].decode("utf-8")
     })
     return processed
 
@@ -79,7 +79,7 @@ def _run_pgbench():
     cmd = "pgbench -P 10 --progress-timestamp $pgbench_opts"
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout,stderr = process.communicate()
-    return stdout.strip(), stderr.strip(), process.returncode
+    return stdout.strip().decode("utf-8"), stderr.strip().decode("utf-8"), process.returncode
 
 def _num_convert(value):
     try:
@@ -95,7 +95,7 @@ def _num_convert(value):
 
 
 def _parse_stdout(stdout):
-    raw_output_b64 = base64.b64encode(stdout)
+    raw_output_b64 = base64.b64encode(stdout.encode("utf-8"))
     # pgbench outputs config values and results in either 'key:value'
     # or 'key=value' format. It's a bit inconsistent between versions
     # which information uses which format, and some of the output is
@@ -184,7 +184,8 @@ def main():
     args.cluster_name = "mycluster"
     if "clustername" in os.environ:
         args.cluster_name = os.environ["clustername"]
-    pgb_vers = subprocess.check_output("pgbench --version", shell=True).strip()
+    pgb_vers = subprocess.check_output("pgbench --version",
+            shell=True).strip().decode("utf-8")
     run_start_timestamp = datetime.now()
     sample_start_timestamp = datetime.now()
     index = "ripsaw-pgbench"
@@ -224,17 +225,17 @@ def main():
 
     output = _run_pgbench()
     if output[2] == 1 :
-        print "PGBench failed to execute, trying one more time.."
+        print("PGBench failed to execute, trying one more time..")
         output = _run_pgbench()
         if output[2] == 1:
-            print "PGBench failed to execute a second time, stopping..."
+            print("PGBench failed to execute a second time, stopping...")
             exit(1)
     data = _parse_stdout(output[0])
     progress = _parse_stderr(output[1])
     documents = _json_payload(meta_processed,data)
     documents_raw = _json_payload_raw(meta_processed,data)
     documents_prog = _json_payload_prog(meta_processed,progress,data)
-    print output[0]
+    print(output[0])
     if len(documents) > 0 :
       _summarize_data(data,args.run[0],uuid,database,pgb_vers)
     print("\n")

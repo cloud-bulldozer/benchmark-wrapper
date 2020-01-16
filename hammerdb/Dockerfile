@@ -16,7 +16,9 @@ RUN pip install "elasticsearch>=6.0.0,<=7.0.2"
 
 # clone the snafu repo 
 #RUN cd /opt/; git clone https://github.com/mkarg75/snafu.git
-RUN cd /opt/; git clone https://github.com/cloud-bulldozer/snafu.git
+#RUN cd /opt/; git clone https://github.com/cloud-bulldozer/snafu.git
+RUN mkdir -p /opt/snafu
+COPY . /opt/snafu/
 
 # Download and install the hammer suite
 RUN wget 'https://downloads.sourceforge.net/project/hammerdb/HammerDB/HammerDB-3.2/HammerDB-3.2-Linux-x86-64-Install?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fhammerdb%2Ffiles%2FHammerDB%2FHammerDB-3.2%2FHammerDB-3.2-Linux-x86-64-Install%2Fdownload&ts=1564587940&use_mirror=autoselect' -O hammer_installer

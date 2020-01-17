@@ -18,10 +18,10 @@ import os
 import argparse
 import configparser
 import logging
-import urllib2
+import requests
 
-from fio_analyzer import Fio_Analyzer
-import trigger_fio
+from fio_wrapper.fio_analyzer import Fio_Analyzer
+from fio_wrapper import trigger_fio
 
 logger = logging.getLogger("snafu")
 
@@ -78,7 +78,7 @@ class fio_wrapper():
                 os.mkdir(sample_dir)
             if self.cache_drop_ip:
                 try:
-                    drop = urllib2.urlopen("http://{}:9432/drop_osd_caches".format(self.cache_drop_ip)).read()
+                    drop = requests.get("http://{}:9432/drop_osd_caches".format(self.cache_drop_ip)).text
                 except:
                     logger.error("Failed HTTP request to Ceph OSD cache drop pod {}".format(self.cache_drop_ip))
                 if "SUCCESS" in drop:

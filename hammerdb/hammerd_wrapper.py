@@ -13,7 +13,7 @@ def _run_hammerdb():
     cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload.tcl"
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     stdout,stderr = process.communicate()
-    return stdout.strip(), process.returncode
+    return stdout.strip().decode("utf-8"), process.returncode
 
 def _fake_run():
     with open("hammerdb.log", "r") as input:

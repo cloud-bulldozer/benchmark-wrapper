@@ -10,7 +10,7 @@ import argparse
 import configparser
 import logging
 
-import trigger_cluster_loader
+from cluster_loader import trigger_cluster_loader
 
 logger = logging.getLogger("snafu")
 

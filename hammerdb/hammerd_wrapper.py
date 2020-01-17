@@ -123,6 +123,9 @@ def main():
     iteration = "" 
     test_type = ""
     timestamp = ""
+    db_tcp = ""
+    timed_test = ""
+    
 
     if "es_server" in os.environ:
         es_server = os.environ["es_server"]

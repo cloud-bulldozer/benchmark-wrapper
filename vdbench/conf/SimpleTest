@@ -1,0 +1,5 @@
+fsd=fsd1,anchor=/mnt/pvc/dir1,depth=1,width=1,files=10,size=5M
+
+fwd=fwd1,fsd=fsd1,operation=read,xfersize=4k,fileio=random,fileselect=random,threads=8
+
+rd=rd1,fwd=fwd*,fwdrate=max,format=yes,elapsed=10,interval=1

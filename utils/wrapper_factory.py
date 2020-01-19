@@ -6,12 +6,14 @@ from smallfile_wrapper.smallfile_wrapper import smallfile_wrapper
 #from uperf_wrapper.uperf_wrapper import uperf_wrapper
 from fs_drift_wrapper.fs_drift_wrapper import fs_drift_wrapper
 from cluster_loader.cluster_loader import cluster_loader_wrapper
+from vdbench_wrapper.vdbench_wrapper import vdbench_wrapper
 
 import logging
 logger = logging.getLogger("snafu")
 
 wrapper_dict = {
     "fio": fio_wrapper,
+    "vdbench": vdbench_wrapper,
     "smallfile": smallfile_wrapper,
     "fs-drift": fs_drift_wrapper,
     "cl": cluster_loader_wrapper

@@ -59,7 +59,7 @@ def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers,
 
 def _summarize_data(data):
     for i in range(0,len(data)):
-        entry = data[0]
+        entry = data[i]
 
         print("+{} HammerDB Results {}+".format("-"*(50), "-"*(50)))
         print("HammerDB setup")

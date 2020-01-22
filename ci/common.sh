@@ -41,16 +41,6 @@ function update_operator_image() {
     resources/operator.yaml
 }
 
-function build_wrapper_image() {
-  image_spec=$1
-  wrapper_dir=$2
-  if [ "$image_builder" = "docker" ] ; then
-    docker build --tag=$image_spec -f $wrapper_dir/Dockerfile . && docker push $image_spec
-  elif [ "$image_builder" = "podman" ] ; then
-    $SUDO buildah bud --tag $image_spec -f $wrapper_dir/Dockerfile . && $SUDO podman push $image_spec
-  fi
-}
-
 function wait_clean {
   kubectl delete all --all -n my-ripsaw
   for i in {1..30}; do

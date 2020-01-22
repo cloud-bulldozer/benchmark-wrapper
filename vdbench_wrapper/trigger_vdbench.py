@@ -132,7 +132,7 @@ class _trigger_vdbench:
         return clean_output
 
     def _run_vdbenchd(self):
-        BASE_PATH = '/opt/snafu/vdbench/'
+        BASE_PATH = '/opt/vdbench/'
         cmd = [BASE_PATH, '-f', '-o']
         cmd[0] = BASE_PATH + 'bin/vdbench'
         cmd[1] = '-f ' + self.config_file_path

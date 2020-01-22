@@ -20,7 +20,7 @@ from vdbench_wrapper import trigger_vdbench
 
 logger = logging.getLogger('snafu')
 
-BASE_PATH = '/opt/snafu/vdbench'
+BASE_PATH = '/opt/vdbench'
 
 
 class vdbench_wrapper():

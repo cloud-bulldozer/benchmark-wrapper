@@ -194,7 +194,7 @@ And here is a simple example of a ci_test.sh (they all look very similar):
 source ci/common.sh
 default_image_spec="quay.io/cloud-bulldozer/your_wrapper:master"
 image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/your_wrapper:$SNAFU_IMAGE_TAG
-build_wrapper_image $image_spec your_wrapper
+build_and_push your_wrapper/Dockerfile $image_spec 
 
 cd ripsaw
 sed -i "s#$default_image_spec#$image_spec#" roles/your_wrapper_in_ripsaw/templates/*

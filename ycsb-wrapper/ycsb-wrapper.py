@@ -149,10 +149,9 @@ def main():
     extra = ""
     if not args.extra is None:
         extra = args.extra[0]
-
+    python = "/usr/bin/python2"
     if args.load :
         phase = "load"
-        python = "/usr/bin/python2"
         cmd = "{} /ycsb/bin/ycsb {} {} -s -P /tmp/ycsb/{} {}".format(python, phase,
                                                                         args.driver[0],
                                                                         args.workload[0],

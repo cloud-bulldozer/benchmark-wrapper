@@ -34,59 +34,68 @@ def _parse_stdout(stdout):
 
 def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user, transactions, test_type, runtime, rampup, samples, timed_test, timestamp):
     processed = []
-    for i in range(0,len(data)):
-        processed.append({
-            "workload" : "hammerdb",
-            "uuid" : uuid,
-            "db_server" : db_server,
-            "db_port" : db_port,
-            "db_warehouses" : db_warehouses,
-            "db_num_workers" : db_num_workers,
-            "db_tcp": db_tcp,
-            "db_user": db_user,
-            "transactions": transactions,
-            "test_type": test_type,
-            "runtime": runtime,
-            "rampup": rampup,
-            "samples": samples,
-            "timed_test": timed_test,
-            "worker": data[i][0],
-            "tpm": data[i][1],
-            "nopm": data[i][2],
-            "timestamp": timestamp
-            })
+    for current_worker in range(1, int(db_num_workers)):
+        for current_sample in range(1, int(samples)):
+            for i in range(0,len(data)):
+                processed.append({
+                "workload" : "hammerdb",
+                "uuid" : uuid,
+                "db_server" : db_server,
+                "db_port" : db_port,
+                "db_warehouses" : db_warehouses,
+                "db_num_workers" : db_num_workers,
+                "db_tcp": db_tcp,
+                "db_user": db_user,
+                "transactions": transactions,
+                "test_type": test_type,
+                "runtime": runtime,
+                "rampup": rampup,
+                "samples": samples,
+                "current_sample": current_sample,
+                "current_worker": current_worker,
+                "timed_test": timed_test,
+                "worker": data[i][0],
+                "tpm": data[i][1],
+                "nopm": data[i][2],
+                "timestamp": timestamp
+                })
     return processed
 
 def _summarize_data(data):
-    for i in range(0,len(data)):
-        entry = data[i]
-
-        print("+{} HammerDB Results {}+".format("-"*(50), "-"*(50)))
-        print("HammerDB setup")
-        print("")
-        print("HammerDB results for:")
-        print("UUID: {}".format(entry['uuid']))
-        print("Database server: {}".format(entry['db_server']))
-        print("Database port: {}".format(entry['db_port']))
-        print("Number of database warehouses: {}".format(entry['db_warehouses']))
-        print("Number of workers: {}".format(entry['db_num_workers']))
-        print("TCP connection to the DB: {}".format(entry['db_tcp']))
-        print("Database user: {}".format(entry['db_user']))
-        print("Transactions: {}".format(entry['transactions']))
-        print("Test type: {}".format(entry['test_type']))
-        print("Runtime: {}".format(entry['runtime']))
-        print("Rampup time: {}".format(entry['rampup']))
-        print("Worker: {}".format(entry['worker']))
-        print("Samples: {}".format(entry['samples']))
-        print("Timed test: {}".format(entry['timed_test']))
-        print("HammerDB results (TPM):")
-        print("""
-              TPM: {}""".format(entry['tpm']))
-        print("HammerDB results (NOPM):")
-        print("""
-              NOPM: {}""".format(entry['nopm']))
-        print("Timestamp: {}".format(entry['timestamp']))
-        print("+{}+".format("-"*(115)))
+    max_workers = int(data[0]['db_num_workers'])
+    max_samples = int(data[0]['samples'])
+    for current_worker in range(1,max_workers):
+        for current_sample in range(1,max_samples):
+            for i in range(0,len(data)):
+                entry = data[i]
+    
+                print("+{} HammerDB Results {}+".format("-"*(50), "-"*(50)))
+                print("HammerDB setup")
+                print("")
+                print("HammerDB results for:")
+                print("UUID: {}".format(entry['uuid']))
+                print("Database server: {}".format(entry['db_server']))
+                print("Database port: {}".format(entry['db_port']))
+                print("Number of database warehouses: {}".format(entry['db_warehouses']))
+                print("Number of workers: {}".format(entry['db_num_workers']))
+                print("TCP connection to the DB: {}".format(entry['db_tcp']))
+                print("Database user: {}".format(entry['db_user']))
+                print("Transactions: {}".format(entry['transactions']))
+                print("Test type: {}".format(entry['test_type']))
+                print("Runtime: {}".format(entry['runtime']))
+                print("Rampup time: {}".format(entry['rampup']))
+                print("Worker: {}".format(current_worker))
+                print("Samples: {}".format(entry['samples']))
+                print("Current sample {}".format(current_sample))
+                print("Timed test: {}".format(entry['timed_test']))
+                print("HammerDB results (TPM):")
+                print("""
+                      TPM: {}""".format(entry['tpm']))
+                print("HammerDB results (NOPM):")
+                print("""
+                      NOPM: {}""".format(entry['nopm']))
+                print("Timestamp: {}".format(entry['timestamp']))
+                print("+{}+".format("-"*(115)))
 
 def _index_result(index,es_server,es_port,payload):
     _es_connection_string = str(es_server) + ':' + str(es_port)

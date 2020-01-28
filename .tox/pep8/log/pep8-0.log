@@ -1,0 +1,7 @@
+actionid: pep8
+msg: getenv
+cmdargs: '/usr/bin/python3 -m virtualenv --python /usr/bin/python pep8'
+
+New python executable in /home/asagtani/Desktop/snafu/.tox/pep8/bin/python
+Installing setuptools, pip, wheel...done.
+Running virtualenv with interpreter /usr/bin/python

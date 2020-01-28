@@ -4,18 +4,21 @@ such opinions for creating templates (put_template()) and bulk indexing
 (streaming_bulk).
 """
 
-import sys, os, time, json, errno, logging, math
-
-from random import SystemRandom
+import json
+import logging
+import math
+import time
 from collections import Counter, deque
-from urllib3 import exceptions as ul_excs
+from random import SystemRandom
+
 try:
     from elasticsearch1 import VERSION as es_VERSION, helpers, exceptions as es_excs
+
     _es_logger = "elasticsearch1"
 except ImportError:
     from elasticsearch import VERSION as es_VERSION, helpers, exceptions as es_excs
-    _es_logger = "elasticsearch"
 
+    _es_logger = "elasticsearch"
 
 # Use the random number generator provided by the host OS to calculate our
 # random backoff.
@@ -30,7 +33,7 @@ _op_type = "create"
 # 100,000 minute timeout talking to Elasticsearch; basically we just don't
 # want to timeout waiting for Elasticsearch and then have to retry, as that
 # can add undue burden to the Elasticsearch cluster.
-_request_timeout = 100000*60.0
+_request_timeout = 100000 * 60.0
 
 
 def _tstos(ts=None):
@@ -116,7 +119,7 @@ def streaming_bulk(es, actions):
             assert '_index' in cl_action
             assert _op_type == cl_action['_op_type']
 
-            actions_deque.append((0, cl_action))   # Append to the right side ...
+            actions_deque.append((0, cl_action))  # Append to the right side ...
             yield cl_action
             # if after yielding an action some actions appear on the retry deque
             # start yielding those actions until we drain the retry queue.
@@ -130,7 +133,8 @@ def streaming_bulk(es, actions):
                 while len(actions_retry_deque) > 0:
                     retry_actions.append(actions_retry_deque.popleft())
                 for retry_count, retry_action in retry_actions:
-                    actions_deque.append((retry_count, retry_action))   # Append to the right side ...
+                    actions_deque.append(
+                        (retry_count, retry_action))  # Append to the right side ...
                     yield retry_action
                 # if after yielding all the actions to be retried, some show up
                 # on the retry deque again, we extend our sleep backoff to avoid
@@ -145,10 +149,10 @@ def streaming_bulk(es, actions):
     # Create the generator that closes over the external generator, "actions"
     generator = actions_tracking_closure(actions)
 
-    streaming_bulk_generator = helpers.streaming_bulk(
-            es, generator, raise_on_error=False,
-            raise_on_exception=False, request_timeout=_request_timeout)
-
+    streaming_bulk_generator = helpers.streaming_bulk(es, generator,
+                                                      raise_on_error=False,
+                                                      raise_on_exception=False,
+                                                      request_timeout=_request_timeout)
     for ok, resp_payload in streaming_bulk_generator:
         retry_count, action = actions_deque.popleft()
         try:
@@ -173,15 +177,15 @@ def streaming_bulk(es, actions):
                     successes += 1
             elif status == 400:
                 doc = {
-                        "action": action,
-                        "ok": ok,
-                        "resp": resp,
-                        "retry_count": retry_count,
-                        "timestamp": _tstos(time.time())
-                        }
+                    "action": action,
+                    "ok": ok,
+                    "resp": resp,
+                    "retry_count": retry_count,
+                    "timestamp": _tstos(time.time())
+                }
                 jsonstr = json.dumps(doc, indent=4, sort_keys=True)
                 print(jsonstr)
-                #errorsfp.flush()
+                # errorsfp.flush()
                 failures += 1
             else:
                 # Retry all other errors

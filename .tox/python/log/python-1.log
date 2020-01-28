@@ -1,0 +1,4 @@
+actionid: python
+msg: envreport
+cmdargs: '/home/asagtani/Desktop/snafu/.tox/python/bin/python -m pip freeze'
+

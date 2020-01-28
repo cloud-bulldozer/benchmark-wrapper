@@ -1,20 +1,18 @@
-from copy import deepcopy
-import time
+import json
 import os
-import sys
-import json
-import subprocess
-import logging
-import yaml
 import re
-import json
+import subprocess
+
+import yaml
 
 
 class _trigger_cluster_loader:
     """
         Will execute with the provided arguments and return normalized results for indexing
     """
-    def __init__(self, logger, cluster_name, result_dir, user, uuid, sample, path_binary, test_name, console_cl_output):
+
+    def __init__(self, logger, cluster_name, result_dir, user, uuid, sample, path_binary,
+                 test_name, console_cl_output):
         self.logger = logger
         self.result_dir = result_dir
         self.user = user
@@ -31,15 +29,15 @@ class _trigger_cluster_loader:
         """
         execution_output_file = os.path.join(self.result_dir, 'cl_output.txt')
         file_stdout = open(execution_output_file, "w")
-        cmd = [str(self.path_binary),
-               'run-test',
-               '"[Feature:Performance][Serial][Slow] Load cluster should load the cluster [Suite:openshift]"']
+        cmd = [str(self.path_binary), 'run-test',
+               '"[Feature:Performance][Serial][Slow] Load cluster should load the cluster [Suite:openshift]"'
+               ]
         command_string = ""
         for _string in cmd:
-            command_string =  command_string + ' ' + _string
+            command_string = command_string + ' ' + _string
         self.logger.info('from current directory %s' % os.getcwd())
         try:
-            if bool(self.console_cl_output) == True:
+            if bool(self.console_cl_output) is True:
                 command_string = command_string + ' | tee -a ' + str(execution_output_file)
                 self.logger.info('running:' + str(command_string))
                 process = subprocess.check_call(command_string, shell=True)
@@ -50,7 +48,7 @@ class _trigger_cluster_loader:
             self.logger.exception(e)
             exit(1)
         self.logger.info("completed sample {} , results in {}".format(
-                    self.sample, execution_output_file))
+            self.sample, execution_output_file))
         file_stdout.close()
         with open(str(execution_output_file)) as f:
             output_file_content = f.readlines()
@@ -58,22 +56,24 @@ class _trigger_cluster_loader:
         cl_output_json = list(filter(pattern.match, output_file_content))[0].strip()
         cl_output_dict = json.loads(cl_output_json)
         self.logger.info("cl output is {}".format(
-                    cl_output_json))
+            cl_output_json))
         config_file_location = ""
         if "VIPERCONFIG" in os.environ:
             config_file_location = os.environ["VIPERCONFIG"]
-        if config_file_location is "":
+        if config_file_location == "":
             pattern = re.compile('.*INFO: Using config ')
-            config_file_location = list(filter(pattern.match, output_file_content))[0].strip().split('INFO: Using config ',1)[1].replace('"','')
+            config_file_location = \
+                list(filter(pattern.match, output_file_content))[0].strip().split(
+                    'INFO: Using config ', 1)[1].replace('"', '')
         self.logger.info("config file location is {}".format(
-                    config_file_location))
+            config_file_location))
         with open(config_file_location, 'r') as stream:
             try:
                 config_dict = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
                 print(exc)
         self.logger.info("configuration is {}".format(
-                    config_dict))
+            config_dict))
         output_template = {}
         output_template['config'] = config_dict['ClusterLoader']
         output_template['provider'] = config_dict['provider']

@@ -1,0 +1,11 @@
+actionid: python
+msg: getenv
+cmdargs: '/usr/bin/python3 -m virtualenv --python /usr/bin/python3 python'
+
+Already using interpreter /usr/bin/python3
+Using base prefix '/usr'
+New python executable in /home/asagtani/Desktop/snafu/.tox/python/bin/python3
+Also creating executable in /home/asagtani/Desktop/snafu/.tox/python/bin/python
+Installing setuptools, pip, wheel...done.
+/usr/lib/python3.7/site-packages/virtualenv.py:1055: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+  import imp

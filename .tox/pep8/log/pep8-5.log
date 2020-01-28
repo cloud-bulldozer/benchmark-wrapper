@@ -1,0 +1,5 @@
+actionid: pep8
+msg: envreport
+cmdargs: '/home/asagtani/Desktop/snafu/.tox/pep8/bin/python -m pip freeze'
+
+DEPRECATION: Python 2.7 reached the end of its life on January 1st, 2020. Please upgrade your Python as Python 2.7 is no longer maintained. A future version of pip will drop support for Python 2.7. More details about Python 2 support in pip, can be found at https://pip.pypa.io/en/latest/development/release-process/#python-2-support

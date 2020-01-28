@@ -1,11 +1,9 @@
-from copy import deepcopy
-import time
-import os
-import sys
 import json
+import os
 import subprocess
 import logging
 import re
+import time
 
 regex = 'counters.([0-9]{2}).[0-9,\.,\-,a-z,A-Z]*.json'
 counters_regex_prog = re.compile(regex)
@@ -13,11 +11,14 @@ counters_regex_prog = re.compile(regex)
 class FsDriftWrapperException(Exception):
     pass
 
+
 class _trigger_fs_drift:
     """
         Will execute with the provided arguments and return normalized results for indexing
     """
-    def __init__(self, logger, yaml_input_file, cluster_name, working_dir, result_dir, user, uuid, sample):
+
+    def __init__(self, logger, yaml_input_file, cluster_name, working_dir, result_dir, user,
+                 uuid, sample):
         self.logger = logger
         self.yaml_input_file = yaml_input_file
         self.working_dir = working_dir
@@ -49,11 +50,11 @@ class _trigger_fs_drift:
         json_output_file = os.path.join(self.result_dir, 'fs-drift.json')
         network_shared_dir = os.path.join(self.working_dir, 'network-shared')
         rsptime_file = os.path.join(network_shared_dir, 'stats-rsptimes.csv')
-        cmd = ["fs-drift.py", 
-                "--top", self.working_dir, 
-                "--output-json", json_output_file,
-                "--response-times", "Y",
-                "--input-yaml", self.yaml_input_file ]
+        cmd = ["fs-drift.py",
+               "--top", self.working_dir,
+               "--output-json", json_output_file,
+               "--response-times", "Y",
+               "--input-yaml", self.yaml_input_file]
         self.logger.info('running:' + ' '.join(cmd))
         self.logger.info('from current directory %s' % os.getcwd())
         try:
@@ -63,7 +64,7 @@ class _trigger_fs_drift:
             raise FsDriftWrapperException(
                 'fs-drift.py non-zero process return code %d' % e.returncode)
         self.logger.info("completed sample {} , results in {}".format(
-                    self.sample, json_output_file))
+            self.sample, json_output_file))
         with open(json_output_file) as f:
             data = json.load(f)
             params = data['parameters']
@@ -84,10 +85,10 @@ class _trigger_fs_drift:
 
         elapsed_time = float(data['results']['elapsed'])
         start_time = data['results']['start-time']
-        sampling_interval = max(int(elapsed_time/120.0), 1)
+        sampling_interval = max(int(elapsed_time / 120.0), 1)
         cmd = ["rsptime_stats.py",
-                "--time-interval", str(sampling_interval),
-                rsptime_dir ]
+               "--time-interval", str(sampling_interval),
+               rsptime_dir]
         self.logger.info("process response times with: %s" % ' '.join(cmd))
         try:
             process = subprocess.check_call(cmd, stderr=subprocess.STDOUT)
@@ -95,17 +96,17 @@ class _trigger_fs_drift:
             self.logger.exception(e)
             raise FsDriftWrapperException(
                 'rsptime_stats return code %d' % e.returncode)
-        self.logger.info( "response time result {}".format( rsptime_file))
+        self.logger.info("response time result {}".format(rsptime_file))
         with open(rsptime_file) as rf:
-            lines = [ l.strip() for l in rf.readlines() ]
+            lines = [l.strip() for l in rf.readlines()]
             start_grabbing = False
-            for l in lines:
-                if l.startswith('time-since-start'):
+            for line in lines:
+                if line.startswith('time-since-start'):
                     start_grabbing = True
                 elif start_grabbing:
-                    if l == '':
+                    if line == '':
                         continue
-                    flds = l.split(',')
+                    flds = line.split(',')
                     interval = {}
                     # number of fs-drift file operations in this interval
                     interval['op-count'] = int(flds[2])
@@ -121,7 +122,8 @@ class _trigger_fs_drift:
                     interval['user'] = self.user
                     interval['sample'] = self.sample
                     rsptime_date = start_time + int(flds[0])
-                    rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(rsptime_date))
+                    rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z',
+                                                     time.gmtime(rsptime_date))
                     interval['date'] = rsptime_date_str
                     # file operations per second in this interval
                     interval['file-ops-per-sec'] = float(flds[2]) / sampling_interval

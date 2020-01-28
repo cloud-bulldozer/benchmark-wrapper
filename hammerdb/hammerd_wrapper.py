@@ -59,7 +59,7 @@ def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers,
 
 def _summarize_data(data):
     for i in range(0,len(data)):
-        entry = data[0]
+        entry = data[i]
 
         print("+{} HammerDB Results {}+".format("-"*(50), "-"*(50)))
         print("HammerDB setup")
@@ -170,13 +170,13 @@ def main():
             exit(1)
     data = _parse_stdout(stdout[0])
     documents = _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user, transactions, test_type, runtime, rampup, samples, timed_test, timestamp)
+    if len(documents) > 0 :
+        _summarize_data(documents)
     if es_server != "" :
         if len(documents) > 0 :
             _index_result("ripsaw-hammerdb-results", es_server, es_port, documents)
         else: 
             raise Exception('Failed to produce hammerdb results document')
-    if len(documents) > 0 :
-        _summarize_data(documents)
 
 
 if __name__ == '__main__':

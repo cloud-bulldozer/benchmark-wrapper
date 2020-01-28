@@ -62,6 +62,7 @@ def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers,
     return processed
 
 def _summarize_data(data):
+
     max_workers = int(data[0]['db_num_workers'])
     max_samples = int(data[0]['samples'])
     for current_worker in range(1,max_workers):

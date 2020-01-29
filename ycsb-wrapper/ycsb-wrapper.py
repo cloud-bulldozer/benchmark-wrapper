@@ -23,10 +23,11 @@ import elasticsearch
 
 def _index_result(index, server, port, payload):
     _es_connection_string = str(server) + ':' + str(port)
-    es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
-    for result in payload :
+    es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST')
+    for result in payload:
         print(result)
-        es.index(index=index,body=result)
+        es.index(index=index, body=result)
+
 
 def _run(cmd):
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -155,24 +156,24 @@ def main():
     if args.extra is not None:
         extra = args.extra[0]
     python = "/usr/bin/python2"
-    if args.load :
+    if args.load:
         phase = "load"
         cmd = "{} /ycsb/bin/ycsb {} {} -s -P /tmp/ycsb/{} {}".format(python, phase,
-                                                                        args.driver[0],
-                                                                        args.workload[0],
-                                                                        extra)
+                                                                     args.driver[0],
+                                                                     args.workload[0],
+                                                                     extra)
         stdout, stderr, rc = _run(cmd)
         output = "{}\n{}".format(stdout, stderr)
     else:
         phase = "run"
         cmd = "{} /ycsb/bin/ycsb {} {} -s -P /tmp/ycsb/{} {}".format(python, phase,
-                                                                        args.driver[0],
-                                                                        args.workload[0],
-                                                                        extra)
+                                                                     args.driver[0],
+                                                                     args.workload[0],
+                                                                     extra)
         stdout, stderr, rc = _run(cmd)
         output = "{}\n{}".format(stdout, stderr)
 
-    if rc != 0 :
+    if rc != 0:
         print("YCSB failed to execute:\n%s", stderr)
         exit(1)
     if "Error inserting" in stderr:
@@ -181,10 +182,12 @@ def main():
 
     data = _parse_stdout(output)
     print(output)
-    documents,summary = _json_payload(data,args.run[0],uuid,user,phase,workload,args.driver[0],recordcount,operationcount,args.cluster_name)
-    if server != "" :
+    documents, summary = _json_payload(data, args.run[0], uuid, user, phase, workload,
+                                       args.driver[0],
+                                       recordcount, operationcount, args.cluster_name)
+    if server != "":
         print("Attempting to index results...")
-        if len(documents) > 0 :
+        if len(documents) > 0:
             index = "ripsaw-ycsb-results"
             _index_result(index, server, port, documents)
         if len(summary) > 0:

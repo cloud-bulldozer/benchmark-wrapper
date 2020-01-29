@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+set -xeEo pipefail
 
 source ci/common.sh
 

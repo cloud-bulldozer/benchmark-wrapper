@@ -36,7 +36,7 @@ class vdbench_wrapper():
             help='path to output files',
             default=BASE_PATH+'/outputs')
         parser.add_argument(
-            '-s', '--sample',
+            '-s', '--samples',
             help='number of times to run benchmark, defaults to 1',
             type=int,
             default=1)
@@ -65,7 +65,7 @@ class vdbench_wrapper():
             self.user = os.environ['test_user']
         if 'ceph_cache_drop_pod_ip' in os.environ:
             self.cache_drop_ip = os.environ['ceph_cache_drop_pod_ip']
-        self.sample = self.args.sample
+        self.samples = self.args.samples
         self.output_dir = self.args.output
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
@@ -103,8 +103,8 @@ class vdbench_wrapper():
             execute vdbench for X number of samples,
             yield the trigger_vdbench_generator.
         """
-        for i in range(1, self.sample + 1):
-            sample_dir = self.output_dir + '/' + str(i)
+        for i in range(1, self.samples + 1):
+            samples_dir = self.output_dir + '/' + str(i)
             if self.cache_drop_ip:
                 logger.debug('Going to drop the OSDs cache before test.')
                 self.cache_drop()
@@ -112,7 +112,7 @@ class vdbench_wrapper():
                 logger.info('The OSDs cache did not drop before the test.')
 
             trigger_vdbench_generator = trigger_vdbench._trigger_vdbench(
-                    self.args, sample_dir, self.user, self.uuid, i,
+                    self.args, samples_dir, self.user, self.uuid, i,
             )
             yield trigger_vdbench_generator
 

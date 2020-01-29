@@ -21,7 +21,7 @@ uuid=`cat uuid`
 
 cd ..
 
-index="ripsaw-fs-drift-results"
-
-check_es $uuid $index
-exit $?
+indexes="ripsaw-fs-drift-results ripsaw-fs-drift-rsptimes ripsaw-fs-drift-rates-over-time"
+for i in $indexes ; do
+  check_es $uuid $i || exit 1
+done

@@ -1,14 +1,10 @@
-FROM centos/tools
+FROM registry.access.redhat.com/ubi8:latest
 
-USER root
-RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-RUN yum install -y yum-plugin-copr
-RUN yes | yum copr enable ndokos/pbench
-RUN yum install -y pbench-uperf
-RUN yum install -y redis
-RUN yum install -y git python-pip
-RUN pip install --upgrade pip
-RUN pip install "elasticsearch>=6.0.0,<=7.0.2"
-RUN yum install -y numpy
+RUN dnf copr enable ndokos/pbench -y
+RUN dnf install -y --nodocs git python3-pip python3-numpy python3-requests python3-numpy pbench-uperf
+COPY image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
+RUN dnf install -y --nodocs redis --enablerepo=centos8-appstream
+RUN pip3 install --upgrade-strategy=only-if-needed "elasticsearch>=6.0.0,<=7.0.2" pyyaml
+RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN mkdir -p /opt/snafu/
 COPY . /opt/snafu/

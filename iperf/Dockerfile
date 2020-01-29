@@ -1,5 +1,4 @@
-FROM centos/tools
+FROM registry.access.redhat.com/ubi8:latest
 
-USER root
-RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-RUN yum install -y iperf3
+COPY image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
+RUN dnf install --nodocs -y iperf3 --enablerepo=centos8-appstream

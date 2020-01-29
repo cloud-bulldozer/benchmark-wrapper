@@ -174,7 +174,7 @@ class _trigger_fs_drift:
                         rate_obj['user'] = self.user
                         rate_obj['uuid'] = self.uuid
                         rate_obj['sample'] = self.sample
-                        yield rate_obj, '-rates-over-time'
+                        yield rate_obj, 'rates-over-time'
 
     # assumes that the input dictionaries have same fields
     # and that all fields other than 'elapsed_time' are integer counters

@@ -1,4 +1,3 @@
-
 import statistics
 import time
 
@@ -10,6 +9,7 @@ class Fio_Analyzer:
     this is a static evaluation and future enhancements could evalute results based on
     other properties dynamically.
     """
+
     def __init__(self, uuid, user, cluster_name):
         self.uuid = uuid
         self.user = user
@@ -30,7 +30,6 @@ class Fio_Analyzer:
             fio_result["starttime"] = starttime
             self.fio_processed_results_list.append(fio_result)
 
-
     def calculate_iops_sum(self):
         """
         will loop through all documents and will populate parameter lists and sum
@@ -43,9 +42,12 @@ class Fio_Analyzer:
                 bs = fio_result['document']['global_options']['bs']
                 rw = fio_result['document']['fio']['job options']['rw']
 
-                if sample not in self.sample_list: self.sample_list.append(sample)
-                if rw not in self.operation_list: self.operation_list.append(rw)
-                if bs not in self.io_size_list: self.io_size_list.append(bs)
+                if sample not in self.sample_list:
+                    self.sample_list.append(sample)
+                if rw not in self.operation_list:
+                    self.operation_list.append(rw)
+                if bs not in self.io_size_list:
+                    self.io_size_list.append(bs)
 
         for sample in self.sample_list:
             self.sumdoc[sample] = {}
@@ -71,7 +73,7 @@ class Fio_Analyzer:
 
                 self.sumdoc[sample][rw][bs]['write'] += \
                     int(fio_result['document']['fio']["write"]["iops"])
-                self.sumdoc[sample][rw][bs]['read'] +=\
+                self.sumdoc[sample][rw][bs]['read'] += \
                     int(fio_result['document']['fio']["read"]["iops"])
 
     def emit_actions(self):
@@ -125,16 +127,17 @@ class Fio_Analyzer:
 
                 if calcuate_percent_std_dev:
                     if "read" in oper:
-                        tmp_doc['std-dev-%s' % io_size] =\
-                            round(((statistics.stdev(average_read_result_list) / read_average)
-                                   * 100), 3)
+                        tmp_doc['std-dev-%s' % io_size] = \
+                            round(((statistics.stdev(
+                                average_read_result_list) / read_average) * 100), 3)
                     elif "write" in oper:
                         tmp_doc['std-dev-%s' % io_size] = round(((statistics.stdev
-                            (average_write_result_list) / write_average) * 100), 3)
+                                                                  (average_write_result_list) /
+                                                                  write_average) * 100), 3)
                     elif "randrw" in oper:
-                        tmp_doc['std-dev-%s' % io_size] = round((((statistics.stdev
-                            (average_read_result_list) + statistics.stdev
-                            (average_write_result_list)) / tmp_doc['total-iops']) * 100), 3)
+                        tmp_doc['std-dev-%s' % io_size] = round((((statistics.stdev(
+                            average_read_result_list) + statistics.stdev(
+                            average_write_result_list)) / tmp_doc['total-iops']) * 100), 3)
 
                 importdoc['ceph_benchmark_test']['test_data'] = tmp_doc
                 importdoc['cluster_name'] = self.cluster_name

@@ -83,7 +83,7 @@ class fio_wrapper():
                 try:
                     drop = requests.get(
                         "http://{}:9432/drop_osd_caches".format(self.cache_drop_ip)).text
-                except:
+                except:  # noqa
                     logger.error("Failed HTTP request to Ceph OSD cache drop pod {}".format(
                         self.cache_drop_ip))
                 if "SUCCESS" in drop:

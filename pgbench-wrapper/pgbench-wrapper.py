@@ -93,7 +93,7 @@ def _num_convert(value):
     except ValueError:
         try:
             value = float(value)
-        except:
+        except:  # noqa
             pass
     except TypeError:
         pass
@@ -125,10 +125,10 @@ def _parse_stdout(stdout):
         if line in config:
             config.remove(line)
         if re.search('tps', results[idx][0]):
-            cons = re.findall('.*\((....)uding.*', results[idx][1])
+            cons = re.findall('.*\((....)uding.*', results[idx][1])  # noqa
             if cons:
                 results[idx][0] = 'tps_{}_con_est'.format(cons[0]).strip()
-                results[idx][1] = _num_convert(re.sub(' \(.*', '', results[idx][1]).strip())
+                results[idx][1] = _num_convert(re.sub(' \(.*', '', results[idx][1]).strip())  # noqa
         elif re.search('latency', results[idx][0]):
             results[idx][0] += "_ms"
             results[idx][1] = _num_convert(results[idx][1].split(" ", 1)[0])

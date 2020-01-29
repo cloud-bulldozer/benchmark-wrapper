@@ -52,7 +52,7 @@ class fs_drift_wrapper():
             self.user = os.environ["test_user"]
 
         if not self.args.top:
-            raise SnafuSmfException('must supply directory where you access flies')
+            raise SnafuSmfException('must supply directory where you access flies')  # noqa
         self.samples = self.args.samples
         self.working_dir = self.args.top
         self.result_dir = self.args.dir

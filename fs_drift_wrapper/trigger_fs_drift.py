@@ -91,7 +91,7 @@ class _trigger_fs_drift:
                rsptime_dir]
         self.logger.info("process response times with: %s" % ' '.join(cmd))
         try:
-            process = subprocess.check_call(cmd, stderr=subprocess.STDOUT)
+            process = subprocess.check_call(cmd, stderr=subprocess.STDOUT)  # noqa
         except subprocess.CalledProcessError as e:
             self.logger.exception(e)
             raise FsDriftWrapperException(
@@ -112,7 +112,7 @@ class _trigger_fs_drift:
                     interval['op-count'] = int(flds[2])
                     if interval['op-count'] == 0:
                         self.logger.info(
-                            'no response time data in interval starting at ' + rsptime_date_str)
+                            'no response time data in interval starting at ' + rsptime_date_str)  # noqa
                         # no response time data for this interval
                         # FIXME: how do we indicate to grafana that preceding sample
                         # is not continuing into this interval.

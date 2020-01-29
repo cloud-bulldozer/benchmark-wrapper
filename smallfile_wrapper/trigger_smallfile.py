@@ -104,7 +104,7 @@ class _trigger_smallfile:
                    rsptime_dir]
             self.logger.info("process response times with: %s" % ' '.join(cmd))
             try:
-                process = subprocess.check_call(cmd, stderr=subprocess.STDOUT)
+                process = subprocess.check_call(cmd, stderr=subprocess.STDOUT)  # noqa
             except subprocess.CalledProcessError as e:
                 self.logger.exception(e)
                 raise SmallfileWrapperException(

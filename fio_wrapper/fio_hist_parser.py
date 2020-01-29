@@ -85,7 +85,7 @@ def parse_hist_file(logfn, buckets_per_interval, log_hist_msec):
         tokens = r.split(',')
         try:
             int_tokens = [int(t) for t in tokens]
-        except ValueError as e:
+        except ValueError as e:  # noqa
             raise FioHistoLogExc('non-integer value %s' % exception_suffix(k + 1, logfn))
 
         neg_ints = list(filter(lambda tk: tk < 0, int_tokens))
@@ -245,7 +245,7 @@ def align_histo_log(raw_histogram_log, time_quantum, bucket_count, min_timestamp
         offset_from_min_ts = time_msec - min_timestamp_ms
         qtm_start_ms = min_timestamp_ms + (offset_from_min_ts // time_qtm_ms) * time_qtm_ms
         qtm_end_ms = min_timestamp_ms + (
-                (offset_from_min_ts + time_qtm_ms) // time_qtm_ms) * time_qtm_ms
+            (offset_from_min_ts + time_qtm_ms) // time_qtm_ms) * time_qtm_ms
         qtm_index = offset_from_min_ts // time_qtm_ms
 
         # for each quantum that overlaps this histogram record's time interval
@@ -289,7 +289,7 @@ def add_to_histo_from(target, source):
 # calculate total samples in the histogram buckets
 
 def get_samples(buckets):
-    return reduce(lambda x, y: x + y, buckets)
+    return reduce(lambda x, y: x + y, buckets)  # noqa
 
 
 # compute percentiles
@@ -482,14 +482,14 @@ def compute_percentiles_from_logs(output_csv_file, file_list, fio_version=3, buc
 # end of MAIN PROGRAM
 
 
-##### below are unit tests ##############
+# --------- below are unit tests ------------
 
 if unittest2_imported:
-    import tempfile, shutil
+    import tempfile
+    import shutil
     from os.path import join
 
     should_not_get_here = False
-
 
     class Test(unittest2.TestCase):
         tempdir = None
@@ -537,7 +537,7 @@ if unittest2_imported:
             self.A(time_ms == 5678 and direction == 1 and bsz == 16384 and histo == [5, 6, 7, 8])
 
         def test_b2_parse_empty_log(self):
-            with open(self.fn, 'w') as f:
+            with open(self.fn, 'w') as f:  # noqa
                 pass
             try:
                 (raw_histo_log, _, _) = parse_hist_file(self.fn, 4, None)
@@ -631,12 +631,12 @@ if unittest2_imported:
             # see fio V3 stat.h for why 29 groups and 2^6 buckets/group
             normal_ranges_v3 = time_ranges(29, 64)
             # for v3, bucket time intervals are measured in nanoseconds
-            self.A(len(normal_ranges_v3) == 29 * 64 and normal_ranges_v3[-1][1] == 64 * (
-                    1 << (29 - 1)) / 1000.0)
+            self.A(len(normal_ranges_v3) == 29 * 64 and normal_ranges_v3[-1][1] == 64 *
+                   (1 << (29 - 1)) / 1000.0)
             normal_ranges_v2 = time_ranges(19, 64, fio_version=2)
             # for v2, bucket time intervals are measured in microseconds so we have fewer buckets
-            self.A(len(normal_ranges_v2) == 19 * 64 and normal_ranges_v2[-1][1] == 64 * (
-                    1 << (19 - 1)))
+            self.A(len(normal_ranges_v2) == 19 * 64 and normal_ranges_v2[-1][1] == 64 *
+                   (1 << (19 - 1)))
 
         def test_d1_align_histo_log_1_quantum(self):
             with open(self.fn, 'w') as f:
@@ -698,7 +698,7 @@ if unittest2_imported:
         def is_close(self, buckets, buckets_expected):
             if len(buckets) != len(buckets_expected):
                 return False
-            compare_buckets = lambda k: self.compare_2_floats(buckets[k], buckets_expected[k])
+            compare_buckets = lambda k: self.compare_2_floats(buckets[k], buckets_expected[k])  # noqa
             indices_close = list(filter(compare_buckets, range(0, len(buckets))))
             return len(indices_close) == len(buckets)
 

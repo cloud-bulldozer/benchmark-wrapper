@@ -43,7 +43,7 @@ class _trigger_cluster_loader:
                 process = subprocess.check_call(command_string, shell=True)
             else:
                 self.logger.info('running:' + str(command_string))
-                process = subprocess.check_call(command_string, stdout=file_stdout, shell=True)
+                process = subprocess.check_call(command_string, stdout=file_stdout, shell=True)  # noqa
         except Exception as e:
             self.logger.exception(e)
             exit(1)

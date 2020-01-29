@@ -16,7 +16,7 @@ try:
 
     _es_logger = "elasticsearch1"
 except ImportError:
-    from elasticsearch import VERSION as es_VERSION, helpers, exceptions as es_excs
+    from elasticsearch import VERSION as es_VERSION, helpers, exceptions as es_excs  # noqa
 
     _es_logger = "elasticsearch"
 
@@ -51,7 +51,7 @@ def quiet_loggers():
     A convenience function to quiet the urllib3 and elasticsearch1 loggers.
     """
     logging.getLogger("urllib3").setLevel(logging.FATAL)
-    logging.getLogger(es_logger).setLevel(logging.FATAL)
+    logging.getLogger(es_logger).setLevel(logging.FATAL)  # noqa
 
 
 def put_template(es, name, body):
@@ -73,7 +73,7 @@ def put_template(es, name, body):
     while retry:
         try:
             es.indices.put_template(name=name, body=body)
-        except es_excs.ConnectionError as exc:
+        except es_excs.ConnectionError as exc:  # noqa
             # We retry all connection errors
             time.sleep(_calc_backoff_sleep(backoff))
             backoff += 1
@@ -158,7 +158,7 @@ def streaming_bulk(es, actions):
         try:
             resp = resp_payload[_op_type]
             status = resp['status']
-        except KeyError as e:
+        except KeyError as e:  # noqa
             assert not ok
             # resp is not of expected form
             print(resp)

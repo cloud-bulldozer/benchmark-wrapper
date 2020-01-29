@@ -16,7 +16,7 @@ def run_publisher(redis_host, redis_port, benchmark, pod_count):
             count = r.execute_command(redis_command)[1]
             print(count)
             time.sleep(1)
-        print("All Pods are ready to run.Triggering the run.....\(^_^)/")
+        print("All Pods are ready to run.Triggering the run.....\(^_^)/")  # noqa
         r.publish(benchmark, "run")
         return True
     except Exception as e:

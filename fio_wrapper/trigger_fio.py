@@ -117,14 +117,13 @@ class _trigger_fio:
                         log_file_prefix_string = 'write_lat_log'
                     try:
                         log_file_name = str(job_options[log_file_prefix_string]) + '_' \
-                                        + str(log) + '.' + str(numjob) + '.log.' + str(host)
+                            + str(log) + '.' + str(numjob) + '.log.' + str(host)
                     except KeyError:
                         try:
                             log_file_name = str(fio_jobs_dict['global'][log_file_prefix_string]) \
-                                            + '_' + str(log) + '.' + str(numjob) + '.log.' + str(
-                                host)
+                                + '_' + str(log) + '.' + str(numjob) + '.log.' + str(host)
 
-                        except:
+                        except:  # noqa
                             logger.info("Error setting log_file_name")
                     with open(directory + '/ ' + str(log_file_name), 'r') as log_file:
                         for log_line in log_file:
@@ -276,7 +275,8 @@ class _trigger_fio:
                 logger.error("failed to parse the output file")
                 exit(1)
             logger.info(
-                "fio has successfully finished sample {} executing for jobname {} and results are in the dir {}\n".format(
+                "fio has successfully finished sample {} executing for jobname {} and results "
+                "are in the dir {}\n".format(
                     self.sample, job, job_dir))
 
             with open(fio_output_file) as f:
@@ -300,15 +300,15 @@ class _trigger_fio:
 
             # check to determine if logs can be parsed, if not fail
             try:
-                if self.fio_jobs_dict[job]['filename_format'] != 'f.\$jobnum.\$filenum':
-                    logger.error("filename_format is not 'f.\$jobnum.\$filenum'")
+                if self.fio_jobs_dict[job]['filename_format'] != 'f.\$jobnum.\$filenum':  # noqa
+                    logger.error("filename_format is not 'f.\$jobnum.\$filenum'")  # noqa
                     exit(1)
             except KeyError:
                 try:
-                    if self.fio_jobs_dict['global']['filename_format'] != 'f.\$jobnum.\$filenum':
-                        logger.error("filename_format is not 'f.\$jobnum.\$filenum'")
+                    if self.fio_jobs_dict['global']['filename_format'] != 'f.\$jobnum.\$filenum':  # noqa
+                        logger.error("filename_format is not 'f.\$jobnum.\$filenum'")  # noqa
                         exit(1)
-                except:
+                except:  # noqa
                     logger.error("Error getting filename_format")
 
             # parse all fio log files, return list of normalized log documents
@@ -324,17 +324,15 @@ class _trigger_fio:
                 yield document, index
             if self.histogram_process:
                 try:
-                    processed_histogram_prefix = self.fio_jobs_dict[job]['write_hist_log'] \
-                                                 + '_clat_hist'
+                    processed_histogram_prefix = self.fio_jobs_dict[job]['write_hist_log'] + '_clat_hist'
                 except KeyError:
                     try:
-                        processed_histogram_prefix = self.fio_jobs_dict['global'][
-                                                         'write_hist_log'] + '_clat_hist'
-                    except:
+                        processed_histogram_prefix = self.fio_jobs_dict['global']['write_hist_log'] +\
+                            '_clat_hist'
+                    except:  # noqa
                         logger.error("Error setting processed_histogram_prefix")
-                histogram_output_file = job_dir \
-                                        + '/' + processed_histogram_prefix \
-                                        + '_processed.' + str(self.numjob)
+                histogram_output_file = job_dir + \
+                    '/' + processed_histogram_prefix + '_processed.' + str(self.numjob)
                 self._process_histogram(self.fio_jobs_dict, hosts, job, job_dir,
                                         processed_histogram_prefix, histogram_output_file)
                 histogram_documents = self._histogram_payload(histogram_output_file, self.user,

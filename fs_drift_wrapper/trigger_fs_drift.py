@@ -7,7 +7,7 @@ import subprocess
 import logging
 import re
 
-regex = 'counters.([0-9]{2}).[0-9,\-,a-z,A-Z]*.json'
+regex = 'counters.([0-9]{2}).[0-9,\.,\-,a-z,A-Z]*.json'
 counters_regex_prog = re.compile(regex)
 
 class FsDriftWrapperException(Exception):
@@ -136,8 +136,8 @@ class _trigger_fs_drift:
 
         # process counter data
 
-        previous_obj = None
         for fn in os.listdir(rsptime_dir):
+            previous_obj = None
             if fn.startswith('counters') and fn.endswith('json'):
                 pathnm = os.path.join(rsptime_dir, fn)
                 matched = counters_regex_prog.match(fn)
@@ -145,6 +145,8 @@ class _trigger_fs_drift:
                 with open(pathnm, 'r') as f:
                     records = [ l.strip() for l in f.readlines() ]
                 json_start = 0
+                self.logger.info("process %d records from rates-over-time file %s " % 
+                                (len(records), fn))
                 for k, l in enumerate(records):
                     if l == '{':
                         json_start = k

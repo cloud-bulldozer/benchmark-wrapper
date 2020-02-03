@@ -125,7 +125,7 @@ class _trigger_fio:
 
                         except:  # noqa
                             logger.info("Error setting log_file_name")
-                    with open(directory + '/ ' + str(log_file_name), 'r') as log_file:
+                    with open(directory + '/' + str(log_file_name), 'r') as log_file:
                         for log_line in log_file:
                             log_line_values = str(log_line).split(", ")
                             if len(log_line_values) == 4:

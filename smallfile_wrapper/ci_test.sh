@@ -23,6 +23,6 @@ cd ..
 
 index="ripsaw-smallfile-results ripsaw-smallfile-rsptimes"
 
-check_es $uuid $index
+check_es "${uuid}" "${index}"
 exit $?
 

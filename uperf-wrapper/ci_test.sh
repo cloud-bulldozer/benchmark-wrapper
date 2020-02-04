@@ -23,5 +23,5 @@ cd ..
 
 index="ripsaw-uperf-results"
 
-check_es $uuid $index
+check_es "${uuid}" "${index}"
 exit $?

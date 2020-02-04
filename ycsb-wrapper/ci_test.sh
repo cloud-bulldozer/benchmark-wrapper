@@ -23,5 +23,5 @@ cd ..
 
 index="ripsaw-ycsb-summary"
 
-check_es $uuid $index
+check_es "${uuid}" "${index}"
 exit $?

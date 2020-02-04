@@ -25,5 +25,5 @@ cd ..
 
 index="ripsaw-pgbench-summary"
 
-check_es $uuid $index
+check_es "${uuid}" "${index}"
 exit $?

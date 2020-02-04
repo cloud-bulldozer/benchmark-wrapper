@@ -23,6 +23,6 @@ cd ..
 # Define index
 index="ripsaw-fio-results ripsaw-fio-log ripsaw-fio-analyzed-result"
 
-check_es $uuid $index
+check_es "${uuid}" "${index}"
 exit $?
 

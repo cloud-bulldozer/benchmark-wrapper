@@ -23,5 +23,5 @@ cd ..
 
 index="ripsaw-hammerdb-results"
 
-check_es $uuid $index
+check_es "${uuid}" "${index}"
 exit $?

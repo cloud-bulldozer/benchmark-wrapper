@@ -208,9 +208,9 @@ uuid=`cat uuid`
 
 cd ..
 
-# Define index (there can be more than 1)
+# Define index (there can be more than 1 separated by whitespaces)
 index="ripsaw-your-wrapper-results"
 
-check_es $uuid $index
+check_es "${uuid}" "${index}"
 exit $?
 ```

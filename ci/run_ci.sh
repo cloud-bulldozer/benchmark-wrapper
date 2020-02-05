@@ -12,9 +12,6 @@ kubectl create namespace my-ripsaw
 rm -rf ripsaw
 git clone https://github.com/cloud-bulldozer/ripsaw.git
 
-# Disable metadata collection to save time
-sed -i 's/metadata_collection: true/metadata_collection: false/g' ripsaw/tests/test_crs/*
-
 # Prep results.markdown file
 echo "Results for SNAFU CI Test" > results.markdown
 echo "" >> results.markdown

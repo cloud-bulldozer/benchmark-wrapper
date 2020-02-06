@@ -10,59 +10,60 @@ import argparse
 import configparser
 import logging
 
-from smallfile_wrapper import trigger_smallfile
+from cluster_loader import trigger_cluster_loader
 
 logger = logging.getLogger("snafu")
 
-class smallfile_wrapper():
+class cluster_loader_wrapper():
 
     def __init__(self, parser):
         #collect arguments
-        
+
         # it is assumed that the parser was created using argparse and already knows
         # about the --tool option
         parser.add_argument(
-            '-s', '--samples', 
-            type=int, 
+            '-s', '--samples',
+            type=int,
             help='number of times to run benchmark, defaults to 1',
             default=1)
         parser.add_argument(
-            '-T', '--top',
-            help='directory to access files in')
-        parser.add_argument(
-            '-d', '--dir', 
-            help='output parent directory', 
+            '-d', '--dir',
+            help='output parent directory, defaults to current directory',
             default=os.path.dirname(os.getcwd()))
         parser.add_argument(
-            '-o', '--operations', 
-            help='sequence of smallfile operation types to run',
-            default='create')
+            '-p', '--path-binary',
+            help='absolute path to openshift-tests binary',
+            default='/root/go/src/github.com/openshift/origin/_output/local/bin/linux/amd64/openshift-tests')
         parser.add_argument(
-            '-y', '--yaml-input-file', 
-            help='smallfile parameters passed via YAML input file')
+            '--cl-output',
+            help='print the cl output to console ( helps with CI )',
+            type=bool)
+        parser.add_argument(
+            dest="test_name",
+            help="name of the test",
+            type=str,
+            metavar="test_name")
         self.args = parser.parse_args()
-    
-        self.server = ""
 
         self.cluster_name = "mycluster"
         if "clustername" in os.environ:
             self.cluster_name = os.environ["clustername"]
-    
+
         self.uuid = ""
         if "uuid" in os.environ:
             self.uuid = os.environ["uuid"]
 
         self.user = ""
         if "test_user" in os.environ:
-           self.user = os.environ["test_user"]
-
-        if not self.args.top:
-            raise SnafuSmfException('must supply directory where you access flies')
+            self.user = os.environ["test_user"]
         self.samples = self.args.samples
-        self.working_dir = self.args.top
         self.result_dir = self.args.dir
-        self.yaml_input_file = self.args.yaml_input_file
-        self.operations = self.args.operations
+        self.path_binary = self.args.path_binary
+        self.test_name = self.args.test_name
+        if self.args.cl_output is not None:
+            self.console_cl_output = True
+        else:
+            self.console_cl_output = False
 
     def run(self):
         if not os.path.exists(self.result_dir):
@@ -71,8 +72,6 @@ class smallfile_wrapper():
             sample_dir = self.result_dir + '/' + str(s)
             if not os.path.exists(sample_dir):
                 os.mkdir(sample_dir)
-            trigger_generator = trigger_smallfile._trigger_smallfile( 
-                    logger, self.operations, self.yaml_input_file, self.cluster_name, self.working_dir, sample_dir, self.user, self.uuid, s)
+            trigger_generator = trigger_cluster_loader._trigger_cluster_loader(
+                    logger, self.cluster_name, sample_dir, self.user, self.uuid, s, self.path_binary, self.test_name, self.console_cl_output)
             yield trigger_generator
-    
- 

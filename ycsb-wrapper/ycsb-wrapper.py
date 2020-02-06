@@ -24,13 +24,13 @@ def _index_result(index,server,port,payload):
     _es_connection_string = str(server) + ':' + str(port)
     es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
     for result in payload :
-        print result
+        print(result)
         es.index(index=index,body=result)
 
 def _run(cmd):
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout,stderr = process.communicate()
-    return [ stdout.strip(), stderr.strip(), process.returncode]
+    stdout, stderr = process.communicate()
+    return stdout.strip().decode("utf-8"), stderr.strip().decode("utf-8"), process.returncode
 
 def _json_payload(data,iteration,uuid,user,phase,workload,driver,recordcount,operationcount,clustername):
     processed = []
@@ -149,36 +149,36 @@ def main():
     extra = ""
     if not args.extra is None:
         extra = args.extra[0]
-
+    python = "/usr/bin/python2"
     if args.load :
         phase = "load"
-        cmd = "/ycsb/bin/ycsb {} {} -s -P /tmp/ycsb/{} {}".format(phase,
+        cmd = "{} /ycsb/bin/ycsb {} {} -s -P /tmp/ycsb/{} {}".format(python, phase,
                                                                         args.driver[0],
                                                                         args.workload[0],
                                                                         extra)
-        stdout = _run(cmd)
-        output = "{}\n{}".format(stdout[0],stdout[1])
+        stdout, stderr, rc = _run(cmd)
+        output = "{}\n{}".format(stdout, stderr)
     else:
         phase = "run"
-        cmd = "/ycsb/bin/ycsb {} {} -s -P /tmp/ycsb/{} {}".format(phase,
+        cmd = "{} /ycsb/bin/ycsb {} {} -s -P /tmp/ycsb/{} {}".format(python, phase,
                                                                         args.driver[0],
                                                                         args.workload[0],
                                                                         extra)
-        stdout = _run(cmd)
-        output = "{}\n{}".format(stdout[0],stdout[1])
+        stdout, stderr, rc = _run(cmd)
+        output = "{}\n{}".format(stdout, stderr)
 
-    if stdout[2] != 0 :
-        print "YCSB failed to execute"
+    if rc != 0 :
+        print("YCSB failed to execute:\n%s", stderr)
         exit(1)
-    if "Error inserting" in stdout[1] :
-        print "YCSB failed to load database... Drop previous YCSB database"
+    if "Error inserting" in stderr:
+        print("YCSB failed to load database... Drop previous YCSB database")
         exit(1)
 
     data = _parse_stdout(output)
-    print output
+    print(output)
     documents,summary = _json_payload(data,args.run[0],uuid,user,phase,workload,args.driver[0],recordcount,operationcount,args.cluster_name)
     if server != "" :
-        print "Attempting to index results..."
+        print("Attempting to index results...")
         if len(documents) > 0 :
             index = "ripsaw-ycsb-results"
             _index_result(index,server,port,documents)

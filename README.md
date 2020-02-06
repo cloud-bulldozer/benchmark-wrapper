@@ -35,10 +35,10 @@ You must supply a "wrapper", which provides these functions:
 * build the container image for your benchmark, with all the packages, python modules, etc. that are required to run it.
 * runs the benchmark and stores the benchmark-specific results to an elasticsearch server
 
-Your ripsaw benchmark will define several environment variables:
+Your ripsaw benchmark will define several environment variables relevant to Elasticsearch:
 * es - hostname of elasticsearch server
 * es_port - port number of elasticsearch server (default 9020)
-* es_index - prefix of index name for your results in elasticsearch (default "ripsaw")
+* es_index - OPTIONAL - default is "snafu-tool" - define the prefix of the ES index name
 
 It will then invoke your wrapper via the command:
 
@@ -84,6 +84,32 @@ server that is viewable with Kibana and Grafana!
 
 Look at some of the other benchmarks for examples of how this works.
 
+## how do I post results to Elasticsearch from my wrapper?
+
+Every snafu benchmark will use Elasticsearch index name of the form **orchestrator-benchmark-doctype**, consisting of the 3
+components:
+
+* orchestrator - software running the benchmark - usually "ripsaw" at this point
+* benchmark - typically the tool name, something like "iperf" or "fio"
+* doctype - type of documents being placed in this index.
+
+If you are using run_snafu.py, construct an elastic search document in the usual way, and then use the python "yield" statement (do not return!) a **document** and **doctype**, where **document** is a python dictionary representing an Elasticsearch document, and **doctype** is the end of the index name.  For example, any ripsaw benchmark will be defining an index name that begins with ripsaw, but your wrapper can create whatever indexes it wants with that prefix.  For example, to create an index named ripsaw-iperf-results, you just do something like this:
+
+- optionally, in roles/your-benchmark/defaults/main.yml, you can override the default if you need to:
+
+```
+es_index: ripsaw-iperf
+```
+
+- in your snafu wrapper, to post a document to Elasticsearch, you **MUST**:
+
+```
+    yield my_doc, 'results'
+```
+
+run_snafu.py concatenates the doctype with the es_index component associated with the benchmark to generate the
+full index name, and posts document **my__doc** to it.
+
 ## how do I integrate snafu wrapper into my ripsaw benchmark?
 
 You just replace the commands to run the workload in your ripsaw benchmark 
@@ -98,19 +124,17 @@ run_snafu.py for access to Elasticsearch:
       spec:
         containers:
           env:
-{% if es_server is defined %}
           - name: uuid
             value: "{{ uuid }}"
           - name: test_user
             value: "{{ test_user }}"
           - name: clustername
             value: "{{ clustername }}"
+{% if elasticsearch.server is defined %}
           - name: es
-            value: "{{ es_server }}"
+            value: "{{ elasticsearch.server }}"
           - name: es_port
-            value: "{{ es_port }}"
-          - name: es_index
-            value: "{{ es_index }}"
+            value: "{{ elasticsearch.port }}"
 {% endif %}
 ```
 
@@ -138,3 +162,55 @@ has an "object-oriented" parser - the only inherited parameter is the --tool par
 run_snafu.py uses the tool parameter to determine which wrapper to invoke, and
 The remaining parameters are defined and parsed by the workload-specific wrapper.
 
+
+## how do I run my snafu wrapper in CI?
+
+add the ci_test.sh script to your wrapper directory - the SNAFU CI (Continuous Integration) test harness 
+will automatically find it and run it.   This assumes that your wrapper supports ripsaw, for now.
+At present, the CI does not test SNAFU on baremetal but this may be added in the future.
+
+every ci_test.sh script makes use of environment variables defined in ci/common.sh :
+
+* RIPSAW_CI_IMAGE_LOCATION - defaults to quay.io
+* RIPSAW_CI_IMAGE_ACCOUNT - defaults to rht_perf_ci
+* SNAFU_IMAGE_TAG (defaults to snafu_ci)
+* SNAFU_IMAGE_BUILDER (defaults to podman, can be set to docker)
+
+You, the wrapper developer, can override these variables to use any container image repository 
+supported by ripsaw (quay.io is at present the only location tested).  
+
+NOTE: at present, you need to force these images to be public images so that minikube can
+load them.    A better method is needed.
+
+In your CI script, ci_test.sh, you can make use of these 2 environment variables:
+
+* SNAFU_IMAGE_TAG (defaults to snafu_ci)
+* SNAFU_WRAPPER_IMAGE_PREFIX - just concatenation of location and account
+
+And here is a simple example of a ci_test.sh (they all look very similar):
+
+```
+#!/bin/bash
+source ci/common.sh
+default_image_spec="quay.io/cloud-bulldozer/your_wrapper:master"
+image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/your_wrapper:$SNAFU_IMAGE_TAG
+build_and_push your_wrapper/Dockerfile $image_spec 
+
+cd ripsaw
+sed -i "s#$default_image_spec#$image_spec#" roles/your_wrapper_in_ripsaw/templates/*
+
+# Build new ripsaw image
+update_operator_image
+
+# run the ripsaw CI for your wrapper in tests/ and get resulting UUID
+get_uuid test_your_wrapper.sh
+uuid=`cat uuid`
+
+cd ..
+
+# Define index (there can be more than 1)
+index="ripsaw-your-wrapper-results"
+
+check_es $uuid $index
+exit $?
+```

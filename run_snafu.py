@@ -58,9 +58,16 @@ def main():
     #instantiate elasticsearch instance and check connection
     es={}
     if "es" in os.environ:
-        es['server'] = os.environ["es"]
-        es['port'] = os.environ["es_port"]
-        index_args.prefix = os.environ["es_index"]
+        if os.environ["es"] != "":
+            es['server'] = os.environ["es"]
+            logger.info("Using elasticsearch server with host:" + str(es['server']))
+        if os.environ["es_port"] != "":
+            es['port'] = os.environ["es_port"]
+            logger.info("Using elasticsearch server with port:" + str(es['port']))
+    if len(es.keys()) == 2:
+        if os.environ["es_index"] != "":
+            index_args.prefix = os.environ["es_index"]
+            logger.info("Using index prefix for ES:" + str(index_args.prefix))
         index_args.index_results = True
         try:
             _es_connection_string = str(es['server']) + ':' + str(es['port'])
@@ -108,7 +115,7 @@ def process_generator(index_args, parser):
         for data_object in wrapper_object.run():
             for action, index in data_object.emit_actions():
 
-                es_index = index_args.prefix + index
+                es_index = index_args.prefix + '-' + index
                 es_valid_document = { "_index": es_index,
                                       "_op_type": "create",
                                       "_source": action,

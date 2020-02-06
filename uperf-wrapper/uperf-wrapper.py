@@ -26,7 +26,7 @@ def _index_result(index,server,port,payload):
     for result in payload:
          es.index(index=index, body=result)
 
-def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,clustername):
+def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,clustername,resource_type,server_node,client_node):
     processed = []
     prev_bytes = 0
     prev_ops = 0
@@ -57,7 +57,10 @@ def _json_payload(data,iteration,uuid,user,hostnetwork,serviceip,remote,client,c
             "norm_byte": int(result[1])-prev_bytes,
             "ops": int(result[2]),
             "norm_ops": norm_ops,
-            "norm_ltcy": norm_ltcy
+            "norm_ltcy": norm_ltcy,
+            "kind": str(resource_type),
+            "client_node": client_node,
+            "server_node": server_node
         })
         prev_timestamp = float(result[0])
         prev_bytes = int(result[1])
@@ -68,12 +71,12 @@ def _run_uperf(workload):
     cmd = "uperf -v -a -x -i 1 -m {}".format(workload)
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     stdout,stderr = process.communicate()
-    return stdout.strip(), process.returncode
+    return stdout.strip().decode("utf-8"), process.returncode
 
 def _parse_stdout(stdout):
     # This will effectivly give us:
     # ripsaw-test-stream-udp-16384
-    config = re.findall(r"running profile:(.*) \.\.\.",stdout)
+    config = re.findall(r"running profile:(.*) \.\.\.", stdout)
     test = re.split("-",config[0])[0]
     protocol = re.split("-",config[0])[1]
     size = re.split("-",config[0])[2]
@@ -81,7 +84,7 @@ def _parse_stdout(stdout):
     # This will yeild us this structure :
     #     timestamp, number of bytes, number of operations
     # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
-    results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)",stdout)
+    results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)", stdout)
     return { "test": test, "protocol": protocol, "message_size": size, "num_threads": nthr, "results" : results }
 
 def _summarize_data(data):
@@ -158,6 +161,8 @@ def _summarize_data(data):
                              np.percentile(ltcy_result, 95)))
     print("+{}+".format("-"*(115)))
 
+
+
 def main():
     parser = argparse.ArgumentParser(description="UPerf Wrapper script")
     parser.add_argument(
@@ -166,6 +171,9 @@ def main():
     parser.add_argument(
         '-r', '--run', nargs=1,
         help='Provide the iteration for the run')
+    parser.add_argument(
+        '--resourcetype', nargs=1,
+        help='Provide the resource type for this uperf run - pod/vm/baremetal')
     args = parser.parse_args()
 
     server = ""
@@ -175,6 +183,8 @@ def main():
     remoteip = ""
     hostnetwork = ""
     serviceip = ""
+    server_node = ""
+    client_node = ""
     args.cluster_name = "mycluster"
     if "clustername" in os.environ:
         args.cluster_name = os.environ["clustername"]
@@ -192,22 +202,27 @@ def main():
         remoteip = os.environ["h"]
     if "ips" in os.environ:
         clientips = os.environ["ips"]
+    if "server_node" in os.environ:
+        server_node = os.environ["server_node"]
+    if "client_node" in os.environ:
+        client_node = os.environ["client_node"]
 
     stdout = _run_uperf(args.workload[0])
     if stdout[1] == 1 :
-        print "UPerf failed to execute, trying one more time.."
+        print("UPerf failed to execute, trying one more time..")
         stdout = _run_uperf(args.workload[0])
         if stdout[1] == 1:
-            print "UPerf failed to execute a second time, stopping..."
+            print("UPerf failed to execute a second time, stopping...")
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips,args.cluster_name)
+    documents = _json_payload(data,args.run[0],uuid,user,hostnetwork,serviceip,remoteip,clientips,args.cluster_name,args.resourcetype[0],server_node,client_node)
     if server != "" :
         if len(documents) > 0 :
             _index_result("ripsaw-uperf-results",server,port,documents)
-    print stdout[0]
+    print(stdout[0])
     if len(documents) > 0 :
       _summarize_data(documents)
 
 if __name__ == '__main__':
     sys.exit(main())
+

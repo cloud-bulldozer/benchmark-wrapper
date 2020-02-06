@@ -215,6 +215,8 @@ check_es $uuid $index
 exit $?
 ```
 
+## Style guide
+Max line length is 110 to avoid linting issues.
 
 ## Running linters on your code
 

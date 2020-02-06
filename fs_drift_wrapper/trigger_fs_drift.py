@@ -1,23 +1,24 @@
-from copy import deepcopy
-import time
-import os
-import sys
 import json
+import os
 import subprocess
-import logging
 import re
+import time
 
-regex = 'counters.([0-9]{2}).[0-9,\.,\-,a-z,A-Z]*.json'
+regex = 'counters.([0-9]{2}).[0-9,\.,\-,a-z,A-Z]*.json' # noqa
 counters_regex_prog = re.compile(regex)
+
 
 class FsDriftWrapperException(Exception):
     pass
+
 
 class _trigger_fs_drift:
     """
         Will execute with the provided arguments and return normalized results for indexing
     """
-    def __init__(self, logger, yaml_input_file, cluster_name, working_dir, result_dir, user, uuid, sample):
+
+    def __init__(self, logger, yaml_input_file, cluster_name, working_dir, result_dir, user,
+                 uuid, sample):
         self.logger = logger
         self.yaml_input_file = yaml_input_file
         self.working_dir = working_dir
@@ -49,11 +50,11 @@ class _trigger_fs_drift:
         json_output_file = os.path.join(self.result_dir, 'fs-drift.json')
         network_shared_dir = os.path.join(self.working_dir, 'network-shared')
         rsptime_file = os.path.join(network_shared_dir, 'stats-rsptimes.csv')
-        cmd = ["fs-drift.py", 
-                "--top", self.working_dir, 
-                "--output-json", json_output_file,
-                "--response-times", "Y",
-                "--input-yaml", self.yaml_input_file ]
+        cmd = ["fs-drift.py",
+               "--top", self.working_dir,
+               "--output-json", json_output_file,
+               "--response-times", "Y",
+               "--input-yaml", self.yaml_input_file]
         self.logger.info('running:' + ' '.join(cmd))
         self.logger.info('from current directory %s' % os.getcwd())
         try:
@@ -63,7 +64,7 @@ class _trigger_fs_drift:
             raise FsDriftWrapperException(
                 'fs-drift.py non-zero process return code %d' % e.returncode)
         self.logger.info("completed sample {} , results in {}".format(
-                    self.sample, json_output_file))
+            self.sample, json_output_file))
         with open(json_output_file) as f:
             data = json.load(f)
             params = data['parameters']
@@ -84,34 +85,34 @@ class _trigger_fs_drift:
 
         elapsed_time = float(data['results']['elapsed'])
         start_time = data['results']['start-time']
-        sampling_interval = max(int(elapsed_time/120.0), 1)
+        sampling_interval = max(int(elapsed_time / 120.0), 1)
         cmd = ["rsptime_stats.py",
-                "--time-interval", str(sampling_interval),
-                rsptime_dir ]
+               "--time-interval", str(sampling_interval),
+               rsptime_dir]
         self.logger.info("process response times with: %s" % ' '.join(cmd))
         try:
-            process = subprocess.check_call(cmd, stderr=subprocess.STDOUT)
+            process = subprocess.check_call(cmd, stderr=subprocess.STDOUT)  # noqa
         except subprocess.CalledProcessError as e:
             self.logger.exception(e)
             raise FsDriftWrapperException(
                 'rsptime_stats return code %d' % e.returncode)
-        self.logger.info( "response time result {}".format( rsptime_file))
+        self.logger.info("response time result {}".format(rsptime_file))
         with open(rsptime_file) as rf:
-            lines = [ l.strip() for l in rf.readlines() ]
+            lines = [l.strip() for l in rf.readlines()]
             start_grabbing = False
-            for l in lines:
-                if l.startswith('time-since-start'):
+            for line in lines:
+                if line.startswith('time-since-start'):
                     start_grabbing = True
                 elif start_grabbing:
-                    if l == '':
+                    if line == '':
                         continue
-                    flds = l.split(',')
+                    flds = line.split(',')
                     interval = {}
                     # number of fs-drift file operations in this interval
                     interval['op-count'] = int(flds[2])
                     if interval['op-count'] == 0:
                         self.logger.info(
-                            'no response time data in interval starting at ' + rsptime_date_str)
+                            'no response time data in interval starting at ' + rsptime_date_str)  # noqa
                         # no response time data for this interval
                         # FIXME: how do we indicate to grafana that preceding sample
                         # is not continuing into this interval.
@@ -121,7 +122,8 @@ class _trigger_fs_drift:
                     interval['user'] = self.user
                     interval['sample'] = self.sample
                     rsptime_date = start_time + int(flds[0])
-                    rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(rsptime_date))
+                    rsptime_date_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z',
+                                                     time.gmtime(rsptime_date))
                     interval['date'] = rsptime_date_str
                     # file operations per second in this interval
                     interval['file-ops-per-sec'] = float(flds[2]) / sampling_interval
@@ -143,21 +145,21 @@ class _trigger_fs_drift:
                 matched = counters_regex_prog.match(fn)
                 thread_id = matched.group(1)
                 with open(pathnm, 'r') as f:
-                    records = [ l.strip() for l in f.readlines() ]
+                    records = [l.strip() for l in f.readlines()]
                 json_start = 0
-                self.logger.info("process %d records from rates-over-time file %s " % 
-                                (len(records), fn))
-                for k, l in enumerate(records):
-                    if l == '{':
-                        json_start = k
-                    if l == '}{' or l == '}':
+                self.logger.info("process %d records from rates-over-time file %s " %
+                                 (len(records), fn))
+                for index, record in enumerate(records):
+                    if record == '{':
+                        json_start = index
+                    if record == '}{' or record == '}':
                         # extract next JSON string from counter logfile
 
-                        json_str = ' '.join(records[json_start:k])
-                        json_str += ' }' 
-                        if l == '}{':
-                            records[k] = '{'
-                        json_start = k
+                        json_str = ' '.join(records[json_start:index])
+                        json_str += ' }'
+                        if record == '}{':
+                            records[index] = '{'
+                        json_start = index
                         json_obj = json.loads(json_str)
                         rate_obj = self.compute_rates(json_obj, previous_obj)
                         previous_obj = json_obj
@@ -166,7 +168,8 @@ class _trigger_fs_drift:
 
                         time_since_test_start = float(rate_obj['elapsed-time'])
                         counter_time = time_since_test_start + start_time
-                        timestamp_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(counter_time))
+                        timestamp_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z',
+                                                      time.gmtime(counter_time))
                         rate_obj['date'] = timestamp_str
 
                         # add other info needed to display data in elastic search
@@ -186,7 +189,7 @@ class _trigger_fs_drift:
 
     def compute_rates(self, current_sample, previous_sample):
         time_since_test_start = float(current_sample['elapsed-time'])
-        if previous_sample != None:
+        if previous_sample is not None:
             previous_time_since_test_start = float(previous_sample['elapsed-time'])
         else:
             previous_time_since_test_start = 0
@@ -196,7 +199,8 @@ class _trigger_fs_drift:
         for k in current_sample.keys():
             if k != 'elapsed-time':
                 if previous_sample:
-                    rate_dict[k] = (int(current_sample[k]) - int(previous_sample[k])) / delta_time
+                    rate_dict[k] = (int(current_sample[k]) - int(
+                        previous_sample[k])) / delta_time
                 else:
                     rate_dict[k] = int(current_sample[k]) / delta_time
             else:

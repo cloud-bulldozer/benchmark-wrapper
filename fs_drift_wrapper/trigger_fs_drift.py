@@ -1,12 +1,12 @@
 import json
 import os
 import subprocess
-import logging
 import re
 import time
 
-regex = 'counters.([0-9]{2}).[0-9,\.,\-,a-z,A-Z]*.json'
+regex = 'counters.([0-9]{2}).[0-9,\.,\-,a-z,A-Z]*.json' # noqa
 counters_regex_prog = re.compile(regex)
+
 
 class FsDriftWrapperException(Exception):
     pass
@@ -145,21 +145,21 @@ class _trigger_fs_drift:
                 matched = counters_regex_prog.match(fn)
                 thread_id = matched.group(1)
                 with open(pathnm, 'r') as f:
-                    records = [ l.strip() for l in f.readlines() ]
+                    records = [l.strip() for l in f.readlines()]
                 json_start = 0
-                self.logger.info("process %d records from rates-over-time file %s " % 
-                                (len(records), fn))
-                for k, l in enumerate(records):
-                    if l == '{':
-                        json_start = k
-                    if l == '}{' or l == '}':
+                self.logger.info("process %d records from rates-over-time file %s " %
+                                 (len(records), fn))
+                for index, record in enumerate(records):
+                    if record == '{':
+                        json_start = index
+                    if record == '}{' or record == '}':
                         # extract next JSON string from counter logfile
 
-                        json_str = ' '.join(records[json_start:k])
-                        json_str += ' }' 
-                        if l == '}{':
-                            records[k] = '{'
-                        json_start = k
+                        json_str = ' '.join(records[json_start:index])
+                        json_str += ' }'
+                        if record == '}{':
+                            records[index] = '{'
+                        json_start = index
                         json_obj = json.loads(json_str)
                         rate_obj = self.compute_rates(json_obj, previous_obj)
                         previous_obj = json_obj
@@ -168,7 +168,8 @@ class _trigger_fs_drift:
 
                         time_since_test_start = float(rate_obj['elapsed-time'])
                         counter_time = time_since_test_start + start_time
-                        timestamp_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(counter_time))
+                        timestamp_str = time.strftime('%Y-%m-%dT%H:%M:%S.000Z',
+                                                      time.gmtime(counter_time))
                         rate_obj['date'] = timestamp_str
 
                         # add other info needed to display data in elastic search
@@ -188,7 +189,7 @@ class _trigger_fs_drift:
 
     def compute_rates(self, current_sample, previous_sample):
         time_since_test_start = float(current_sample['elapsed-time'])
-        if previous_sample != None:
+        if previous_sample is not None:
             previous_time_since_test_start = float(previous_sample['elapsed-time'])
         else:
             previous_time_since_test_start = 0
@@ -198,7 +199,8 @@ class _trigger_fs_drift:
         for k in current_sample.keys():
             if k != 'elapsed-time':
                 if previous_sample:
-                    rate_dict[k] = (int(current_sample[k]) - int(previous_sample[k])) / delta_time
+                    rate_dict[k] = (int(current_sample[k]) - int(
+                        previous_sample[k])) / delta_time
                 else:
                     rate_dict[k] = int(current_sample[k]) / delta_time
             else:

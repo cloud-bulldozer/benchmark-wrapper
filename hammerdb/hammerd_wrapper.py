@@ -1,76 +1,80 @@
 #!/usr/bin/env python
 
-import argparse
-import sys
-import subprocess
 import os
-import re
+import subprocess
+import sys
+import time
+
 import elasticsearch
-import time 
-from datetime import datetime
+
 
 def _run_hammerdb():
     cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload.tcl"
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    stdout,stderr = process.communicate()
+    stdout, stderr = process.communicate()
     return stdout.strip().decode("utf-8"), process.returncode
+
 
 def _fake_run():
     with open("hammerdb.log", "r") as input:
         stdout = input.read()
-    return stdout,0
+    return stdout, 0
+
 
 def _parse_stdout(stdout):
     data = []
-    iteration = 0
     for line in stdout.splitlines():
         if "TEST RESULT" in line:
             worker = (line.split(":"))[0]
             tpm = (line.split(" "))[6]
             nopm = (line.split(" "))[-2]
-            entry = [ worker, tpm, nopm ]
+            entry = [worker, tpm, nopm]
             data.append(entry)
     return data
 
-def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user, transactions, test_type, runtime, rampup, samples, timed_test, timestamp):
+
+def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers,
+                  db_tcp, db_user, transactions, test_type, runtime, rampup,
+                  samples, timed_test, timestamp):
     processed = []
     for current_worker in range(1, int(db_num_workers)):
         for current_sample in range(1, int(samples)):
-            for i in range(0,len(data)):
+            for i in range(0, len(data)):
                 processed.append({
-                "workload" : "hammerdb",
-                "uuid" : uuid,
-                "db_server" : db_server,
-                "db_port" : db_port,
-                "db_warehouses" : db_warehouses,
-                "db_num_workers" : db_num_workers,
-                "db_tcp": db_tcp,
-                "db_user": db_user,
-                "transactions": transactions,
-                "test_type": test_type,
-                "runtime": runtime,
-                "rampup": rampup,
-                "samples": samples,
-                "current_sample": current_sample,
-                "current_worker": current_worker,
-                "timed_test": timed_test,
-                "worker": data[i][0],
-                "tpm": data[i][1],
-                "nopm": data[i][2],
-                "timestamp": timestamp
+                    "workload": "hammerdb",
+                    "uuid": uuid,
+                    "db_server": db_server,
+                    "db_port": db_port,
+                    "db_warehouses": db_warehouses,
+                    "db_num_workers": db_num_workers,
+                    "db_tcp": db_tcp,
+                    "db_user": db_user,
+                    "transactions": transactions,
+                    "test_type": test_type,
+                    "runtime": runtime,
+                    "rampup": rampup,
+                    "samples": samples,
+                    "current_sample": current_sample,
+                    "current_worker": current_worker,
+                    "timed_test": timed_test,
+                    "worker": data[i][0],
+                    "tpm": data[i][1],
+                    "nopm": data[i][2],
+                    "timestamp": timestamp
                 })
+
     return processed
 
-def _summarize_data(data):
 
+def _summarize_data(data):
     max_workers = int(data[0]['db_num_workers'])
     max_samples = int(data[0]['samples'])
-    for current_worker in range(1,max_workers):
-        for current_sample in range(1,max_samples):
-            for i in range(0,len(data)):
+    for current_worker in range(1, max_workers):
+        for current_sample in range(1, max_samples):
+            for i in range(0, len(data)):
                 entry = data[i]
-    
-                print("+{} HammerDB Results {}+".format("-"*(50), "-"*(50)))
+
+                print("+{} HammerDB Results {}+".format("-" * (50), "-" * (50)))
                 print("HammerDB setup")
                 print("")
                 print("HammerDB results for:")
@@ -96,11 +100,12 @@ def _summarize_data(data):
                 print("""
                       NOPM: {}""".format(entry['nopm']))
                 print("Timestamp: {}".format(entry['timestamp']))
-                print("+{}+".format("-"*(115)))
+                print("+{}+".format("-" * (115)))
 
-def _index_result(index,es_server,es_port,payload):
+
+def _index_result(index, es_server, es_port, payload):
     _es_connection_string = str(es_server) + ':' + str(es_port)
-    es = elasticsearch.Elasticsearch([_es_connection_string],send_get_body_as='POST')
+    es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST')
     indexed = True
     processed_count = 0
     total_count = 0
@@ -109,17 +114,16 @@ def _index_result(index,es_server,es_port,payload):
             es.index(index=index, body=result)
             processed_count += 1
         except Exception as e:
-            print (repr(e) + "occured for the json document:")
+            print(repr(e) + "occured for the json document:")
             print(str(result))
             indexed = False
         total_count += 1
     return indexed, processed_count, total_count
 
-def main():
 
+def main():
     es_server = ""
     es_port = ""
-    protocol = ""
     uuid = ""
     db_user = ""
     db_server = ""
@@ -130,13 +134,10 @@ def main():
     runtime = ""
     rampup = ""
     samples = ""
-    iteration = "" 
     test_type = ""
     timestamp = ""
     db_tcp = ""
     timed_test = ""
-    
-
     if "es_server" in os.environ:
         es_server = os.environ["es_server"]
     if "es_port" in os.environ:
@@ -168,24 +169,25 @@ def main():
     if "timed_test" in os.environ:
         timed_test = os.environ["timed_test"]
 
-
     timestamp = str(int(time.time()))
     stdout = _run_hammerdb()
-    #stdout = _fake_run()
+    # stdout = _fake_run()
     if stdout[1] == 1:
-        print ("hammerdbcli failed to execute, trying one more time..")
+        print("hammerdbcli failed to execute, trying one more time..")
         stdout = _run_hammerdb()
         if stdout[1] == 1:
-            print ("hammerdbcli failed to execute a second time, stopping...")
+            print("hammerdbcli failed to execute a second time, stopping...")
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user, transactions, test_type, runtime, rampup, samples, timed_test, timestamp)
-    if len(documents) > 0 :
+    documents = _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers,
+                              db_tcp, db_user, transactions, test_type, runtime, rampup, samples,
+                              timed_test, timestamp)
+    if len(documents) > 0:
         _summarize_data(documents)
-    if es_server != "" :
-        if len(documents) > 0 :
+    if es_server != "":
+        if len(documents) > 0:
             _index_result("ripsaw-hammerdb-results", es_server, es_port, documents)
-        else: 
+        else:
             raise Exception('Failed to produce hammerdb results document')
 
 

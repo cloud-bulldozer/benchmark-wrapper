@@ -1,7 +1,8 @@
 import logging
 import os
 
-has_a_tty = os.isatty(1) # test stdout
+has_a_tty = os.isatty(1)  # test stdout
+
 
 def color_me(color):
     RESET_SEQ = "\033[0m"
@@ -11,6 +12,7 @@ def color_me(color):
 
     def closure(msg):
         return color_seq + msg + RESET_SEQ
+
     return closure
 
 
@@ -64,8 +66,8 @@ def setup_loggers(logger_name, def_level=logging.DEBUG, log_fname=None):
     logger.addHandler(sh)
 
     if log_fname is not None:
-        #add check for existing file with same name if so move old log to .old.
-        #will only preserve a single .old file.
+        # add check for existing file with same name if so move old log to .old.
+        # will only preserve a single .old file.
         if os.path.exist(log_fname):
             backup = "%s.old" % log_fname
             os.rename(log_fname, backup)
@@ -76,6 +78,3 @@ def setup_loggers(logger_name, def_level=logging.DEBUG, log_fname=None):
         logger.addHandler(fh)
     else:
         fh = None
-
-
-        

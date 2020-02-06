@@ -214,3 +214,18 @@ index="ripsaw-your-wrapper-results"
 check_es "${uuid}" "${index}"
 exit $?
 ```
+
+## Style guide
+Max line length is 110 to avoid linting issues.
+
+## Running linters on your code
+
+Before making a PR, make sure to run linters on your code.
+
+Flake8 configurations are written in tox.ini file.
+
+Run ``` flake8 ``` command.
+
+This will show the code quality errors. Fix them before making a PR.
+
+To ignore an error, use  ``` # noqa ```  at the end of that code line.

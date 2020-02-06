@@ -38,8 +38,10 @@ def run_subscriber(redis_host, redis_port, benchmark):
 
 def main():
     parser = argparse.ArgumentParser(prog='Redis Subscriber')
-    parser.add_argument("--redis-host", help="input the redis server address. DEFAULT: localhost", default="localhost", type=str)
-    parser.add_argument("--redis-port", help="input the redis port. DEFAULT: 6379", default=6379, type=int)
+    parser.add_argument("--redis-host", help="input the redis server address. DEFAULT: localhost",
+                        default="localhost", type=str)
+    parser.add_argument("--redis-port", help="input the redis port. DEFAULT: 6379", default=6379,
+                        type=int)
     parser.add_argument("benchmark", help="input the benchmark to be executed", type=str)
     args = parser.parse_args()
     redis_host = args.redis_host

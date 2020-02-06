@@ -40,7 +40,7 @@ def main():
         '-i', '--index',
         help='Index to provide to search')
     args = parser.parse_args()
-    
+
     sys.exit(_check_index(args.server,args.port,args.uuid,args.index))
 
 

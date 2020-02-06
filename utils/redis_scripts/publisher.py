@@ -16,7 +16,7 @@ def run_publisher(redis_host, redis_port, benchmark, pod_count):
             count = r.execute_command(redis_command)[1]
             print(count)
             time.sleep(1)
-        print("All Pods are ready to run.Triggering the run.....\(^_^)/")
+        print("All Pods are ready to run.Triggering the run.....\(^_^)/")  # noqa
         r.publish(benchmark, "run")
         return True
     except Exception as e:
@@ -28,8 +28,10 @@ def run_publisher(redis_host, redis_port, benchmark, pod_count):
 
 def main():
     parser = argparse.ArgumentParser(prog='Redis Publisher')
-    parser.add_argument("--redis-host", help="input the redis server address. DEFAULT: localhost", default="localhost")
-    parser.add_argument("--redis-port", help="input the redis port. DEFAULT: 6379", default=6379, type=int)
+    parser.add_argument("--redis-host", help="input the redis server address. DEFAULT: localhost",
+                        default="localhost")
+    parser.add_argument("--redis-port", help="input the redis port. DEFAULT: 6379",
+                        default=6379, type=int)
     parser.add_argument("benchmark", help="input the benchmark to be executed", type=str)
     parser.add_argument("pod_count", help="input the number of subscriber pods",type=int)
     # parser.add_argument("--help")

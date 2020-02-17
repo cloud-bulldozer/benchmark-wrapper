@@ -35,12 +35,6 @@ class Trigger_uperf():
         self.run = args.run
         self.resourcetype = args.resourcetype
 
-    def _index_result(self, index, server, port, payload):
-        _es_connection_string = str(server) + ':' + str(port)
-        es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST')
-        for result in payload:
-            es.index(index=index, body=result)
-
     def _json_payload(self, data, iteration, uuid, user, hostnetwork, serviceip, remote, client,
                       clustername, resource_type, server_node, client_node):
         processed = []
@@ -194,7 +188,7 @@ class Trigger_uperf():
                                        self.client_node)
         if self.server != "":
             if len(documents) > 0:
-                self._index_result("ripsaw-uperf-results", self.server, self.port, documents)
+                yield documents, 'results'
         print(stdout[0])
         if len(documents) > 0:
             self._summarize_data(documents)

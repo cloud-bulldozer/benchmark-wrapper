@@ -21,26 +21,19 @@ import numpy as np
 
 class Trigger_uperf():
     def __init__(self, args):
-        stdout = self._run_uperf(args.workload[0])
-        if stdout[1] == 1:
-            print("UPerf failed to execute, trying one more time..")
-            stdout = self._run_uperf(args.workload[0])
-            if stdout[1] == 1:
-                print("UPerf failed to execute a second time, stopping...")
-                exit(1)
-        data = self._parse_stdout(stdout[0])
-        documents = self._json_payload(data, args.run[0], args.uuid, args.user, args.hostnetwork,
-                                       args.serviceip,
-                                       args.remoteip,
-                                       args.clientips, args.cluster_name, args.resourcetype[0],
-                                       args.server_node,
-                                       args.client_node)
-        if args.server != "":
-            if len(documents) > 0:
-                self._index_result("ripsaw-uperf-results", args.server, args.port, documents)
-        print(stdout[0])
-        if len(documents) > 0:
-            self._summarize_data(documents)
+        self.server = args.server
+        self.uuid = args.uuid
+        self.user = args.user
+        self.clientips = args.clientips
+        self.remoteip = args.remoteip
+        self.hostnetwork = args.hostnetwork
+        self.serviceip = args.serviceip
+        self.server_node = args.server_node
+        self.client_node = args.client_node
+        self.cluster_name = args.cluster_name
+        self.workload = args.workload
+        self.run = args.run
+        self.resourcetype = args.resourcetype
 
     def _index_result(self, index, server, port, payload):
         _es_connection_string = str(server) + ':' + str(port)
@@ -183,3 +176,25 @@ class Trigger_uperf():
                                  np.average(ltcy_result),
                                  np.percentile(ltcy_result, 95)))
         print("+{}+".format("-" * (115)))
+
+    def emit_actions(self):
+        stdout = self._run_uperf(self.workload[0])
+        if stdout[1] == 1:
+            print("UPerf failed to execute, trying one more time..")
+            stdout = self._run_uperf(self.workload[0])
+            if stdout[1] == 1:
+                print("UPerf failed to execute a second time, stopping...")
+                exit(1)
+        data = self._parse_stdout(stdout[0])
+        documents = self._json_payload(data, self.run[0], self.uuid, self.user, self.hostnetwork,
+                                       self.serviceip,
+                                       self.remoteip,
+                                       self.clientips, self.cluster_name, self.resourcetype[0],
+                                       self.server_node,
+                                       self.client_node)
+        if self.server != "":
+            if len(documents) > 0:
+                self._index_result("ripsaw-uperf-results", self.server, self.port, documents)
+        print(stdout[0])
+        if len(documents) > 0:
+            self._summarize_data(documents)

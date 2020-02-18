@@ -30,7 +30,6 @@ class uperf_wrapper():
             help='Provide the resource type for this uperf run - pod/vm/baremetal')
         self.args = parser.parse_args()
 
-        self.args.server = ""
         self.args.uuid = ""
         self.args.user = ""
         self.args.clientips = ""
@@ -46,7 +45,6 @@ class uperf_wrapper():
         if "serviceip" in os.environ:
             self.args.serviceip = os.environ['serviceip']
         if "es" in os.environ:
-            self.args.server = os.environ["es"]
             self.args.port = os.environ["es_port"]
             self.args.uuid = os.environ["uuid"]
         if "test_user" in os.environ:

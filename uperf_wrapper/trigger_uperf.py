@@ -15,13 +15,11 @@ import re
 import subprocess
 from datetime import datetime
 
-import elasticsearch
 import numpy as np
 
 
 class Trigger_uperf():
     def __init__(self, args):
-        self.server = args.server
         self.uuid = args.uuid
         self.user = args.user
         self.clientips = args.clientips
@@ -186,9 +184,8 @@ class Trigger_uperf():
                                        self.clientips, self.cluster_name, self.resourcetype[0],
                                        self.server_node,
                                        self.client_node)
-        if self.server != "":
-            if len(documents) > 0:
-                yield documents, 'results'
+        if len(documents) > 0:
+            yield documents, 'results'
         print(stdout[0])
         if len(documents) > 0:
             self._summarize_data(documents)

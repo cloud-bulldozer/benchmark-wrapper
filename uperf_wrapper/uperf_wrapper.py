@@ -44,9 +44,6 @@ class uperf_wrapper():
             self.args.cluster_name = os.environ["clustername"]
         if "serviceip" in os.environ:
             self.args.serviceip = os.environ['serviceip']
-        if "es" in os.environ:
-            self.args.port = os.environ["es_port"]
-            self.args.uuid = os.environ["uuid"]
         if "test_user" in os.environ:
             self.args.user = os.environ["test_user"]
         if "hostnet" in os.environ:

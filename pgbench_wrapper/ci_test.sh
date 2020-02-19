@@ -8,7 +8,7 @@ source ci/common.sh
 default_ripsaw_image="quay.io/cloud-bulldozer/pgbench"
 default_ripsaw_tag="latest"
 image=$SNAFU_WRAPPER_IMAGE_PREFIX/pgbench
-build_and_push pgbench-wrapper/Dockerfile $image:snafu_ci
+build_and_push pgbench_wrapper/Dockerfile $image:snafu_ci
 
 cd ripsaw
 

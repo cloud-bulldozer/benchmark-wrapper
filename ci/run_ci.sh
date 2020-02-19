@@ -12,6 +12,16 @@ kubectl create namespace my-ripsaw
 rm -rf ripsaw
 git clone https://github.com/cloud-bulldozer/ripsaw.git
 
+if [[ $ghprbPullLongDescription = *"Depends-On:"* ]]; then
+  ripsaw_change_id="$(echo $ghprbPullLongDescription | sed -n -e 's/^.*Depends-On: //p')"
+  echo $ripsaw_change_id
+  cd ripsaw
+  git fetch origin pull/$ripsaw_change_id/head:local_change
+  git checkout local_change
+  cd ..
+fi
+
+
 # Prep results.markdown file
 echo "Results for SNAFU CI Test" > results.markdown
 echo "" >> results.markdown

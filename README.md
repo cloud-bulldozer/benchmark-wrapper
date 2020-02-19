@@ -112,7 +112,7 @@ full index name, and posts document **my__doc** to it.
 
 ## how do I integrate snafu wrapper into my ripsaw benchmark?
 
-You just replace the commands to run the workload in your ripsaw benchmark 
+You just replace the commands to run the workload in your ripsaw benchmark
 (often in roles/Your_Workload/templates/workload.yml.j2) with the command below.
 
 First, you have to define environment variables used to pass information to
@@ -165,7 +165,7 @@ The remaining parameters are defined and parsed by the workload-specific wrapper
 
 ## how do I run my snafu wrapper in CI?
 
-add the ci_test.sh script to your wrapper directory - the SNAFU CI (Continuous Integration) test harness 
+add the ci_test.sh script to your wrapper directory - the SNAFU CI (Continuous Integration) test harness
 will automatically find it and run it.   This assumes that your wrapper supports ripsaw, for now.
 At present, the CI does not test SNAFU on baremetal but this may be added in the future.
 
@@ -176,11 +176,11 @@ every ci_test.sh script makes use of environment variables defined in ci/common.
 * SNAFU_IMAGE_TAG (defaults to snafu_ci)
 * SNAFU_IMAGE_BUILDER (defaults to podman, can be set to docker)
 
-You, the wrapper developer, can override these variables to use any container image repository 
+You, the wrapper developer, can override these variables to use any container image repository
 supported by ripsaw (quay.io is at present the only location tested).  
 
 NOTE: at present, you need to force these images to be public images so that minikube can
-load them.    A better method is needed.
+load them. A better method is needed.
 
 In your CI script, ci_test.sh, you can make use of these 2 environment variables:
 
@@ -194,7 +194,7 @@ And here is a simple example of a ci_test.sh (they all look very similar):
 source ci/common.sh
 default_image_spec="quay.io/cloud-bulldozer/your_wrapper:master"
 image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/your_wrapper:$SNAFU_IMAGE_TAG
-build_and_push your_wrapper/Dockerfile $image_spec 
+build_and_push your_wrapper/Dockerfile $image_spec
 
 cd ripsaw
 sed -i "s#$default_image_spec#$image_spec#" roles/your_wrapper_in_ripsaw/templates/*
@@ -214,6 +214,11 @@ index="ripsaw-your-wrapper-results"
 check_es "${uuid}" "${index}"
 exit $?
 ```
+
+Note: If your PR requires a PR in ripsaw to be merged, you can ask CI to
+checkout that PR by adding a `Depends-On: <ripsaw_pr_number>` to the end of
+your snafu commit message.
+
 
 ## Style guide
 Max line length is 110 to avoid linting issues.

@@ -20,7 +20,6 @@ from datetime import datetime
 
 class Trigger_pgbench():
     def __init__(self, args):
-        self.server = args.server
         self.port = args.port
         self.uuid = args.uuid
         self.user = args.user
@@ -201,8 +200,8 @@ class Trigger_pgbench():
         if len(documents) > 0:
             yield documents, 'summary'
 
-            if len(documents_raw) > 0:
-                yield documents_raw, 'raw'
+        if len(documents_raw) > 0:
+            yield documents_raw, 'raw'
 
-            if len(documents_prog) > 0:
-                yield documents_prog, 'results'
+        if len(documents_prog) > 0:
+            yield documents_prog, 'results'

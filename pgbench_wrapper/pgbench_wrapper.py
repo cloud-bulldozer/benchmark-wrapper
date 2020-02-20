@@ -25,7 +25,6 @@ class pgbench_wrapper():
             help='Provide the iteration for the run')
         self.args = parser.parse_args()
 
-        self.args.server = ""
         self.args.port = ""
         self.args.uuid = ""
         self.args.user = ""
@@ -40,11 +39,6 @@ class pgbench_wrapper():
         self.args.sample_start_timestamp = datetime.now()
         self.args.index = "ripsaw-pgbench"
 
-        if "es" in os.environ:
-            self.args.server = os.environ["es"]
-            self.args.port = os.environ["es_port"]
-            if "es_index_prefix" in os.environ:
-                self.args.index = os.environ["es_index_prefix"]
         if "uuid" in os.environ:
             self.args.uuid = os.environ["uuid"]
         if "test_user" in os.environ:

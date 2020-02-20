@@ -7,7 +7,6 @@ import elasticsearch
 import time
 
 
-
 def _run_hammerdb():
     cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload.tcl"
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
@@ -34,7 +33,7 @@ def _parse_stdout(stdout):
 
 
 def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user,
-        transactions, test_type, runtime, rampup, samples, timed_test, timestamp):
+                  transactions, test_type, runtime, rampup, samples, timed_test, timestamp):
     processed = []
     for current_worker in range(0, int(db_num_workers)):
         for current_sample in range(0, int(samples)):
@@ -135,7 +134,7 @@ def main():
     timestamp = ""
     db_tcp = ""
     timed_test = ""
-    
+
     if "es_server" in os.environ:
         es_server = os.environ["es_server"]
     if "es_port" in os.environ:
@@ -178,7 +177,7 @@ def main():
             exit(1)
     data = _parse_stdout(stdout[0])
     documents = _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user,
-            transactions, test_type, runtime, rampup, samples, timed_test, timestamp)
+                              transactions, test_type, runtime, rampup, samples, timed_test, timestamp)
     # print(documents)
     if len(documents) > 0 :
         _summarize_data(documents)

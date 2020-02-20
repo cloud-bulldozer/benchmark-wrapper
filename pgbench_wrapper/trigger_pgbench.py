@@ -17,8 +17,6 @@ import re
 import subprocess
 from datetime import datetime
 
-import elasticsearch
-
 
 class Trigger_pgbench():
     def __init__(self, args):
@@ -50,23 +48,6 @@ class Trigger_pgbench():
             "sample_start_timestamp": self.sample_start_timestamp,
             "description": self.description,
         })
-
-    def _index_result(self, index, server, port, payload):
-        _es_connection_string = str(server) + ':' + str(port)
-        es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST')
-        indexed = True
-        processed_count = 0
-        total_count = 0
-        for result in payload:
-            try:
-                es.index(index=index, body=result)
-                processed_count += 1
-            except Exception as e:
-                print(repr(e) + "occurred for the json document:")
-                print(str(result))
-                indexed = False
-            total_count += 1
-        return indexed, processed_count, total_count
 
     def _json_payload(self, meta_processed, data):
         processed = copy.deepcopy(meta_processed)
@@ -217,42 +198,11 @@ class Trigger_pgbench():
         print("\n")
         print(documents)
         print("\n")
-        if self.server != "":
-            if len(documents) > 0:
-                _status_results, processed_count, total_count = self._index_result(
-                    "{}-summary".format(self.index), self.server, self.port, documents)
-                if _status_results:
-                    print(
-                        "Succesfully indexed {} pgbench summary documents to index {}-summary\n".format(
-                            str(total_count), str(self.index)))
-                else:
-                    print(
-                        "{}/{} pgbench summary documents succesfully indexed to {}-summary\n".format(
-                            str(processed_count), str(total_count), str(self.index)))
+        if len(documents) > 0:
+            yield documents, 'summary'
 
-                _status_results, processed_count, total_count = self._index_result(
-                    "{}-raw".format(self.index),
-                    self.server, self.port,
-                    documents_raw)
-                if _status_results:
-                    print(
-                        "Succesfully indexed {} pgbench raw documents to index {}-raw\n".format(
-                            str(total_count), str(self.index)))
-                else:
-                    print("{}/{} pgbench raw documents succesfully indexed to {}-raw\n".format(
-                        str(processed_count), str(total_count), str(self.index)))
+            if len(documents_raw) > 0:
+                yield documents_raw, 'raw'
 
-                _status_results, processed_count, total_count = self._index_result(
-                    "{}-results".format(self.index), self.server, self.port, documents_prog)
-                if _status_results:
-                    print(
-                        "Succesfully indexed {} pgbench results documents to index {}-results\n".format(
-                            str(total_count), str(self.index)))
-                else:
-                    print(
-                        "{}/{} pgbench results documents succesfully indexed to {}-results\n".format(
-                            str(processed_count), str(total_count), str(self.index)))
-            else:
-                print("Indexing failed; summary JSON document empty!\n")
-        else:
-            print("Results not indexed.\n")
+            if len(documents_prog) > 0:
+                yield documents_prog, 'results'

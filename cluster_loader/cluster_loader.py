@@ -5,19 +5,18 @@
 #
 #   http://www.apache.org/licenses/LICENSE-2.0
 #
-import os
-import argparse
-import configparser
 import logging
+import os
 
 from cluster_loader import trigger_cluster_loader
 
 logger = logging.getLogger("snafu")
 
+
 class cluster_loader_wrapper():
 
     def __init__(self, parser):
-        #collect arguments
+        # collect arguments
 
         # it is assumed that the parser was created using argparse and already knows
         # about the --tool option
@@ -73,5 +72,6 @@ class cluster_loader_wrapper():
             if not os.path.exists(sample_dir):
                 os.mkdir(sample_dir)
             trigger_generator = trigger_cluster_loader._trigger_cluster_loader(
-                    logger, self.cluster_name, sample_dir, self.user, self.uuid, s, self.path_binary, self.test_name, self.console_cl_output)
+                logger, self.cluster_name, sample_dir, self.user, self.uuid,
+                s, self.path_binary, self.test_name, self.console_cl_output)
             yield trigger_generator

@@ -112,7 +112,7 @@ full index name, and posts document **my__doc** to it.
 
 ## how do I integrate snafu wrapper into my ripsaw benchmark?
 
-You just replace the commands to run the workload in your ripsaw benchmark 
+You just replace the commands to run the workload in your ripsaw benchmark
 (often in roles/Your_Workload/templates/workload.yml.j2) with the command below.
 
 First, you have to define environment variables used to pass information to
@@ -162,3 +162,75 @@ has an "object-oriented" parser - the only inherited parameter is the --tool par
 run_snafu.py uses the tool parameter to determine which wrapper to invoke, and
 The remaining parameters are defined and parsed by the workload-specific wrapper.
 
+
+## how do I run my snafu wrapper in CI?
+
+add the ci_test.sh script to your wrapper directory - the SNAFU CI (Continuous Integration) test harness
+will automatically find it and run it.   This assumes that your wrapper supports ripsaw, for now.
+At present, the CI does not test SNAFU on baremetal but this may be added in the future.
+
+every ci_test.sh script makes use of environment variables defined in ci/common.sh :
+
+* RIPSAW_CI_IMAGE_LOCATION - defaults to quay.io
+* RIPSAW_CI_IMAGE_ACCOUNT - defaults to rht_perf_ci
+* SNAFU_IMAGE_TAG (defaults to snafu_ci)
+* SNAFU_IMAGE_BUILDER (defaults to podman, can be set to docker)
+
+You, the wrapper developer, can override these variables to use any container image repository
+supported by ripsaw (quay.io is at present the only location tested).  
+
+NOTE: at present, you need to force these images to be public images so that minikube can
+load them. A better method is needed.
+
+In your CI script, ci_test.sh, you can make use of these 2 environment variables:
+
+* SNAFU_IMAGE_TAG (defaults to snafu_ci)
+* SNAFU_WRAPPER_IMAGE_PREFIX - just concatenation of location and account
+
+And here is a simple example of a ci_test.sh (they all look very similar):
+
+```
+#!/bin/bash
+source ci/common.sh
+default_image_spec="quay.io/cloud-bulldozer/your_wrapper:master"
+image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/your_wrapper:$SNAFU_IMAGE_TAG
+build_and_push your_wrapper/Dockerfile $image_spec
+
+cd ripsaw
+sed -i "s#$default_image_spec#$image_spec#" roles/your_wrapper_in_ripsaw/templates/*
+
+# Build new ripsaw image
+update_operator_image
+
+# run the ripsaw CI for your wrapper in tests/ and get resulting UUID
+get_uuid test_your_wrapper.sh
+uuid=`cat uuid`
+
+cd ..
+
+# Define index (there can be more than 1 separated by whitespaces)
+index="ripsaw-your-wrapper-results"
+
+check_es "${uuid}" "${index}"
+exit $?
+```
+
+Note: If your PR requires a PR in ripsaw to be merged, you can ask CI to
+checkout that PR by adding a `Depends-On: <ripsaw_pr_number>` to the end of
+your snafu commit message.
+
+
+## Style guide
+Max line length is 110 to avoid linting issues.
+
+## Running linters on your code
+
+Before making a PR, make sure to run linters on your code.
+
+Flake8 configurations are written in tox.ini file.
+
+Run ``` flake8 ``` command.
+
+This will show the code quality errors. Fix them before making a PR.
+
+To ignore an error, use  ``` # noqa ```  at the end of that code line.

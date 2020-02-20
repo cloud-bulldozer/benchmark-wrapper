@@ -1,7 +1,7 @@
 FROM registry.access.redhat.com/ubi8:latest
 
 # install requirements
-RUN dnf install --nodocs -y tcl unixODBC python3-pip python3-requests
+RUN dnf install --nodocs -y tcl unixODBC python3-pip python3-requests 
 
 RUN curl https://packages.microsoft.com/config/rhel/8/prod.repo -o /etc/yum.repos.d/mssql-release.repo
 COPY image_resources/centos8.repo /etc/yum.repos.d/centos8.repo

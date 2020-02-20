@@ -7,6 +7,7 @@ import elasticsearch
 import time
 
 
+
 def _run_hammerdb():
     cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload.tcl"
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
@@ -134,7 +135,7 @@ def main():
     timestamp = ""
     db_tcp = ""
     timed_test = ""
-
+    
     if "es_server" in os.environ:
         es_server = os.environ["es_server"]
     if "es_port" in os.environ:
@@ -166,15 +167,14 @@ def main():
     if "timed_test" in os.environ:
         timed_test = os.environ["timed_test"]
 
-
     timestamp = str(int(time.time()))
     stdout = _run_hammerdb()
     # stdout = _fake_run()
     if stdout[1] == 1:
-        print ("hammerdbcli failed to execute, trying one more time..")
+        print("hammerdbcli failed to execute, trying one more time..")
         stdout = _run_hammerdb()
         if stdout[1] == 1:
-            print ("hammerdbcli failed to execute a second time, stopping...")
+            print("hammerdbcli failed to execute a second time, stopping...")
             exit(1)
     data = _parse_stdout(stdout[0])
     documents = _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user,

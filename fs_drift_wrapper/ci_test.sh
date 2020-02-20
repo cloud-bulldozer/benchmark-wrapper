@@ -5,21 +5,22 @@ set -x
 source ci/common.sh
 
 # Build image for ci
-build_and_push fs_drift_wrapper/Dockerfile quay.io/cloud-bulldozer/fs-drift:snafu_ci
+default_ripsaw_image_spec="quay.io/cloud-bulldozer/fs-drift:master"
+image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/fs-drift:$SNAFU_IMAGE_TAG
+build_and_push fs_drift_wrapper/Dockerfile $image_spec
 
 cd ripsaw
 
-sed -i 's/fs-drift:master/fs-drift:snafu_ci/g' roles/fs-drift/templates/*
+sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/fs-drift/templates/* roles/fs-drift/tasks/*
 
 # Build new ripsaw image
-update_operator_image snafu_ci
+update_operator_image
 
 get_uuid test_fs_drift.sh
 uuid=`cat uuid`
 
 cd ..
 
-index="ripsaw-fs-drift-results"
-
-check_es $uuid $index
+indexes="ripsaw-fs-drift-results ripsaw-fs-drift-rsptimes ripsaw-fs-drift-rates-over-time"
+check_es "${uuid}" "${indexes}"
 exit $?

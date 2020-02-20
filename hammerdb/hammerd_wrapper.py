@@ -32,7 +32,8 @@ def _parse_stdout(stdout):
     return data
 
 
-def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user, transactions, test_type, runtime, rampup, samples, timed_test, timestamp):
+def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user,
+        transactions, test_type, runtime, rampup, samples, timed_test, timestamp):
     processed = []
     for current_worker in range(0, int(db_num_workers)):
         for current_sample in range(0, int(samples)):
@@ -168,7 +169,7 @@ def main():
 
     timestamp = str(int(time.time()))
     stdout = _run_hammerdb()
-    #stdout = _fake_run()
+    # stdout = _fake_run()
     if stdout[1] == 1:
         print ("hammerdbcli failed to execute, trying one more time..")
         stdout = _run_hammerdb()
@@ -176,14 +177,15 @@ def main():
             print ("hammerdbcli failed to execute a second time, stopping...")
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user, transactions, test_type, runtime, rampup, samples, timed_test, timestamp)
-    #print(documents)
+    documents = _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user,
+            transactions, test_type, runtime, rampup, samples, timed_test, timestamp)
+    # print(documents)
     if len(documents) > 0 :
         _summarize_data(documents)
     if es_server != "" :
         if len(documents) > 0 :
             _index_result("ripsaw-hammerdb-results", es_server, es_port, documents)
-        else: 
+        else:
             raise Exception('Failed to produce hammerdb results document')
 
 

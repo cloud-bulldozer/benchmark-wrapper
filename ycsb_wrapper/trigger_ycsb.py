@@ -105,7 +105,6 @@ class Trigger_ycsb():
         summary = re.findall(r"(.*), (.*), (.*)", data)
         return {"results": data_points, "summary": summary}
 
-
     def emit_actions(self):
         extra = ""
         if self.extra is not None:

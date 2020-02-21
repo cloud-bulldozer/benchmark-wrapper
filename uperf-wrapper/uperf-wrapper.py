@@ -211,13 +211,26 @@ def main():
         server_node = os.environ["server_node"]
     if "client_node" in os.environ:
         client_node = os.environ["client_node"]
+    if "bo_ip" in os.environ:
+        redis_host = os.environ["bo_ip"]
+    if "redis_port" in os.environ:
+        redis_port = os.environ['redis_port']
+    if "redis_collection" in os.environ:
+        redis_collection = os.environ['redis_collection']
+    if redis_collection == "True":
+        from redis_utils import RedisUtils
+        r = RedisUtils(redis_host, redis_port)
+        test_params = uuid + "-" + args.workload[0].split('/')[-1]
+        r.set_code(args.workload[0].split('/')[-2], "status", "2")
 
     stdout = _run_uperf(args.workload[0])
     if stdout[1] == 1:
-        print("UPerf failed to execute, trying one more time..")
+        print(f"UPerf failed to execute with args {args.workload[0].split('/')[-1]}, trying one more time..")  # noqa
         stdout = _run_uperf(args.workload[0])
         if stdout[1] == 1:
-            print("UPerf failed to execute a second time, stopping...")
+            print(f"UPerf failed to execute with args {args.workload[0].split('/')[-1]} again, stopping..")    # noqa
+            if redis_collection == "True":
+                r.set_code(args.workload[0].split('/')[-2], "status", "1")
             exit(1)
     data = _parse_stdout(stdout[0])
     documents = _json_payload(data, args.run[0], uuid, user, hostnetwork, serviceip, remoteip,
@@ -229,6 +242,9 @@ def main():
     print(stdout[0])
     if len(documents) > 0:
         _summarize_data(documents)
+
+    if redis_collection == "True":
+        r.set_code(args.workload[0].split('/')[-2], "status", "0")
 
 
 if __name__ == '__main__':

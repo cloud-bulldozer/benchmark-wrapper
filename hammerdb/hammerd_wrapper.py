@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
-import os
-import subprocess
 import sys
-import time
-
+import subprocess
+import os
 import elasticsearch
+import time
 
 
 def _run_hammerdb():
@@ -33,12 +32,11 @@ def _parse_stdout(stdout):
     return data
 
 
-def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers,
-                  db_tcp, db_user, transactions, test_type, runtime, rampup,
-                  samples, timed_test, timestamp):
+def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user,
+                  transactions, test_type, runtime, rampup, samples, timed_test, timestamp):
     processed = []
-    for current_worker in range(1, int(db_num_workers)):
-        for current_sample in range(1, int(samples)):
+    for current_worker in range(0, int(db_num_workers)):
+        for current_sample in range(0, int(samples)):
             for i in range(0, len(data)):
                 processed.append({
                     "workload": "hammerdb",
@@ -62,19 +60,17 @@ def _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers,
                     "nopm": data[i][2],
                     "timestamp": timestamp
                 })
-
     return processed
 
 
 def _summarize_data(data):
     max_workers = int(data[0]['db_num_workers'])
     max_samples = int(data[0]['samples'])
-    for current_worker in range(1, max_workers):
-        for current_sample in range(1, max_samples):
+    for current_worker in range(0, max_workers):
+        for current_sample in range(0, max_samples):
             for i in range(0, len(data)):
                 entry = data[i]
-
-                print("+{} HammerDB Results {}+".format("-" * (50), "-" * (50)))
+                print("+{} HammerDB Results {}+".format("-"*(50), "-"*(50)))
                 print("HammerDB setup")
                 print("")
                 print("HammerDB results for:")
@@ -100,7 +96,7 @@ def _summarize_data(data):
                 print("""
                       NOPM: {}""".format(entry['nopm']))
                 print("Timestamp: {}".format(entry['timestamp']))
-                print("+{}+".format("-" * (115)))
+                print("+{}+".format("-"*(115)))
 
 
 def _index_result(index, es_server, es_port, payload):
@@ -138,6 +134,7 @@ def main():
     timestamp = ""
     db_tcp = ""
     timed_test = ""
+
     if "es_server" in os.environ:
         es_server = os.environ["es_server"]
     if "es_port" in os.environ:
@@ -179,13 +176,13 @@ def main():
             print("hammerdbcli failed to execute a second time, stopping...")
             exit(1)
     data = _parse_stdout(stdout[0])
-    documents = _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers,
-                              db_tcp, db_user, transactions, test_type, runtime, rampup, samples,
-                              timed_test, timestamp)
-    if len(documents) > 0:
+    documents = _json_payload(data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp, db_user,
+                              transactions, test_type, runtime, rampup, samples, timed_test, timestamp)
+    # print(documents)
+    if len(documents) > 0 :
         _summarize_data(documents)
-    if es_server != "":
-        if len(documents) > 0:
+    if es_server != "" :
+        if len(documents) > 0 :
             _index_result("ripsaw-hammerdb-results", es_server, es_port, documents)
         else:
             raise Exception('Failed to produce hammerdb results document')

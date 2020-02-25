@@ -183,7 +183,7 @@ def streaming_bulk(es, actions):
                     "retry_count": retry_count,
                     "timestamp": _tstos(time.time())
                 }
-                jsonstr = json.dumps(doc, indent=4, sort_keys=True)
+                jsonstr = json.dumps(doc, indent=4, sort_keys=True,default=str)
                 print(jsonstr)
                 # errorsfp.flush()
                 failures += 1

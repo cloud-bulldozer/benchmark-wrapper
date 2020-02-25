@@ -123,7 +123,7 @@ def process_generator(index_args, parser):
                                      "_source": action,
                                      "_id": ""}
                 es_valid_document["_id"] = hashlib.md5(str(action).encode()).hexdigest()
-                logger.debug(json.dumps(es_valid_document, indent=4))
+                logger.debug(json.dumps(es_valid_document, indent=4, default=str))
                 yield es_valid_document
 
 

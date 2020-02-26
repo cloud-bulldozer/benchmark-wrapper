@@ -198,10 +198,13 @@ class Trigger_pgbench():
         print(documents)
         print("\n")
         if len(documents) > 0:
-            yield documents, 'summary'
+            for document in documents:
+                yield document, 'summary'
 
         if len(documents_raw) > 0:
-            yield documents_raw, 'raw'
+            for document in documents_raw:
+                yield document, 'raw'
 
         if len(documents_prog) > 0:
-            yield documents_prog, 'results'
+            for document in documents_prog:
+                yield document, 'results'

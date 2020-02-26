@@ -144,6 +144,8 @@ class Trigger_ycsb():
 
         print("Attempting to index results...")
         if len(documents) > 0:
-            yield documents, 'results'
+            for document in documents:
+                yield document, 'results'
         if len(summary) > 0:
-            yield documents, 'summary'
+            for document in summary:
+                yield document, 'summary'

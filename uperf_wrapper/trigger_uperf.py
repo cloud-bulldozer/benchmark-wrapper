@@ -185,7 +185,8 @@ class Trigger_uperf():
                                        self.server_node,
                                        self.client_node)
         if len(documents) > 0:
-            yield documents, 'results'
+            for document in documents:
+                yield document, 'results'
         print(stdout[0])
         if len(documents) > 0:
             self._summarize_data(documents)

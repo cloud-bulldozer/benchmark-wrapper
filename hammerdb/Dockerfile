@@ -1,13 +1,11 @@
-FROM registry.access.redhat.com/ubi8:latest
+FROM docker.io/centos:8
 
 # install requirements
-RUN dnf install --nodocs -y tcl unixODBC python3-pip python3-requests 
+RUN dnf install --nodocs -y tcl unixODBC python3-pip python3-requests python3-pyyaml tcpdump
 
 RUN curl https://packages.microsoft.com/config/rhel/8/prod.repo -o /etc/yum.repos.d/mssql-release.repo
-COPY image_resources/centos8.repo /etc/yum.repos.d/centos8.repo
-RUN ACCEPT_EULA=Y dnf -y install --nodocs msodbcsql17 --enablerepo=centos8
-RUN dnf clean all
-RUN pip3 install --upgrade-strategy=only-if-needed "elasticsearch>=6.0.0,<=7.0.2" pyyaml
+RUN ACCEPT_EULA=Y dnf -y install --nodocs msodbcsql17
+RUN pip3 install --upgrade-strategy=only-if-needed "elasticsearch>=6.0.0,<=7.0.2"
 COPY . /opt/snafu
 RUN ln -s /usr/bin/python3 /usr/bin/python
 

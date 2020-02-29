@@ -4,10 +4,12 @@
 
 HAMMERDB_IMAGE = ${REGISTRY_URL}/${ORG}/hammerdb:${TAG}
 
-hammerdb: build-hammerdb push-hammerdb
+snafu-hammerdb: build-hammerdb push-hammerdb
 
-build-hammerdb:
-	$(call build-container,${HAMMERDB_IMAGE},hammerdb/Dockerfile)
+build-hammerdb: build-tmp/hammerdb
+
+build-tmp/hammerdb: hammerdb/* run_snafu.py
+	$(call build-container,${HAMMERDB_IMAGE},hammerdb/Dockerfile,hammerdb)
 
 push-hammerdb:
 	$(call push-container,${HAMMERDB_IMAGE})

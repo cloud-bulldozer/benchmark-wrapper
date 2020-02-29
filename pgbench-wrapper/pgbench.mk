@@ -4,10 +4,12 @@
 
 PGBENCH_IMAGE = ${REGISTRY_URL}/${ORG}/pgbench:${TAG}
 
-pgbench: build-pgbench push-pgbench
+snafu-pgbench: build-pgbench push-pgbench
 
-build-pgbench:
-	$(call build-container,${PGBENCH_IMAGE},pgbench-wrapper/Dockerfile)
+build-pgbench: build-tmp/pgbench
+
+build-tmp/pgbench: pgbench-wrapper/* run_snafu.py
+	$(call build-container,${PGBENCH_IMAGE},pgbench-wrapper/Dockerfile,pgbench)
 
 push-pgbench:
 	$(call push-container,${PGBENCH_IMAGE})

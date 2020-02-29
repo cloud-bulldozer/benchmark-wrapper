@@ -4,10 +4,12 @@
 
 YCSB_IMAGE = ${REGISTRY_URL}/${ORG}/ycsb-server:${TAG}
 
-ycsb: build-ycsb push-ycsb
+snafu-ycsb: build-ycsb push-ycsb
 
-build-ycsb:
-	$(call build-container,${YCSB_IMAGE},ycsb-wrapper/Dockerfile)
+build-ycsb: build-tmp/ycsb
+
+build-tmp/ycsb: ycsb-wrapper/* run_snafu.py
+	$(call build-container,${YCSB_IMAGE},ycsb-wrapper/Dockerfile,ycsb)
 
 push-ycsb:
 	$(call push-container,${YCSB_IMAGE})

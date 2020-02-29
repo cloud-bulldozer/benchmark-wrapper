@@ -4,10 +4,12 @@
 
 IPERF_IMAGE = ${REGISTRY_URL}/${ORG}/iperf3:${TAG}
 
-iperf: build-iperf push-iperf
+snafu-iperf: build-iperf push-iperf
 
-build-iperf:
-	$(call build-container,${IPERF_IMAGE},iperf/Dockerfile)
+build-iperf: build-tmp/iperf
+
+build-tmp/iperf: iperf/* run_snafu.py
+	$(call build-container,${IPERF_IMAGE},iperf/Dockerfile,iperf)
 
 push-iperf:
 	$(call push-container,${IPERF_IMAGE})

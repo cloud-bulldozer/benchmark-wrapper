@@ -5,7 +5,7 @@
 BASE_PROJECT = snafu
 SHELL = /bin/bash
 REGISTRY_URL = quay.io
-ORG = cloud-bulldozer
+ORG = rsevilla
 REGISTRY = ${REGISTRY_URL}/${ORG}
 TAG = latest
 BENCHMARKS = fio fs-drift hammerdb iperf pgbench smallfile sysbench uperf ycsb 
@@ -31,7 +31,8 @@ push: push-fio push-fs-drift push-hammerdb push-iperf push-pgbench push-smallfil
 
 define build-container
 	@echo Building ${1}
-	${BUILD} --tag=${1} -f ${2} .
+	mkdir -p build-tmp
+	${BUILD} --tag=${1} -f ${2} --iidfile build-tmp/${3} .
 endef
 
 define push-container
@@ -51,7 +52,7 @@ help:
 	@echo "    make push              Push all container images."
 	@echo "    make clean             Clean all container images."
 	@echo "    make test              Perform CI tests."
-	@echo "    make BENCHMARK         Build and push BENCHMARK container image."
+	@echo "    make snafu-BENCHMARK   Build and push BENCHMARK container image."
 	@echo "    make build-BENCHMARK   Build BENCHMARK container image."
 	@echo "    make push-BENCHMARK    Build BENCHMARK container image."
 	@echo "    make test-BENCHMARK    Execute BENCHMARK tests."

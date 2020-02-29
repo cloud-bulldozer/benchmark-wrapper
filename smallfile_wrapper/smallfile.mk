@@ -4,10 +4,12 @@
 
 SMALLFILE_IMAGE = ${REGISTRY_URL}/${ORG}/smallfile:${TAG}
 
-smallfile: build-smallfile push-smallfile
+snafu-smallfile: build-smallfile push-smallfile
 
-build-smallfile:
-	$(call build-container,${SMALLFILE_IMAGE},smallfile_wrapper/Dockerfile)
+build-smallfile: build-tmp/smallfile
+
+build-tmp/smallfile: smallfile_wrapper/* run_snafu.py
+	$(call build-container,${SMALLFILE_IMAGE},smallfile_wrapper/Dockerfile,smallfile)
 
 push-smallfile:
 	$(call push-container,${SMALLFILE_IMAGE})

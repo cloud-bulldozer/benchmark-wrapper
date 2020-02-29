@@ -4,10 +4,12 @@
 
 FS_DRIFT_IMAGE = ${REGISTRY_URL}/${ORG}/fs-drift:${TAG}
 
-fs-drift: build-fs-drift push-fs-drift
+snafu-fs-drift: build-fs-drift push-fs-drift
 
-build-fs-drift: 
-	$(call build-container,${FS_DRIFT_IMAGE},fs_drift_wrapper/Dockerfile)
+build-fs-drift: build-tmp/fs-drift
+
+build-tmp/fs-drift: fs_drift_wrapper/* run_snafu.py
+	$(call build-container,${FS_DRIFT_IMAGE},fs_drift_wrapper/Dockerfile,fs-drift)
 
 push-fs-drift:
 	$(call push-container,${FS_DRIFT_IMAGE})

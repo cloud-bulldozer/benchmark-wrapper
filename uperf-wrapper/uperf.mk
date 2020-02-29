@@ -4,10 +4,12 @@
 
 UPERF_IMAGE = ${REGISTRY_URL}/${ORG}/uperf:${TAG}
 
-uperf: build-uperf push-uperf
+snafu-uperf: build-uperf push-uperf
 
-build-uperf:
-	$(call build-container,${UPERF_IMAGE},uperf-wrapper/Dockerfile)
+build-uperf: build-tmp/uperf
+
+build-tmp/uperf: uperf-wrapper/* run_snafu.py
+	$(call build-container,${UPERF_IMAGE},uperf-wrapper/Dockerfile,uperf)
 
 push-uperf:
 	$(call push-container,${UPERF_IMAGE})

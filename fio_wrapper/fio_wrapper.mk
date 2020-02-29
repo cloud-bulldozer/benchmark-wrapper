@@ -4,13 +4,12 @@
 
 FIO_IMAGE = ${REGISTRY_URL}/${ORG}/fio:${TAG}
 
-fio: build-fio push-fio
+snafu-fio: build-fio push-fio
 
-build-fio: tmp/fio-id
+build-fio: build-tmp/fio
 
-tmp/fio-id: fio_wrapper
-	$(call build-container,${FIO_IMAGE},fio_wrapper/Dockerfile)
-	touch tmp/fio-id
+build-tmp/fio: fio_wrapper/* run_snafu.py
+	$(call build-container,${FIO_IMAGE},fio_wrapper/Dockerfile,fio)
 
 push-fio:
 	$(call push-container,${FIO_IMAGE})

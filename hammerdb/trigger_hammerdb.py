@@ -48,8 +48,6 @@ class Trigger_hammerdb():
                       db_user,
                       transactions, test_type, runtime, rampup, samples, timed_test, timestamp):
         processed = []
-        print("*********************************************************************************8")
-        print(db_num_workers)
         for current_worker in range(0, int(db_num_workers)):
             for current_sample in range(0, int(samples)):
                 for i in range(0, len(data)):

@@ -21,7 +21,7 @@ uuid=`cat uuid`
 
 cd ..
 
-index="ripsaw-ycsb-summary"
+index="ripsaw-ycsb-summary ripsaw-ycsb-results"
 
 check_es "${uuid}" "${index}"
 exit $?

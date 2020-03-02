@@ -23,7 +23,7 @@ uuid=`cat uuid`
 
 cd ..
 
-index="ripsaw-pgbench-summary"
+index="ripsaw-pgbench-summary ripsaw-pgbench-raw"
 
 check_es "${uuid}" "${index}"
 exit $?

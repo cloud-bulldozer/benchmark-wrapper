@@ -8,19 +8,19 @@ import elasticsearch
 
 class Trigger_hammerdb():
     def __init__(self, args):
-        self.uuid = args["uuid"]
-        self.db_server = args["db_server"]
-        self.db_port = args["db_port"]
-        self.db_warehouses = args["db_warehouses"]
-        self.db_num_workers = args["db_num_workers"],
-        self.db_tcp = args["db_tcp"]
-        self.db_user = args["db_user"],
-        self.transactions = args["transactions"]
-        self.test_type = args["test_type"]
-        self.runtime = args["runtime"]
-        self.rampup = args["rampup"]
-        self.samples = args["samples"]
-        self.timed_test = args["timed_test"]
+        self.uuid = args.uuid
+        self.db_server = args.db_server
+        self.db_port = args.db_port
+        self.db_warehouses = args.db_warehouses
+        self.db_num_workers = args.db_num_workers
+        self.db_tcp = args.db_tcp
+        self.db_user = args.db_user
+        self.transactions = args.transactions
+        self.test_type = args.test_type
+        self.runtime = args.runtime
+        self.rampup = args.rampup
+        self.samples = args.samples
+        self.timed_test = args.timed_test
 
     def _run_hammerdb(self):
         cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload.tcl"
@@ -139,7 +139,7 @@ class Trigger_hammerdb():
                 exit(1)
         data = self._parse_stdout(stdout[0])
         documents = self._json_payload(data, self.uuid, self.db_server, self.db_port,
-                                       self.db_warehouses, self.db_num_workers,self.db_tcp,
+                                       self.db_warehouses, self.db_num_workers, self.db_tcp,
                                        self.db_user, self.transactions, self.test_type,
                                        self.runtime, self.rampup, self.samples,
                                        self.timed_test, timestamp)

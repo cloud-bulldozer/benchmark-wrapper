@@ -1,6 +1,7 @@
 FROM registry.access.redhat.com/ubi8:latest
 
-RUN dnf install --nodocs -y git python3-pip python3-numpy python3-requests python3-scipy
+RUN dnf install -y --nodocs git python3-pip python3-numpy python3-requests python3-scipy
+RUN dnf install -y --nodocs procps-ng iproute net-tools ethtool nmap iputils
 RUN pip3 install --upgrade-strategy=only-if-needed "elasticsearch>=6.0.0,<=7.0.2" redis pyyaml
 RUN ln -s /usr/bin/python3 /usr/bin/python
 COPY . /opt/snafu/

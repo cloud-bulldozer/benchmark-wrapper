@@ -4,10 +4,6 @@ set -x
 
 source ci/common.sh
 
-wait_clean
-
-kubectl create namespace my-ripsaw
-
 # Clone ripsaw so we can use it for testing
 rm -rf ripsaw
 git clone https://github.com/cloud-bulldozer/ripsaw.git --depth 1
@@ -48,6 +44,8 @@ fi
 
 echo -e "Running tests in the following directories:\n${test_list}"
 test_rc=0
+
+wait_clean
 
 for dir in ${test_list}; do
   start_time=`date`

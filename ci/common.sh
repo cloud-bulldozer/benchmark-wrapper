@@ -36,6 +36,7 @@ function update_operator_image() {
 }
 
 function wait_clean {
+  kubectl delete benchmark --all -n my-ripsaw
   kubectl delete all --all -n my-ripsaw
   for i in {1..30}; do
     if [ `kubectl get pods --namespace my-ripsaw | wc -l` -ge 1 ]; then
@@ -44,8 +45,9 @@ function wait_clean {
       break
     fi
   done
-  kubectl delete namespace my-ripsaw
-  kubectl create namespace my-ripsaw || exit $NOTOK
+  if [[ `kubectl get namespace my-ripsaw` ]]; then
+    kubectl delete namespace my-ripsaw --wait=true
+  fi
 }
 
 # Takes 2 arguments. $1 is the uuid and $2 is a space-separated list of indexes to check
@@ -99,5 +101,3 @@ function build_and_push() {
     fi
   done
 }
-
-wait_clean

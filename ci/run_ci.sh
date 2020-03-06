@@ -17,6 +17,8 @@ if [[ $ghprbPullLongDescription = *"Depends-On:"* ]]; then
   cd ..
 fi
 
+# Clean out minikube docker cache
+minikube ssh "docker image prune -af"
 
 # Prep results.markdown file
 cat > results.markdown << EOF

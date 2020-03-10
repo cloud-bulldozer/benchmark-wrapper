@@ -8,7 +8,6 @@ RUN curl https://packages.microsoft.com/config/rhel/8/prod.repo -o /etc/yum.repo
 COPY image_resources/centos8.repo /etc/yum.repos.d/centos8.repo
 RUN ACCEPT_EULA=Y dnf -y install --nodocs msodbcsql17 --enablerepo=centos8
 RUN dnf clean all
-RUN pip3 install --upgrade-strategy=only-if-needed "elasticsearch>=6.0.0,<=7.0.2" pyyaml
 COPY . /opt/snafu
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
@@ -21,3 +20,4 @@ COPY hammerdb/uid_entrypoint /usr/local/bin/
 RUN chmod g+w /etc/passwd
 RUN chmod 755 /usr/local/bin/uid_entrypoint
 RUN /usr/local/bin/uid_entrypoint
+RUN pip3 install --upgrade-strategy=only-if-needed -r /opt/snafu/requirements.txt

@@ -35,6 +35,9 @@ You must supply a "wrapper", which provides these functions:
 * build the container image for your benchmark, with all the packages, python modules, etc. that are required to run it.
 * runs the benchmark and stores the benchmark-specific results to an elasticsearch server
 
+Note: snafu is a python library, so please add the new python libraries you import
+to the requirements.txt
+
 Your ripsaw benchmark will define several environment variables relevant to Elasticsearch:
 * es - hostname of elasticsearch server
 * es_port - port number of elasticsearch server (default 9020)

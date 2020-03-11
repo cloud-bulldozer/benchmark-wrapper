@@ -20,6 +20,9 @@ fi
 # Clean out minikube docker cache
 minikube ssh "docker image prune -af"
 
+# Podman image prune
+podman image prune -a
+
 # Prep results.markdown file
 cat > results.markdown << EOF
 Results for SNAFU CI Test

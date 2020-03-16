@@ -38,7 +38,8 @@ diff_list=`git diff origin/master --name-only | grep -Ev "*\.(md|png)"`
 # - anything in ci has been changed
 # - anything in utils has been changed
 # Else only run tests on directories that have changed
-if [[ `echo ${diff_list} | grep -cv /` -gt 0 || `echo ${diff_list} | grep -E "(ci|utils|image_resources)/|requirements\.txt"` ]]; then
+
+if [[ `echo "${diff_list}" | grep -cv /` -gt 0 || `echo ${diff_list} | grep -E "(ci|utils|image_resources)/|requirements\.txt"` ]]; then
   echo "Running full test"
   test_list=`find * -maxdepth 1 -name ci_test.sh -type f -exec dirname {} \;`
 else

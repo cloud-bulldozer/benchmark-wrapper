@@ -29,6 +29,7 @@ class Trigger_ycsb():
         self.extra = args.extra
         self.load = args.load
         self.driver = args.driver
+        self.run = args.run
 
     def _run(self, cmd):
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,

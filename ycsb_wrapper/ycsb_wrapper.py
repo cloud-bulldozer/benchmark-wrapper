@@ -37,13 +37,15 @@ class ycsb_wrapper():
         parser.add_argument(
             '-u', '--uuid', nargs=1,
             help='Enter the uuid')
+        parser.add_argument(
+            '--user', nargs=1,
+            help='Enter the user')
 
         self.args = parser.parse_args()
         if self.args.driver is None:
             parser.print_help()
             exit(1)
 
-        self.args.user = ""
         self.args.recordcount = ""
         self.args.operationcount = ""
         self.args.phase = ""
@@ -51,8 +53,6 @@ class ycsb_wrapper():
         self.args.cluster_name = "mycluster"
         if "clustername" in os.environ:
             self.args.cluster_name = os.environ["clustername"]
-        if "user" in os.environ:
-            self.args.user = os.environ["user"]
         if "workload" in os.environ:
             self.args.workload = os.environ["workload"]
         if "num_records" in os.environ:

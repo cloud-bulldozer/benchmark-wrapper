@@ -113,7 +113,7 @@ class Trigger_ycsb():
         python = "/usr/bin/python2"
         if self.load:
             self.phase = "load"
-            cmd = "{} /ycsb/bin/ycsb {} {} -s -P /tmp/ycsb/{} {}".format(python, phase,
+            cmd = "{} /ycsb/bin/ycsb {} {} -s -P /tmp/ycsb/{} {}".format(python, self.phase,
                                                                          self.driver[0],
                                                                          self.workload[0],
                                                                          extra)
@@ -121,7 +121,7 @@ class Trigger_ycsb():
             output = "{}\n{}".format(stdout, stderr)
         else:
             self.phase = "run"
-            cmd = "{} /ycsb/bin/ycsb {} {} -s -P /tmp/ycsb/{} {}".format(python, phase,
+            cmd = "{} /ycsb/bin/ycsb {} {} -s -P /tmp/ycsb/{} {}".format(python, self.phase,
                                                                          self.driver[0],
                                                                          self.workload[0],
                                                                          extra)

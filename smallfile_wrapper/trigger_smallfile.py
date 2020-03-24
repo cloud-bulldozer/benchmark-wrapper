@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 import os
 import json
 import subprocess
@@ -17,8 +18,8 @@ class _trigger_smallfile:
         Will execute with the provided arguments and return normalized results for indexing
     """
 
-    def __init__(self, logger, operations, yaml_input_file, cluster_name, working_dir,
-                 result_dir, user, uuid, redis_host, redis_timeout, clients, sample):
+    def __init__(self, logger, operations, yaml_input_file, cluster_name, working_dir, result_dir, user, uuid,
+                 redis_host, redis_timeout, redis_timeout_th, clients, sample):
         self.logger = logger
         self.operations = operations
         self.yaml_input_file = yaml_input_file
@@ -30,6 +31,7 @@ class _trigger_smallfile:
         self.cluster_name = cluster_name
         self.redis_host = redis_host
         self.redis_timeout = int(redis_timeout)
+        self.redis_timeout_th = int(redis_timeout_th)
         self.clients = int(clients)
         self.host = socket.gethostname()
 
@@ -55,7 +57,7 @@ class _trigger_smallfile:
         # execute for each job in the user specified job file
         operation_list = self.operations.split(',')
         for operation in operation_list:
-
+            before = datetime.now()
             json_output_file = os.path.join(self.result_dir, '%s.json' % operation)
             network_shared_dir = os.path.join(self.working_dir, 'network_shared')
             rsptime_file = os.path.join(network_shared_dir, 'stats-rsptimes.csv')
@@ -152,7 +154,10 @@ class _trigger_smallfile:
                 channel = "smallfile-%s" % self.uuid
                 self.logger.info("Number of smallfile clients > 1, synchronizing them for the next operation")
                 self.logger.info("Redis %s channel at %s:6379" % (channel, self.redis_host))
-                r = redis.StrictRedis(self.redis_host, 6379, socket_timeout=self.redis_timeout)
+                extra_timeout = int((datetime.now() - before).seconds * self.redis_timeout_th / 100)
+                redis_timeout = self.redis_timeout + extra_timeout
+                self.logger.info("Calculated redis socket timeout: %d seconds" % redis_timeout)
+                r = redis.StrictRedis(self.redis_host, 6379, socket_timeout=redis_timeout)
                 p = r.pubsub()
                 p.subscribe(channel)
                 subscribers = int(r.pubsub_numsub(channel)[0][1])

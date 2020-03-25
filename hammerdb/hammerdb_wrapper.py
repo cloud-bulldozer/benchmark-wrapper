@@ -7,10 +7,11 @@ from hammerdb.trigger_hammerdb import Trigger_hammerdb
 
 class hammerdb_wrapper():
     def __init__(self, parser):
-        self.args = parser.parse_args()
+        parser.add_argument(
+            '-u', '--uuid', nargs=1,
+            help='Provide the uuid')
         self.args.es_server = ""
         self.args.es_port = ""
-        self.args.uuid = ""
         self.args.db_user = ""
         self.args.db_server = ""
         self.args.db_port = ""
@@ -24,13 +25,12 @@ class hammerdb_wrapper():
         self.args.timestamp = ""
         self.args.db_tcp = ""
         self.args.timed_test = ""
+        self.args = parser.parse_args()
 
         if "es_server" in os.environ:
             self.args.es_server = os.environ["es_server"]
         if "es_port" in os.environ:
             self.args.es_port = os.environ["es_port"]
-        if "uuid" in os.environ:
-            self.args.uuid = os.environ["uuid"]
         if "db_server" in os.environ:
             self.args.db_server = os.environ["db_server"]
         if "db_port" in os.environ:

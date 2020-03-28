@@ -3,9 +3,6 @@
 import subprocess
 import time
 
-import elasticsearch
-
-
 class Trigger_hammerdb():
     def __init__(self, args):
         self.uuid = args.uuid

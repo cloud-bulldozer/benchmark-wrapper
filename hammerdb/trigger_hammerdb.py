@@ -110,23 +110,6 @@ class Trigger_hammerdb():
                     print("Timestamp: {}".format(entry['timestamp']))
                     print("+{}+".format("-" * (115)))
 
-    def _index_result(self, index, es_server, es_port, payload):
-        _es_connection_string = str(es_server) + ':' + str(es_port)
-        es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST')
-        indexed = True
-        processed_count = 0
-        total_count = 0
-        for result in payload:
-            try:
-                es.index(index=index, body=result)
-                processed_count += 1
-            except Exception as e:
-                print(repr(e) + "occured for the json document:")
-                print(str(result))
-                indexed = False
-            total_count += 1
-        return indexed, processed_count, total_count
-
     def emit_actions(self):
         timestamp = str(int(time.time()))
         stdout = self._run_hammerdb()

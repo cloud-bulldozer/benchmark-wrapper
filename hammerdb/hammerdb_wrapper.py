@@ -10,6 +10,7 @@ class hammerdb_wrapper():
         parser.add_argument(
             '-u', '--uuid', nargs=1,
             help='Provide the uuid')
+        self.args = parser.parse_args()
         self.args.es_server = ""
         self.args.es_port = ""
         self.args.db_user = ""
@@ -25,7 +26,6 @@ class hammerdb_wrapper():
         self.args.timestamp = ""
         self.args.db_tcp = ""
         self.args.timed_test = ""
-        self.args = parser.parse_args()
 
         if "es_server" in os.environ:
             self.args.es_server = os.environ["es_server"]

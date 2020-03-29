@@ -58,11 +58,17 @@ class _trigger_fs_drift:
         self.logger.info('running:' + ' '.join(cmd))
         self.logger.info('from current directory %s' % os.getcwd())
         try:
-            process = subprocess.check_call(cmd, stderr=subprocess.STDOUT)
+            fsd_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             self.logger.exception(e)
             raise FsDriftWrapperException(
                 'fs-drift.py non-zero process return code %d' % e.returncode)
+        finally:
+            fsd_output_lines = [ l.strip().decode('utf-8') for l in fsd_output.splitlines() ]
+            for l in fsd_output_lines: print(l)
+        for l in fsd_output_lines:
+            if l.__contains__('report interval'):
+                sampling_interval = int(l.split()[-1])
         self.logger.info("completed sample {} , results in {}".format(
             self.sample, json_output_file))
         with open(json_output_file) as f:
@@ -85,7 +91,6 @@ class _trigger_fs_drift:
 
         elapsed_time = float(data['results']['elapsed'])
         start_time = data['results']['start-time']
-        sampling_interval = max(int(elapsed_time / 120.0), 1)
         cmd = ["rsptime_stats.py",
                "--time-interval", str(sampling_interval),
                rsptime_dir]
@@ -164,7 +169,7 @@ class _trigger_fs_drift:
                         rate_obj = self.compute_rates(json_obj, previous_obj)
                         if rate_obj == None:
                             self.logger.info(
-                                'no response time data for thread %s in interval starting at %s' %
+                                'no workload rate info for thread %s in interval starting at %s' %
                                 (thread_id, json_obj['elapsed_time']))
                             continue
                         previous_obj = json_obj
@@ -201,7 +206,7 @@ class _trigger_fs_drift:
         delta_time = time_since_test_start - previous_time_since_test_start
         if delta_time < 0.1:
             self.logger.info(
-                'current time %f not greater than previous time %f' %
+                'compute_rates: current time %f not greater than previous time %f' %
                 (time_since_test_start, previous_time_since_test_start))
             return None
         rate_dict = {}

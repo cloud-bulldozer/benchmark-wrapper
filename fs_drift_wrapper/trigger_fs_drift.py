@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import subprocess
 import re
 import time
@@ -66,6 +67,7 @@ class _trigger_fs_drift:
         finally:
             fsd_output_lines = [ l.strip().decode('utf-8') for l in fsd_output.splitlines() ]
             for l in fsd_output_lines: print(l)
+            sys.stdout.flush()
         for l in fsd_output_lines:
             if l.__contains__('report interval'):
                 sampling_interval = int(l.split()[-1])

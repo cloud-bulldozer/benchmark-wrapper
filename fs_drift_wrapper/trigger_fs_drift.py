@@ -162,6 +162,11 @@ class _trigger_fs_drift:
                         json_start = index
                         json_obj = json.loads(json_str)
                         rate_obj = self.compute_rates(json_obj, previous_obj)
+                        if rate_obj == None:
+                            self.logger.info(
+                                'no response time data for thread %s in interval starting at %s' %
+                                (thread_id, json_obj['elapsed_time']))
+                            continue
                         previous_obj = json_obj
 
                         # timestamp this sample
@@ -194,7 +199,11 @@ class _trigger_fs_drift:
         else:
             previous_time_since_test_start = 0
         delta_time = time_since_test_start - previous_time_since_test_start
-        assert delta_time > 0.5
+        if delta_time < 0.1:
+            self.logger.info(
+                'current time %f not greater than previous time %f' %
+                (time_since_test_start, previous_time_since_test_start))
+            return None
         rate_dict = {}
         for k in current_sample.keys():
             if k != 'elapsed-time':

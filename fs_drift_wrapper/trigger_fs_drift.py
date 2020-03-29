@@ -62,6 +62,7 @@ class _trigger_fs_drift:
             fsd_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             self.logger.exception(e)
+            fsd_output = e.output
             raise FsDriftWrapperException(
                 'fs-drift.py non-zero process return code %d' % e.returncode)
         finally:

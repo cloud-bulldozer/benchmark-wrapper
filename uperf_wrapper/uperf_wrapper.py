@@ -31,9 +31,11 @@ class uperf_wrapper():
         parser.add_argument(
             '-u', '--uuid', nargs=1,
             help='Provide the uuid')
+        parser.add_argument(
+            '--user', nargs=1,
+            help='Enter the user')
         self.args = parser.parse_args()
 
-        self.args.user = ""
         self.args.clientips = ""
         self.args.remoteip = ""
         self.args.hostnetwork = ""
@@ -46,8 +48,6 @@ class uperf_wrapper():
             self.args.cluster_name = os.environ["clustername"]
         if "serviceip" in os.environ:
             self.args.serviceip = os.environ['serviceip']
-        if "test_user" in os.environ:
-            self.args.user = os.environ["test_user"]
         if "hostnet" in os.environ:
             self.args.hostnetwork = os.environ["hostnet"]
         if "h" in os.environ:

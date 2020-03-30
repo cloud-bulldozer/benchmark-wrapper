@@ -1,4 +1,4 @@
-FROM ubi8:latest
+FROM registry.access.redhat.com/ubi8:latest
 
 RUN dnf install -y --nodocs https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 RUN dnf install -y --nodocs python3-pip python3-numpy python3-requests postgresql11

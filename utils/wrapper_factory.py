@@ -6,6 +6,7 @@ from smallfile_wrapper.smallfile_wrapper import smallfile_wrapper
 # from uperf_wrapper.uperf_wrapper import uperf_wrapper
 from fs_drift_wrapper.fs_drift_wrapper import fs_drift_wrapper
 from cluster_loader.cluster_loader import cluster_loader_wrapper
+from hammerdb.hammerdb_wrapper import hammerdb_wrapper
 from ycsb_wrapper.ycsb_wrapper import ycsb_wrapper
 
 import logging
@@ -16,6 +17,7 @@ wrapper_dict = {
     "smallfile": smallfile_wrapper,
     "fs-drift": fs_drift_wrapper,
     "cl": cluster_loader_wrapper,
+    "hammerdb": hammerdb_wrapper,
     "ycsb": ycsb_wrapper
 }
 #    "backpack": pgbench_wrapper,

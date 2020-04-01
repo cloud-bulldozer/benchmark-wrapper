@@ -78,6 +78,7 @@ def main():
             logger.warn("Elasticsearch connection caused an exception :" + str(e))
             index_args.index_results = False
 
+    index_args.document_size_capacity_bytes = 0 
     if index_args.index_results:
         # call py es bulk using a process generator to feed it ES documents
         res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(es,
@@ -108,7 +109,7 @@ def main():
 
     # get time delta for indexing run
     tdelta = end_t - start_t
-    logger.info("Duration of execution - %s" % tdelta)
+    logger.info("Duration of execution - %s, with total size of %s" % (tdelta, index_args.document_size_capacity_bytes))
 
 
 def process_generator(index_args, parser):
@@ -123,6 +124,9 @@ def process_generator(index_args, parser):
                                      "_source": action,
                                      "_id": ""}
                 es_valid_document["_id"] = hashlib.md5(str(action).encode()).hexdigest()
+                document_size_bytes = sys.getsizeof(es_valid_document)
+                index_args.document_size_capacity_bytes += document_size_bytes
+                logger.debug("document size is: %s" % document_size_bytes)
                 logger.debug(json.dumps(es_valid_document, indent=4, default=str))
                 yield es_valid_document
 

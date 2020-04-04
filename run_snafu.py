@@ -110,7 +110,7 @@ def main():
     # get time delta for indexing run
     tdelta = end_t - start_t
     total_capacity_bytes = index_args.document_size_capacity_bytes
-    logger.info("Duration of execution - %s, with total size of %s" % (tdelta, total_capacity_bytes))
+    logger.info("Duration of execution - %s, with total size of %s bytes" % (tdelta, total_capacity_bytes))
 
 
 def process_generator(index_args, parser):

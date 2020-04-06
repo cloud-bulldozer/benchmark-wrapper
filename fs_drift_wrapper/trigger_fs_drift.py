@@ -173,7 +173,7 @@ class _trigger_fs_drift:
                         if rate_obj == None:
                             self.logger.info(
                                 'no workload rate info for thread %s in interval starting at %s' %
-                                (thread_id, json_obj['elapsed_time']))
+                                (thread_id, str(json_obj)))
                             continue
                         previous_obj = json_obj
 

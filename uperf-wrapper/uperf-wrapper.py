@@ -72,7 +72,7 @@ def _json_payload(data, iteration, uuid, user, hostnetwork, serviceip, remote, c
 
 
 def _run_uperf(workload):
-    cmd = "uperf -v -a -x -i 1 -m {}".format(workload)
+    cmd = "uperf -v -a -X -i 1 -m {}".format(workload)
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     return stdout.strip().decode("utf-8"), process.returncode

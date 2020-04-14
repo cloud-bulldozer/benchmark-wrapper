@@ -128,7 +128,7 @@ class _trigger_fio:
                     with open(directory + '/' + str(log_file_name), 'r') as log_file:
                         for log_line in log_file:
                             log_line_values = str(log_line).split(", ")
-                            if len(log_line_values) == 4:
+                            if len(log_line_values) == 5:
                                 timestamp_ms = int(fio_starttime[host]) + int(log_line_values[0])
                                 newtime = datetime.fromtimestamp(timestamp_ms / 1000.0)
                                 log_dict = {
@@ -149,7 +149,8 @@ class _trigger_fio:
                                     (log_line_values[1]),
                                     # "nodeName": pod_details["hostname"],
                                     "data_direction": _data_direction[int(log_line_values[2])],
-                                    "offset": int(log_line_values[3])
+                                    "block_size": int(log_line_values[3]),
+                                    "offset": int(log_line_values[4])
                                 }
                                 if 'global' in fio_jobs_dict.keys():
                                     log_dict['global_options'] = fio_jobs_dict['global']

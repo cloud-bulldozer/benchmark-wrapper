@@ -39,12 +39,12 @@ urllib3_log.setLevel(logging.CRITICAL)
 
 def main():
     # collect arguments
-    parser = argparse.ArgumentParser(description="run script")
+    parser = argparse.ArgumentParser(description="run script", add_help=False)
     parser.add_argument(
         '-v', '--verbose', action='store_const', dest='loglevel', const=logging.DEBUG,
         default=logging.INFO, help='enables verbose wrapper debugging info')
     parser.add_argument(
-        '-t', '--tool', help='Provide tool name')
+        '-t', '--tool', help='Provide tool name', required=True)
     index_args, unknown = parser.parse_known_args()
     index_args.index_results = False
     index_args.prefix = "snafu-%s" % index_args.tool
@@ -61,15 +61,15 @@ def main():
     if "es" in os.environ:
         if os.environ["es"] != "":
             es['server'] = os.environ["es"]
-            logger.info("Using elasticsearch server with host:" + str(es['server']))
+            logger.info("Using elasticsearch server with host:" + es['server'])
         if os.environ["es_port"] != "":
             es['port'] = os.environ["es_port"]
-            logger.info("Using elasticsearch server with port:" + str(es['port']))
+            logger.info("Using elasticsearch server with port:" + es['port'])
     es_verify_cert = os.getenv("es_verify_cert", "true")
     if len(es.keys()) == 2:
         if os.environ["es_index"] != "":
             index_args.prefix = os.environ["es_index"]
-            logger.info("Using index prefix for ES:" + str(index_args.prefix))
+            logger.info("Using index prefix for ES:" + index_args.prefix)
         index_args.index_results = True
         try:
             _es_connection_string = str(es['server']) + ':' + str(es['port'])
@@ -87,7 +87,7 @@ def main():
             logger.info("Connected to the elasticsearch cluster with info as follows:{0}".format(
                 str(es.info())))
         except Exception as e:
-            logger.warn("Elasticsearch connection caused an exception :" + str(e))
+            logger.warn("Elasticsearch connection caused an exception : %s" % e)
             index_args.index_results = False
 
     index_args.document_size_capacity_bytes = 0

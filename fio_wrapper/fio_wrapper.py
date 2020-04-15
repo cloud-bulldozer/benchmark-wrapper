@@ -13,10 +13,8 @@
 
 import configparser
 import logging
-# This wrapper assumes the following in fiojob
-# per_job_logs=true
-#
 import os
+import argparse
 
 import requests
 
@@ -28,14 +26,16 @@ logger = logging.getLogger("snafu")
 
 class fio_wrapper():
 
-    def __init__(self, parser):
+    def __init__(self, parent_parser):
         # collect arguments
 
-        # parser = argparse.ArgumentParser(description="fio-d Wrapper script")
+        parser_object = argparse.ArgumentParser(description="fio-d Wrapper script", parents=[parent_parser],
+                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser = parser_object.add_argument_group("Fio benchmark")
         parser.add_argument(
-            '-H', '--hosts', help='Provide host file location')
+            '-H', '--hosts', help='Provide host file location', required=True)
         parser.add_argument(
-            '-j', '--job', help='path to job file')
+            '-j', '--job', help='path to job file', required=True)
         parser.add_argument(
             '-s', '--sample', type=int, default=1,
             help='number of times to run benchmark, defaults to 1')
@@ -44,25 +44,15 @@ class fio_wrapper():
         parser.add_argument(
             '-hp', '--histogramprocess', help='Process and index histogram results',
             default=False)
-        self.args = parser.parse_args()
+        self.args = parser_object.parse_args()
 
         self.args.cluster_name = "mycluster"
         if "clustername" in os.environ:
             self.args.cluster_name = os.environ["clustername"]
 
-        self.uuid = ""
-        self.user = ""
-        self.server = ""
-        self.cache_drop_ip = ""
-
-        if "uuid" in os.environ:
-            self.uuid = os.environ["uuid"]
-        if "test_user" in os.environ:
-            self.user = os.environ["test_user"]
-        if "ceph_cache_drop_pod_ip" in os.environ:
-            self.cache_drop_ip = os.environ["ceph_cache_drop_pod_ip"]
-        # if "pod_details" in os.environ:
-        #     hosts_metadata = os.environ["pod_details"]
+        self.uuid = os.getenv("uuid", "")
+        self.user = os.getenv("test_user", "")
+        self.cache_drop_ip = os.getenv("ceph_cache_drop_pod_ip", "")
         self.sample = self.args.sample
         self.working_dir = self.args.dir
         self.host_file_path = self.args.hosts
@@ -70,15 +60,14 @@ class fio_wrapper():
         self.fio_job_names = self._fio_job_dict.sections()
         if 'global' in self.fio_job_names:
             self.fio_job_names.remove('global')
-        self.fio_jobs_dict = self._parse_jobs(self._fio_job_dict, self.fio_job_names)
+        self.fio_jobs_dict = self._parse_jobs()
 
     def run(self):
         fio_analyzer_obj = Fio_Analyzer(self.uuid, self.user, self.args.cluster_name)
         # execute fio for X number of samples, yield the trigger_fio_generator
         for i in range(1, self.sample + 1):
-            sample_dir = self.working_dir + '/' + str(i)
-            if not os.path.exists(sample_dir):
-                os.mkdir(sample_dir)
+            sample_dir = os.path.join(self.working_dir, str(i))
+            os.makedirs(sample_dir, exist_ok=True)
             if self.cache_drop_ip:
                 try:
                     drop = requests.get(
@@ -104,12 +93,12 @@ class fio_wrapper():
 
         yield fio_analyzer_obj
 
-    def _parse_jobs(self, job_dict, jobs):
+    def _parse_jobs(self):
         job_dicts = {}
-        if 'global' in job_dict.keys():
-            job_dicts['global'] = dict(job_dict['global'])
-        for job in jobs:
-            job_dicts[job] = dict(job_dict[job])
+        if 'global' in self._fio_job_dict.keys():
+            job_dicts['global'] = dict(self._fio_job_dict['global'])
+        for job in self.fio_job_names:
+            job_dicts[job] = dict(self._fio_job_dict[job])
         return job_dicts
 
     def _parse_jobfile(self, job_path):

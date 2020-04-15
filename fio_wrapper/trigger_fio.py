@@ -36,29 +36,27 @@ class _trigger_fio:
         self.numjob = numjob
         self.histogram_process = process_histogram
         self.cluster_name = cluster_name
+        self.fio_version = ""
+        self.hosts = ""
 
-    def _document_payload(self,
-                          data,
-                          user, uuid, sample,
-                          list_hosts, end_time,
-                          fio_version, fio_jobs_dict):  # pod_details,
+    def _document_payload(self, data, end_time):  # pod_details,
         processed = []
         fio_starttime = {}
         earliest_starttime = float('inf')
         for result in data["client_stats"]:
             document = {
-                "uuid": uuid,
-                "user": user,
+                "uuid": self.uuid,
+                "user": self.user,
                 "cluster_name": self.cluster_name,
-                "hosts": list_hosts,
-                "fio-version": fio_version,
+                "hosts": self.hosts,
+                "fio-version": self.fio_version,
                 "timestamp_end": int(end_time) * 1000,  # this is in ms
                 # "nodeName": pod_details["hostname"],
-                "sample": int(sample),
+                "sample": int(self.sample),
                 "fio": result
             }
-            if 'global' in fio_jobs_dict.keys():
-                document['global_options'] = fio_jobs_dict['global']
+            if 'global' in self.fio_jobs_dict.keys():
+                document['global_options'] = self.fio_jobs_dict['global']
             processed.append(document)
             if result['jobname'] != 'All clients':
 
@@ -85,11 +83,10 @@ class _trigger_fio:
 
         return processed, fio_starttime, earliest_starttime
 
-    def _log_payload(self, directory, user, uuid, sample, fio_jobs_dict, fio_version,
-                     fio_starttime, list_hosts, job):  # pod_details
+    def _log_payload(self, directory, fio_starttime, job, fio_output_file):  # pod_details
         logs = []
         _current_log_files = deepcopy(_log_files)
-        job_options = fio_jobs_dict[job]
+        job_options = self.fio_jobs_dict[job]
         if 'gtod_reduce' in job_options:
             del _current_log_files['slat']
             del _current_log_files['clat']
@@ -106,10 +103,10 @@ class _trigger_fio:
         if 'numjobs' in job_options:
             numjob_list = job_options['numjobs']
         else:
-            numjob_list = fio_jobs_dict['global']['numjobs']
+            numjob_list = self.fio_jobs_dict['global']['numjobs']
 
         for log in _current_log_files.keys():
-            for host in list_hosts:
+            for host in self.hosts:
                 for numjob in range(int(numjob_list)):
                     numjob = numjob + 1
                     log_file_prefix_string = 'write_' + str(log) + '_log'
@@ -120,45 +117,51 @@ class _trigger_fio:
                             + str(log) + '.' + str(numjob) + '.log.' + str(host)
                     except KeyError:
                         try:
-                            log_file_name = str(fio_jobs_dict['global'][log_file_prefix_string]) \
+                            log_file_name = str(self.fio_jobs_dict['global'][log_file_prefix_string]) \
                                 + '_' + str(log) + '.' + str(numjob) + '.log.' + str(host)
 
                         except:  # noqa
                             logger.info("Error setting log_file_name")
-                    with open(directory + '/' + str(log_file_name), 'r') as log_file:
-                        for log_line in log_file:
-                            log_line_values = str(log_line).split(", ")
-                            if len(log_line_values) == 5:
-                                timestamp_ms = int(fio_starttime[host]) + int(log_line_values[0])
-                                newtime = datetime.fromtimestamp(timestamp_ms / 1000.0)
-                                log_dict = {
-                                    "uuid": uuid,
-                                    "user": user,
-                                    "host": host,
-                                    "cluster_name": self.cluster_name,
-                                    "job_number": numjob,
-                                    "fio-version": fio_version,
-                                    "job_options": job_options,
-                                    "job_name": str(job),
-                                    "log_file": log_file_name,
-                                    "sample": int(sample),
-                                    "log_name": str(log),
-                                    "timestamp": timestamp_ms,  # this is in ms
-                                    "date": newtime.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-                                    str(_current_log_files[log]['metric']): int
-                                    (log_line_values[1]),
-                                    # "nodeName": pod_details["hostname"],
-                                    "data_direction": _data_direction[int(log_line_values[2])],
-                                    "block_size": int(log_line_values[3]),
-                                    "offset": int(log_line_values[4])
-                                }
-                                if 'global' in fio_jobs_dict.keys():
-                                    log_dict['global_options'] = fio_jobs_dict['global']
-                                logs.append(log_dict)
+                    log_file_name = os.path.join(directory, log_file_name)
+                    try:
+                        with open(log_file_name, 'r') as log_file:
+                            for log_line in log_file:
+                                log_line_values = str(log_line).split(", ")
+                                if len(log_line_values) == 5:
+                                    timestamp_ms = int(fio_starttime[host]) + int(log_line_values[0])
+                                    newtime = datetime.fromtimestamp(timestamp_ms / 1000.0)
+                                    log_dict = {
+                                        "uuid": self.uuid,
+                                        "user": self.user,
+                                        "host": host,
+                                        "cluster_name": self.cluster_name,
+                                        "job_number": numjob,
+                                        "fio-version": self.fio_version,
+                                        "job_options": job_options,
+                                        "job_name": str(job),
+                                        "log_file": log_file_name,
+                                        "sample": int(self.sample),
+                                        "log_name": str(log),
+                                        "timestamp": timestamp_ms,  # this is in ms
+                                        "date": newtime.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                                        str(_current_log_files[log]['metric']): int
+                                        (log_line_values[1]),
+                                        # "nodeName": pod_details["hostname"],
+                                        "data_direction": _data_direction[int(log_line_values[2])],
+                                        "block_size": int(log_line_values[3]),
+                                        "offset": int(log_line_values[4])
+                                    }
+                                    if 'global' in self.fio_jobs_dict.keys():
+                                        log_dict['global_options'] = self.fio_jobs_dict['global']
+                                    logs.append(log_dict)
+                    except OSError:
+                        # In certain situations Fio return code is 0 even after a failed execution, so we have
+                        # to check the log file existence to verify this
+                        logger.error("Log file %s not found" % log_file_name)
+                        exit(1)
         return logs
 
-    def _histogram_payload(self, processed_histogram_file, user, uuid, sample, fio_jobs_dict,
-                           fio_version, longest_fio_startime, list_hosts, job,
+    def _histogram_payload(self, processed_histogram_file, longest_fio_startime, job,
                            numjob=1):  # pod_details
         logs = []
         with open(processed_histogram_file, 'r') as log_file:
@@ -170,14 +173,14 @@ class _trigger_fio:
                     timestamp_ms = int(longest_fio_startime) + int(log_line_values[0])
                     newtime = datetime.fromtimestamp(timestamp_ms / 1000.0)
                     log_dict = {
-                        "uuid": uuid,
-                        "user": user,
-                        "hosts": list_hosts,
+                        "uuid": self.uuid,
+                        "user": self.user,
+                        "hosts": self.hosts,
                         "cluster_name": self.cluster_name,
-                        "fio-version": fio_version,
-                        "job_options": fio_jobs_dict[job],
+                        "fio-version": self.fio_version,
+                        "job_options": self.fio_jobs_dict[job],
                         "job_name": str(job),
-                        "sample": int(sample),
+                        "sample": int(self.sample),
                         "log_name": "clat_hist",
                         "timestamp": timestamp_ms,  # this is in ms
                         "date": newtime.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
@@ -188,55 +191,54 @@ class _trigger_fio:
                         "p99": float(log_line_values[5]),
                         "max": float(log_line_values[6])
                     }
-                    if 'global' in fio_jobs_dict.keys():
-                        log_dict['global_options'] = fio_jobs_dict['global']
+                    if 'global' in self.fio_jobs_dict.keys():
+                        log_dict['global_options'] = self.fio_jobs_dict['global']
                     logs.append(log_dict)
         return logs
 
     def _clean_output(self, fio_output_file):
-        cmd = ["sed", "-i", "/{/,$!d"]
-        cmd.append(str(fio_output_file))
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        cmd = ["sed", "-i", "/{/,$!d", fio_output_file]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
-        return stdout.strip(), process.returncode
+        return stdout.strip(), stderr, process.returncode
 
-    def _run_fiod(self, hosts_file, fiojob_file, output_dir, fio_output_file):
+    def _run_fiod(self, fiojob_file, output_dir, fio_output_file):
         cmd = ["fio", "--client=", "path_file", "--output-format=json", "--output="]
-        cmd[1] = "--client=" + str(hosts_file)
+        cmd[1] = "--client=" + self.host_file
         cmd[2] = fiojob_file
-        cmd[4] = "--output=" + str(fio_output_file)
-        # logger.debug(cmd)
+        cmd[4] = "--output=" + fio_output_file
+        logger.info("Executing %s" % " ".join(map(str, cmd)))
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=output_dir)
         stdout, stderr = process.communicate()
-        return stdout.strip(), process.returncode
+        return stdout.strip(), stderr, process.returncode
 
-    def _process_histogram(self, job_dict, hosts, job, working_dir, processed_histogram_prefix,
+    def _process_histogram(self, job, working_dir, processed_histogram_prefix,
                            histogram_output_file, numjob=1):
         histogram_input_file_list = []
-        for host in hosts:
+        for host in self.hosts:
             input_file = working_dir + '/' + processed_histogram_prefix + '.' + str(
                 numjob) + '.log.' + str(host)
             histogram_input_file_list.append(input_file)
         logger.debug(histogram_input_file_list)
-        if 'log_hist_msec' not in job_dict[job].keys():
-            if 'global' in job_dict.keys() and 'log_hist_msec' not in job_dict['global'].keys():
-                logger.info("log_hist_msec not found, so can't process histogram logs")
+        if 'log_hist_msec' not in self.fio_jobs_dict[job].keys():
+            if ('global' in self.fio_jobs_dict.keys() and
+               'log_hist_msec' not in self.fio_jobs_dict['global'].keys()):
+                logger.error("log_hist_msec not found, so can't process histogram logs")
                 exit(1)
             else:
-                _log_hist_msec = job_dict['global']['log_hist_msec']
+                _log_hist_msec = self.fio_jobs_dict['global']['log_hist_msec']
         else:
-            _log_hist_msec = job_dict[job]['log_hist_msec']
+            _log_hist_msec = self.fio_jobs_dict[job]['log_hist_msec']
         compute_percentiles_from_logs(output_csv_file=histogram_output_file,
                                       file_list=histogram_input_file_list,
                                       log_hist_msec=_log_hist_msec)
 
-    def _build_fio_job(self, job_name, job_dict, parent_dir, fio_job_file_name):
+    def _build_fio_job(self, job_name, parent_dir, fio_job_file_name):
         config = configparser.ConfigParser()
-        if 'global' in job_dict.keys():
-            config['global'] = job_dict['global']
-        config[job_name] = job_dict[job_name]
+        if 'global' in self.fio_jobs_dict.keys():
+            config['global'] = self.fio_jobs_dict['global']
+        config[job_name] = self.fio_jobs_dict[job_name]
         if os.path.exists(fio_job_file_name):
-            os.remove(fio_job_file_name)
             logger.info("file " + fio_job_file_name + " already exists. overwriting")
         with open(fio_job_file_name, 'w') as configfile:
             config.write(configfile, space_around_delimiters=False)
@@ -249,30 +251,24 @@ class _trigger_fio:
 
         # access user specified host file
         with open(self.host_file) as f:
-            hosts = f.read().splitlines()
+            self.hosts = f.read().splitlines()
 
         # execute for each job in the user specified job file
         for job in self.fio_jobs:
 
-            job_dir = self.working_dir + '/' + str(job)
-            if not os.path.exists(job_dir):
-                os.mkdir(job_dir)
-            fio_output_file = job_dir + '/' + str('fio-result.json')
-            fio_job_file = job_dir + '/fiojob'
-
-            self._build_fio_job(job, self.fio_jobs_dict, job_dir, fio_job_file)
-
-            stdout = self._run_fiod(self.host_file, fio_job_file, job_dir, fio_output_file)
-            if stdout[1] != 0:
-                logger.error("Fio failed to execute, trying one more time..")
-                stdout = self._run_fiod(self.host_file, fio_job_file, job_dir, fio_output_file)
-                if stdout[1] != 0:
-                    logger.error("Fio failed to execute a second time, stopping...")
-                    logger.error(stdout)
+            job_dir = os.path.join(self.working_dir, job)
+            os.makedirs(job_dir, exist_ok=True)
+            fio_output_file = os.path.join(job_dir, "fio-result.json")
+            fio_job_file = os.path.join(job_dir, "fiojob")
+            self._build_fio_job(job, job_dir, fio_job_file)
+            stdout, stderr, rc = self._run_fiod(fio_job_file, job_dir, fio_output_file)
+            if rc != 0:
+                logger.error("Fio failed to execute")
+                with open(fio_output_file, "r") as output:
+                    logger.error("Output file: %s" % output.read())
                     exit(1)
-            clean_stdout = self._clean_output(fio_output_file)
-
-            if clean_stdout[1] != 0:
+            stdout, stderr, rc = self._clean_output(fio_output_file)
+            if rc != 0:
                 logger.error("failed to parse the output file")
                 exit(1)
             logger.info(
@@ -283,12 +279,11 @@ class _trigger_fio:
             with open(fio_output_file) as f:
                 data = json.load(f)
             fio_endtime = int(data['timestamp'])  # in epoch seconds
-            fio_version = data["fio version"]
+            self.fio_version = data["fio version"]
 
             # parse fio json file, return list of normalized documents and structured start times
-            fio_result_documents, fio_starttime, earliest_starttime = self._document_payload(
-                data, self.user, self.uuid, self.sample, hosts, fio_endtime, fio_version,
-                self.fio_jobs_dict)  # hosts_metadata
+            fio_result_documents, fio_starttime, earliest_starttime = self._document_payload(data,
+                                                                                             fio_endtime)
 
             # Add fio result document to fio analyzer object
             self.fio_analyzer_obj.add_fio_result_documents(fio_result_documents,
@@ -313,11 +308,7 @@ class _trigger_fio:
                     logger.error("Error getting filename_format")
 
             # parse all fio log files, return list of normalized log documents
-            fio_log_documents = self._log_payload(job_dir, self.user, self.uuid, self.sample,
-                                                  self.fio_jobs_dict,
-                                                  fio_version,
-                                                  fio_starttime,
-                                                  hosts, job)
+            fio_log_documents = self._log_payload(job_dir, fio_starttime, job, fio_output_file)
 
             # if indexing is turned on yield back normalized data
             index = "log"
@@ -330,16 +321,12 @@ class _trigger_fio:
                     try:
                         processed_histogram_prefix = self.fio_jobs_dict['global']['write_hist_log'] +\
                             '_clat_hist'
-                    except:  # noqa
-                        logger.error("Error setting processed_histogram_prefix")
+                    except Exception as err:  # noqa
+                        logger.error("Error setting processed_histogram_prefix %s" % err)
                 histogram_output_file = job_dir + \
                     '/' + processed_histogram_prefix + '_processed.' + str(self.numjob)
-                self._process_histogram(self.fio_jobs_dict, hosts, job, job_dir,
-                                        processed_histogram_prefix, histogram_output_file)
-                histogram_documents = self._histogram_payload(histogram_output_file, self.user,
-                                                              self.uuid, self.sample,
-                                                              self.fio_jobs_dict, fio_version,
-                                                              earliest_starttime, hosts, job)
+                self._process_histogram(job, job_dir, processed_histogram_prefix, histogram_output_file)
+                histogram_documents = self._histogram_payload(histogram_output_file, earliest_starttime, job)
                 # if indexing is turned on yield back normalized data
 
                 index = "hist-log"

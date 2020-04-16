@@ -23,6 +23,7 @@ import datetime
 import logging
 import hashlib
 import json
+import ssl
 from utils.py_es_bulk import streaming_bulk
 from utils.common_logging import setup_loggers
 from utils.wrapper_factory import wrapper_factory
@@ -64,6 +65,7 @@ def main():
         if os.environ["es_port"] != "":
             es['port'] = os.environ["es_port"]
             logger.info("Using elasticsearch server with port:" + str(es['port']))
+    es_verify_cert = os.getenv("es_verify_cert", "true")
     if len(es.keys()) == 2:
         if os.environ["es_index"] != "":
             index_args.prefix = os.environ["es_index"]
@@ -71,7 +73,17 @@ def main():
         index_args.index_results = True
         try:
             _es_connection_string = str(es['server']) + ':' + str(es['port'])
-            es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST')
+            if es_verify_cert == "false":
+                logger.info("Turning off TLS certificate verification")
+                import urllib3
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                ssl_ctx = ssl.create_default_context()
+                ssl_ctx.check_hostname = False
+                ssl_ctx.verify_mode = ssl.CERT_NONE
+                es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST',
+                                                 ssl_context=ssl_ctx, use_ssl=True)
+            else:
+                es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST')
             logger.info("Connected to the elasticsearch cluster with info as follows:{0}".format(
                 str(es.info())))
         except Exception as e:

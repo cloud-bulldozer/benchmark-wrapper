@@ -26,6 +26,18 @@ environments, develop in SNAFU and then write ripsaw benchmark to integrate with
 | Elasticsearch  | Working  |
 | Prom           | Planned  |
 
+
+It is suggested to use a venv to install and run snafu.
+
+```
+python3 -m venv /path/to/new/virtual/environment
+source /path/to/new/virtual/environment/bin/activate
+git clone https://github.com/cloud-bulldozer/snafu
+python setup.py develop
+run_snafu --tool Your_Benchmark ...
+```
+
+
 ## how do I develop a snafu extension for my benchmark?
 
 In what follows, your benchmark's name should be substituted for the name "Your_Benchmark".  Use alphanumerics and
@@ -46,7 +58,7 @@ Your ripsaw benchmark will define several environment variables relevant to Elas
 It will then invoke your wrapper via the command:
 
 ```
-python run_snafu.py --tool Your_Benchmark ...
+run_snafu --tool Your_Benchmark ...
 ```
 
 Additional parameters are benchmark-specific and are passed to the wrapper to be parsed, with the exception of some
@@ -72,7 +84,7 @@ The Dockerfile should *not* git clone snafu - this makes it harder to develop wr
 will be built like this:
 
 ```
-# docker build -f Your_Benchmark_wrapper/Dockerfile .
+# docker build -f src/Your_Benchmark_wrapper/Dockerfile .
 ```
 
 And use the Dockerfile command:
@@ -153,7 +165,7 @@ as you want.
 ...
                  args:
 ...
-                   python run_snafu.py
+                    run_snafu
                    --tool Your_Workload
 {% if Your_Workload.samples is defined %}
                    --samples {{Your_Workload.samples}}
@@ -197,7 +209,7 @@ And here is a simple example of a ci_test.sh (they all look very similar):
 source ci/common.sh
 default_image_spec="quay.io/cloud-bulldozer/your_wrapper:master"
 image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/your_wrapper:$SNAFU_IMAGE_TAG
-build_and_push your_wrapper/Dockerfile $image_spec
+build_and_push src/your_wrapper/Dockerfile $image_spec
 
 cd ripsaw
 sed -i "s#$default_image_spec#$image_spec#" roles/your_wrapper_in_ripsaw/templates/*

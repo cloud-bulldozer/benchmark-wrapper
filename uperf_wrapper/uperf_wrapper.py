@@ -28,14 +28,10 @@ class uperf_wrapper():
         parser.add_argument(
             '--resourcetype', nargs=1,
             help='Provide the resource type for this uperf run - pod/vm/baremetal')
-        parser.add_argument(
-            '-u', '--uuid', nargs=1,
-            help='Provide the uuid')
-        parser.add_argument(
-            '--user', nargs=1,
-            help='Enter the user')
         self.args = parser.parse_args()
 
+        self.args.uuid = os.getenv("uuid", "")
+        self.args.user = os.getenv("test_user", "")
         self.args.clientips = ""
         self.args.remoteip = ""
         self.args.hostnetwork = ""

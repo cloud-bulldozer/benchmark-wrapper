@@ -34,18 +34,14 @@ class ycsb_wrapper():
         parser.add_argument(
             '-x', '--extra', nargs=1,
             help='Extra params to pass')
-        parser.add_argument(
-            '-u', '--uuid', nargs=1,
-            help='Enter the uuid')
-        parser.add_argument(
-            '--user', nargs=1,
-            help='Enter the user')
 
         self.args = parser.parse_args()
         if self.args.driver is None:
             parser.print_help()
             exit(1)
 
+        self.args.uuid = os.getenv("uuid", "")
+        self.args.user = os.getenv("test_user", "")
         self.args.recordcount = ""
         self.args.operationcount = ""
         self.args.phase = ""

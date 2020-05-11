@@ -12,52 +12,45 @@
 #   limitations under the License.
 
 import os
+import argparse
 
 from uperf_wrapper.trigger_uperf import Trigger_uperf
 
 
 class uperf_wrapper():
 
-    def __init__(self, parser):
+    def __init__(self, parent_parser):
+        parser_object = argparse.ArgumentParser(description="Uperf Wrapper script", parents=[parent_parser],
+                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser = parser_object.add_argument_group("Uperf benchmark")
         parser.add_argument(
-            '-w', '--workload', nargs=1,
-            help='Provide XML workload location')
+            '-w', '--workload',
+            help='Provide XML workload location', required=True)
         parser.add_argument(
-            '-r', '--run', nargs=1,
+            '-r', '--run', type=int, required=True,
             help='Provide the iteration for the run')
         parser.add_argument(
-            '--resourcetype', nargs=1,
+            '--resourcetype',
+            required=True,
             help='Provide the resource type for this uperf run - pod/vm/baremetal')
         parser.add_argument(
-            '-u', '--uuid', nargs=1,
+            '-u', '--uuid',
+            required=True,
             help='Provide the uuid')
         parser.add_argument(
-            '--user', nargs=1,
+            '--user',
+            required=True,
+            default="snafu",
             help='Enter the user')
-        self.args = parser.parse_args()
+        self.args = parser_object.parse_args()
 
-        self.args.clientips = ""
-        self.args.remoteip = ""
-        self.args.hostnetwork = ""
-        self.args.serviceip = ""
-        self.args.server_node = ""
-        self.args.client_node = ""
-        self.args.cluster_name = "mycluster"
-
-        if "clustername" in os.environ:
-            self.args.cluster_name = os.environ["clustername"]
-        if "serviceip" in os.environ:
-            self.args.serviceip = os.environ['serviceip']
-        if "hostnet" in os.environ:
-            self.args.hostnetwork = os.environ["hostnet"]
-        if "h" in os.environ:
-            self.args.remoteip = os.environ["h"]
-        if "ips" in os.environ:
-            self.args.clientips = os.environ["ips"]
-        if "server_node" in os.environ:
-            self.args.server_node = os.environ["server_node"]
-        if "client_node" in os.environ:
-            self.args.client_node = os.environ["client_node"]
+        self.args.clientips = os.getenv("ips", "")
+        self.args.remoteip = os.getenv("h", "")
+        self.args.hostnetwork = os.getenv("hostnet", "")
+        self.args.serviceip = os.getenv("serviceip", "")
+        self.args.server_node = os.getenv("server_node", "")
+        self.args.client_node = os.getenv("client_node", "")
+        self.args.cluster_name = os.getenv("clustername", "mycluster")
 
     def run(self):
         uperf_wrapper_obj = Trigger_uperf(self.args)

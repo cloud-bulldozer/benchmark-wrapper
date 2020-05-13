@@ -24,9 +24,9 @@ import logging
 import hashlib
 import json
 import ssl
-from utils.py_es_bulk import streaming_bulk
-from utils.common_logging import setup_loggers
-from utils.wrapper_factory import wrapper_factory
+from .utils.py_es_bulk import streaming_bulk
+from .utils.common_logging import setup_loggers
+from .utils.wrapper_factory import wrapper_factory
 
 logger = logging.getLogger("snafu")
 
@@ -150,5 +150,11 @@ def generate_wrapper_object(index_args, parser):
     yield benchmark_wrapper_object
 
 
-if __name__ == '__main__':
+def render():
+    """Entry point for console_scripts
+    """
     sys.exit(main())
+
+
+if __name__ == "__main__":
+    render()

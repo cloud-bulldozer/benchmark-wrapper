@@ -18,8 +18,8 @@ import argparse
 
 import requests
 
-from fio_wrapper import trigger_fio
-from fio_wrapper.fio_analyzer import Fio_Analyzer
+from . import trigger_fio
+from .fio_analyzer import Fio_Analyzer
 
 logger = logging.getLogger("snafu")
 

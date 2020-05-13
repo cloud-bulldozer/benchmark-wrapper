@@ -2,7 +2,7 @@
 
 import os
 
-from hammerdb.trigger_hammerdb import Trigger_hammerdb
+from .trigger_hammerdb import Trigger_hammerdb
 
 
 class hammerdb_wrapper():

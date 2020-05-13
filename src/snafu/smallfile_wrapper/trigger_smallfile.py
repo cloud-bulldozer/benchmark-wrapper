@@ -5,7 +5,7 @@ import json
 import subprocess
 import shutil
 import socket
-from vfs_stat import get_vfs_stat_dict
+from ..vfs_stat import get_vfs_stat_dict
 import redis
 
 

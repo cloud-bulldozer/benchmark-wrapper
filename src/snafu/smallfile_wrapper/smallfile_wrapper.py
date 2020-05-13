@@ -8,7 +8,7 @@
 import os
 import logging
 
-from smallfile_wrapper import trigger_smallfile
+from . import trigger_smallfile
 
 logger = logging.getLogger("snafu")
 

@@ -15,7 +15,7 @@ import os
 import subprocess
 from datetime import datetime
 
-from pgbench_wrapper.trigger_pgbench import Trigger_pgbench
+from .trigger_pgbench import Trigger_pgbench
 
 
 class pgbench_wrapper():

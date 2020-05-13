@@ -6,7 +6,7 @@ import subprocess
 from copy import deepcopy
 from datetime import datetime
 
-from fio_wrapper.fio_hist_parser import compute_percentiles_from_logs
+from .fio_hist_parser import compute_percentiles_from_logs
 
 logger = logging.getLogger("snafu")
 

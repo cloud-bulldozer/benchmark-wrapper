@@ -13,7 +13,7 @@
 
 import os
 
-from ycsb_wrapper.trigger_ycsb import Trigger_ycsb
+from .trigger_ycsb import Trigger_ycsb
 
 
 class ycsb_wrapper():

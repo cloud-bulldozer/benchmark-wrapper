@@ -8,12 +8,12 @@
 import logging
 import os
 
-from cluster_loader import trigger_cluster_loader
+from . import trigger_fs_drift
 
 logger = logging.getLogger("snafu")
 
 
-class cluster_loader_wrapper():
+class fs_drift_wrapper():
 
     def __init__(self, parser):
         # collect arguments
@@ -26,23 +26,18 @@ class cluster_loader_wrapper():
             help='number of times to run benchmark, defaults to 1',
             default=1)
         parser.add_argument(
+            '-T', '--top',
+            help='directory to access files in')
+        parser.add_argument(
             '-d', '--dir',
-            help='output parent directory, defaults to current directory',
+            help='output parent directory',
             default=os.path.dirname(os.getcwd()))
         parser.add_argument(
-            '-p', '--path-binary',
-            help='absolute path to openshift-tests binary',
-            default='/root/go/src/github.com/openshift/origin/_output/local/bin/linux/amd64/openshift-tests')
-        parser.add_argument(
-            '--cl-output',
-            help='print the cl output to console ( helps with CI )',
-            type=bool)
-        parser.add_argument(
-            dest="test_name",
-            help="name of the test",
-            type=str,
-            metavar="test_name")
+            '-y', '--yaml-input-file',
+            help='fs-drift parameters passed via YAML input file')
         self.args = parser.parse_args()
+
+        self.server = ""
 
         self.cluster_name = "mycluster"
         if "clustername" in os.environ:
@@ -55,14 +50,13 @@ class cluster_loader_wrapper():
         self.user = ""
         if "test_user" in os.environ:
             self.user = os.environ["test_user"]
+
+        if not self.args.top:
+            raise SnafuSmfException('must supply directory where you access flies')  # noqa
         self.samples = self.args.samples
+        self.working_dir = self.args.top
         self.result_dir = self.args.dir
-        self.path_binary = self.args.path_binary
-        self.test_name = self.args.test_name
-        if self.args.cl_output is not None:
-            self.console_cl_output = True
-        else:
-            self.console_cl_output = False
+        self.yaml_input_file = self.args.yaml_input_file
 
     def run(self):
         if not os.path.exists(self.result_dir):
@@ -71,7 +65,7 @@ class cluster_loader_wrapper():
             sample_dir = self.result_dir + '/' + str(s)
             if not os.path.exists(sample_dir):
                 os.mkdir(sample_dir)
-            trigger_generator = trigger_cluster_loader._trigger_cluster_loader(
-                logger, self.cluster_name, sample_dir, self.user, self.uuid,
-                s, self.path_binary, self.test_name, self.console_cl_output)
+            trigger_generator = trigger_fs_drift._trigger_fs_drift(
+                logger, self.yaml_input_file, self.cluster_name, self.working_dir, sample_dir,
+                self.user, self.uuid, s)
             yield trigger_generator

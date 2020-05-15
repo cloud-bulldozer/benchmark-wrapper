@@ -26,6 +26,18 @@ environments, develop in SNAFU and then write ripsaw benchmark to integrate with
 | Elasticsearch  | Working  |
 | Prom           | Planned  |
 
+
+It is suggested to use a venv to install and run snafu.
+
+```
+python3 -m venv /path/to/new/virtual/environment
+source /path/to/new/virtual/environment/bin/activate
+git clone https://github.com/cloud-bulldozer/snafu
+python setup.py develop
+run_snafu --tool Your_Benchmark ...
+```
+
+
 ## how do I develop a snafu extension for my benchmark?
 
 In what follows, your benchmark's name should be substituted for the name "Your_Benchmark".  Use alphanumerics and
@@ -46,7 +58,7 @@ Your ripsaw benchmark will define several environment variables relevant to Elas
 It will then invoke your wrapper via the command:
 
 ```
-python run_snafu.py --tool Your_Benchmark ...
+run_snafu --tool Your_Benchmark ...
 ```
 
 Additional parameters are benchmark-specific and are passed to the wrapper to be parsed, with the exception of some
@@ -153,7 +165,7 @@ as you want.
 ...
                  args:
 ...
-                   python run_snafu.py
+                    run_snafu
                    --tool Your_Workload
 {% if Your_Workload.samples is defined %}
                    --samples {{Your_Workload.samples}}

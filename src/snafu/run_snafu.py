@@ -150,11 +150,5 @@ def generate_wrapper_object(index_args, parser):
     yield benchmark_wrapper_object
 
 
-def render():
-    """Entry point for console_scripts
-    """
-    sys.exit(main())
-
-
 if __name__ == "__main__":
-    render()
+    sys.exit(main())

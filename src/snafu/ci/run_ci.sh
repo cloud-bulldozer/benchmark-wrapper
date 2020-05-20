@@ -2,7 +2,7 @@
 
 set -x
 
-source ci/common.sh
+source src/snafu/ci/common.sh
 
 # Clone ripsaw so we can use it for testing
 rm -rf ripsaw

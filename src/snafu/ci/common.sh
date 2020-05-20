@@ -61,7 +61,7 @@ function check_es() {
   uuid=$1
   index=${@:2}
   for my_index in $index; do
-    python3 ci/check_es.py -s $es_server -p $es_port -u $uuid -i $my_index \
+    python3 src/snafu/ci/check_es.py -s $es_server -p $es_port -u $uuid -i $my_index \
       || exit $NOTOK
   done
 }

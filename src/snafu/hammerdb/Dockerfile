@@ -5,10 +5,11 @@ RUN dnf install -y --nodocs tcl unixODBC python3-pip python3-requests
 RUN dnf install -y --nodocs procps-ng iproute net-tools ethtool nmap iputils
 
 RUN curl https://packages.microsoft.com/config/rhel/8/prod.repo -o /etc/yum.repos.d/mssql-release.repo
-COPY image_resources/centos8.repo /etc/yum.repos.d/centos8.repo
+COPY /src/snafu/image_resources/centos8.repo /etc/yum.repos.d/centos8.repo
 RUN ACCEPT_EULA=Y dnf -y install --nodocs msodbcsql17 --enablerepo=centos8
 RUN dnf clean all
 COPY . /opt/snafu
+RUN pip3 install -e /opt/snafu/
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Download and install the hammer suite
@@ -16,8 +17,7 @@ RUN curl -L 'https://downloads.sourceforge.net/project/hammerdb/HammerDB/HammerD
 RUN mkdir /hammer
 RUN chmod 755 hammer_installer
 RUN ./hammer_installer --prefix /hammer --mode silent
-COPY hammerdb/uid_entrypoint /usr/local/bin/
+COPY src/snafu/hammerdb/uid_entrypoint /usr/local/bin/
 RUN chmod g+w /etc/passwd
 RUN chmod 755 /usr/local/bin/uid_entrypoint
 RUN /usr/local/bin/uid_entrypoint
-RUN pip3 install --upgrade-strategy=only-if-needed -r /opt/snafu/requirements.txt

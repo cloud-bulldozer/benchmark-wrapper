@@ -9,4 +9,4 @@ RUN ln -sv /opt/smallfile/smallfile_cli.py /usr/local/bin/
 RUN ln -sv /opt/smallfile/smallfile_rsptimes_stats.py /usr/local/bin/
 # assumption: docker build -f smallfile_wrapper/Dockerfile .
 COPY . /opt/snafu/
-RUN pip3 install --upgrade-strategy=only-if-needed -r /opt/snafu/requirements.txt
+RUN pip3 install -e /opt/snafu/

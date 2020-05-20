@@ -65,7 +65,7 @@ wait_clean
 for dir in ${test_list}; do
   start_time=`date`
   figlet "CI test for ${dir}"
-  if $dir/ci_test.sh; then
+  if src/snafu/$dir/ci_test.sh; then
     result="PASS"
   else
     result="FAIL"

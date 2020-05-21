@@ -134,6 +134,14 @@ class Fio_Analyzer:
                         tmp_doc['std-dev-%s' % io_size] = round(((statistics.stdev
                                                                   (average_write_result_list) /
                                                                   write_average) * 100), 3)
+                    elif 'randread' in oper:
+                        tmp_doc['std-dev-%s' % io_size] = round(
+                            ((statistics.stdev(
+                                average_read_result_list) / read_average) * 100), 3)
+                    elif 'randwrite' in oper:
+                        tmp_doc['std-dev-%s' % io_size] = round(
+                            ((statistics.stdev(
+                                average_write_result_list) / write_average) * 100), 3)
                     elif "randrw" in oper:
                         tmp_doc['std-dev-%s' % io_size] = round((((statistics.stdev(
                             average_read_result_list) + statistics.stdev(

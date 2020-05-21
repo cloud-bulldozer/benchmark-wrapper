@@ -11,9 +11,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-# This wrapper assumes the following in fiojob
-# per_job_logs=true
-#
 import os
 import sys
 import argparse

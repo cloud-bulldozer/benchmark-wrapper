@@ -32,10 +32,10 @@ class Trigger_uperf():
         self.client_node = args.client_node
         self.cluster_name = args.cluster_name
         self.workload = args.workload
-        self.run = args.run
+        self.sample = args.sample
         self.resourcetype = args.resourcetype
 
-    def _json_payload(self, data):
+    def _json_payload(self, data, sample):
         processed = []
         prev_bytes = 0
         prev_ops = 0
@@ -52,7 +52,7 @@ class Trigger_uperf():
                 "user": self.user,
                 "cluster_name": self.cluster_name,
                 "hostnetwork": self.hostnetwork,
-                "iteration": self.run,
+                "iteration": sample,
                 "remote_ip": self.remoteip,
                 "client_ips": self.client_node,
                 "uperf_ts": datetime.fromtimestamp(int(result[0].split('.')[0]) / 1000),
@@ -101,17 +101,20 @@ class Trigger_uperf():
         if not os.path.exists(self.workload):
             logger.critical("Workload file %s not found" % self.workload)
             exit(1)
-        stdout, stderr, rc = self._run_uperf()
-        if rc == 1:
-            logger.error("UPerf failed to execute, trying one more time..")
+        for s in range(1, self.sample + 1):
+            logger.info("Starting sample %d out of %d" % (s, self.sample))
             stdout, stderr, rc = self._run_uperf()
             if rc == 1:
-                logger.critical("UPerf failed to execute a second time, stopping...")
-                exit(1)
-        data = self._parse_stdout(stdout)
-        documents = self._json_payload(data)
-        if len(documents) > 0:
-            for document in documents:
-                yield document, 'results'
-        logger.info(data)
-        logger.info(stdout)
+                logger.error("UPerf failed to execute, trying one more time..")
+                stdout, stderr, rc = self._run_uperf()
+                if rc == 1:
+                    logger.critical("UPerf failed to execute a second time, stopping...")
+                    exit(1)
+            data = self._parse_stdout(stdout)
+            documents = self._json_payload(data, s)
+            if len(documents) > 0:
+                for document in documents:
+                    yield document, 'results'
+            logger.info(data)
+            logger.info(stdout)
+            logger.info("Finished executing sample %d out of %d" % (s, self.sample))

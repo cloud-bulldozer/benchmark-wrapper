@@ -27,8 +27,8 @@ class uperf_wrapper():
             '-w', '--workload',
             help='Provide XML workload location', required=True)
         parser.add_argument(
-            '-r', '--run', type=int, required=True,
-            help='Provide the iteration for the run')
+            '-s', '--sample', type=int, required=True, default=1,
+            help='Number of times to run the benchmark')
         parser.add_argument(
             '--resourcetype',
             required=True,

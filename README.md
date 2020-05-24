@@ -84,7 +84,7 @@ The Dockerfile should *not* git clone snafu - this makes it harder to develop wr
 will be built like this:
 
 ```
-# docker build -f Your_Benchmark_wrapper/Dockerfile .
+# docker build -f src/Your_Benchmark_wrapper/Dockerfile .
 ```
 
 And use the Dockerfile command:
@@ -184,7 +184,7 @@ add the ci_test.sh script to your wrapper directory - the SNAFU CI (Continuous I
 will automatically find it and run it.   This assumes that your wrapper supports ripsaw, for now.
 At present, the CI does not test SNAFU on baremetal but this may be added in the future.
 
-every ci_test.sh script makes use of environment variables defined in ci/common.sh :
+every ci_test.sh script makes use of environment variables defined in src/ci/common.sh :
 
 * RIPSAW_CI_IMAGE_LOCATION - defaults to quay.io
 * RIPSAW_CI_IMAGE_ACCOUNT - defaults to rht_perf_ci
@@ -206,10 +206,10 @@ And here is a simple example of a ci_test.sh (they all look very similar):
 
 ```
 #!/bin/bash
-source ci/common.sh
+source src/ci/common.sh
 default_image_spec="quay.io/cloud-bulldozer/your_wrapper:master"
 image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/your_wrapper:$SNAFU_IMAGE_TAG
-build_and_push your_wrapper/Dockerfile $image_spec
+build_and_push src/your_wrapper/Dockerfile $image_spec
 
 cd ripsaw
 sed -i "s#$default_image_spec#$image_spec#" roles/your_wrapper_in_ripsaw/templates/*

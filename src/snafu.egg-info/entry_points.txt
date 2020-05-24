@@ -1,0 +1,3 @@
+[console_scripts]
+run_snafu = run_snafu:main
+

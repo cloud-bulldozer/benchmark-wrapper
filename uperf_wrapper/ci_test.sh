@@ -11,7 +11,7 @@ build_and_push uperf_wrapper/Dockerfile $image_spec
 
 cd ripsaw
 
-sed -si "s#$default_ripsaw_image_spec#$image_spec#g" roles/uperf-bench/templates/*
+sed -si "s#$default_ripsaw_image_spec#$image_spec#g" roles/uperf/templates/*
 
 # Build new ripsaw image
 update_operator_image

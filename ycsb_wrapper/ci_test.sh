@@ -11,7 +11,7 @@ build_and_push ycsb_wrapper/Dockerfile $image_spec
 
 cd ripsaw
 
-sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/load-ycsb/tasks/main.yml
+sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/ycsb/templates/*
 
 # Build new ripsaw image
 update_operator_image

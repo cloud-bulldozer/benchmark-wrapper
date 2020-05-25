@@ -11,7 +11,7 @@ build_and_push fio_wrapper/Dockerfile $image_spec
 
 cd ripsaw
 
-sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/fio-distributed/templates/*
+sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/fio_distributed/templates/*
 
 update_operator_image
 

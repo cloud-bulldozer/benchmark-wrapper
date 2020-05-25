@@ -11,7 +11,7 @@ build_and_push smallfile_wrapper/Dockerfile $image_spec
 
 cd ripsaw
 
-sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/smallfile-bench/templates/* roles/smallfile-bench/tasks/*
+sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/smallfile/templates/* roles/smallfile/tasks/*
 
 # Build new ripsaw image
 update_operator_image

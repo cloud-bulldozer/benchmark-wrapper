@@ -11,7 +11,7 @@ build_and_push iperf/Dockerfile $image_spec
 
 cd ripsaw
 
-sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/iperf3-bench/templates/*
+sed -i "s#$default_ripsaw_image_spec#$image_spec#g" roles/iperf3/templates/*
 
 # Build new ripsaw image
 update_operator_image

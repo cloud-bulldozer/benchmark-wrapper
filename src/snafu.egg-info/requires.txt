@@ -1,7 +1,0 @@
-configparser
-elasticsearch<=7.0.2,>=6.0.0
-statistics
-numpy
-pyyaml
-requests
-redis

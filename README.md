@@ -184,7 +184,7 @@ add the ci_test.sh script to your wrapper directory - the SNAFU CI (Continuous I
 will automatically find it and run it.   This assumes that your wrapper supports ripsaw, for now.
 At present, the CI does not test SNAFU on baremetal but this may be added in the future.
 
-every ci_test.sh script makes use of environment variables defined in src/ci/common.sh :
+every ci_test.sh script makes use of environment variables defined in ci/common.sh :
 
 * RIPSAW_CI_IMAGE_LOCATION - defaults to quay.io
 * RIPSAW_CI_IMAGE_ACCOUNT - defaults to rht_perf_ci
@@ -206,7 +206,7 @@ And here is a simple example of a ci_test.sh (they all look very similar):
 
 ```
 #!/bin/bash
-source src/ci/common.sh
+source ci/common.sh
 default_image_spec="quay.io/cloud-bulldozer/your_wrapper:master"
 image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/your_wrapper:$SNAFU_IMAGE_TAG
 build_and_push src/your_wrapper/Dockerfile $image_spec

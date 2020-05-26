@@ -50,11 +50,11 @@ diff_list=`git diff origin/master --name-only | grep -Ev "*\.(md|png)"`
 
 if [[ `echo "${diff_list}" | grep -cv /` -gt 0 || `echo ${diff_list} | grep -E "(ci|utils|image_resources)/|requirements\.txt"` ]]; then
   echo "Running full test"
-  test_list=`find * -maxdepth 1 -name ci_test.sh -type f -exec dirname {} \;`
+  test_list=`find * -maxdepth 2 -name ci_test.sh -type f -exec dirname {} \;`
 else
   echo "Running specific tests"
   echo $diff_list
-  test_list=`echo "${diff_list}" | awk -F "/" '{print $1}' | uniq`
+  test_list=`echo "${diff_list}" | awk -F "/" '{print $1"/"$2}' | uniq`
 fi
 
 echo -e "Running tests in the following directories:\n${test_list}"
@@ -65,7 +65,7 @@ wait_clean
 for dir in ${test_list}; do
   start_time=`date`
   figlet "CI test for ${dir}"
-  if src/$dir/ci_test.sh; then
+  if $dir/ci_test.sh; then
     result="PASS"
   else
     result="FAIL"

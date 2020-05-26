@@ -2,7 +2,7 @@
 
 set -x
 
-source src/ci/common.sh
+source ci/common.sh
 
 # Build image for ci
 default_ripsaw_image_spec="quay.io/cloud-bulldozer/smallfile:master"

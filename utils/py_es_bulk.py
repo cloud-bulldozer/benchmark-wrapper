@@ -91,7 +91,7 @@ def put_template(es, name, body):
     return beg, end, retry_count
 
 
-def streaming_bulk(es, actions):
+def streaming_bulk(es, actions, parallel=0):
     """
     streaming_bulk(es, actions)
     Arguments:
@@ -149,11 +149,14 @@ def streaming_bulk(es, actions):
     # Create the generator that closes over the external generator, "actions"
     generator = actions_tracking_closure(actions)
 
-    streaming_bulk_generator = helpers.streaming_bulk(es, generator,
-                                                      raise_on_error=False,
-                                                      raise_on_exception=False,
-                                                      request_timeout=_request_timeout)
-    for ok, resp_payload in streaming_bulk_generator:
+    indexer_f = helpers.parallel_bulk if parallel else helpers.streaming_bulk
+    indexer = indexer_f(es,
+                        generator,
+                        raise_on_error=False,
+                        raise_on_exception=False,
+                        request_timeout=_request_timeout)
+
+    for ok, resp_payload in indexer:
         retry_count, action = actions_deque.popleft()
         try:
             resp = resp_payload[_op_type]

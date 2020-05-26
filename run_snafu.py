@@ -65,6 +65,7 @@ def main():
         if os.environ["es_port"] != "":
             es['port'] = os.environ["es_port"]
             logger.info("Using elasticsearch server with port:" + es['port'])
+        parallel = int(os.getenv('parallel_indexing', 0))
     es_verify_cert = os.getenv("es_verify_cert", "true")
     if len(es.keys()) == 2:
         if os.environ["es_index"] != "":
@@ -96,7 +97,8 @@ def main():
         res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(es,
                                                                                  process_generator(
                                                                                      index_args,
-                                                                                     parser))
+                                                                                     parser),
+                                                                                 parallel)
 
         logger.info(
             "Indexed results - %s success, %s duplicates, %s failures, with %s retries." % (

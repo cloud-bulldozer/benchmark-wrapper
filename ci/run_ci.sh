@@ -7,6 +7,9 @@ source ci/common.sh
 # Clone ripsaw so we can use it for testing
 rm -rf ripsaw
 git clone https://github.com/cloud-bulldozer/ripsaw.git --depth 1
+pushd ripsaw
+update_operator_image
+popd
 
 # Generate uuid
 UUID=$(uuidgen)

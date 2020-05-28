@@ -5,6 +5,7 @@ es_port=${ES_PORT:-80}
 
 default_operator_image="quay.io/benchmark-operator/benchmark-operator:master"
 
+default_ripsaw_image_prefix="quay.io/cloud-bulldozer"
 image_location=${RIPSAW_CI_IMAGE_LOCATION:-quay.io}
 image_account=${RIPSAW_CI_IMAGE_ACCOUNT:-rht_perf_ci}
 export SNAFU_IMAGE_TAG=${SNAFU_IMAGE_TAG:-snafu_ci}
@@ -20,6 +21,16 @@ NOTOK=1
 # which will be the first thing the wrapper ci_test.sh does to it
 
 function update_operator_image() {
+  sed -i "s#${default_ripsaw_image_prefix}/fio:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/fio:${SNAFU_IMAGE_TAG}#g" roles/fio_distributed/templates/*
+  sed -i "s#${default_ripsaw_image_prefix}/fs-drift:master#${SNAFU_WRAPPER_IMAGE_PREFIX}/fs-drift:${SNAFU_IMAGE_TAG}#g" roles/fs-drift/templates/* roles/fs-drift/tasks/*
+  sed -i "s#${default_ripsaw_image_prefix}/hammerdb:master#${SNAFU_WRAPPER_IMAGE_PREFIX}/hammerdb:${SNAFU_IMAGE_TAG}#g" roles/hammerdb/templates/*
+  sed -i "s#${default_ripsaw_image_prefix}/iperf3:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/iperf3:${SNAFU_IMAGE_TAG}#g" roles/iperf3/templates/*
+  sed -i "s#${default_ripsaw_image_prefix}/pgbench:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/pgbench:${SNAFU_IMAGE_TAG}#g"  roles/pgbench/defaults/main.yml
+  sed -i "s#${default_ripsaw_image_prefix}/smallfile:master#${SNAFU_WRAPPER_IMAGE_PREFIX}/smallfile:${SNAFU_IMAGE_TAG}#g" roles/smallfile/templates/* roles/smallfile/tasks/*
+  sed -i "s#${default_ripsaw_image_prefix}/sysbench:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/sysbench:${SNAFU_IMAGE_TAG}#g" roles/sysbench/templates/*
+  sed -i "s#${default_ripsaw_image_prefix}/uperf:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/uperf:${SNAFU_IMAGE_TAG}#g" roles/uperf/templates/*
+  sed -i "s#${default_ripsaw_image_prefix}/ycsb-server:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/ycsb-server:${SNAFU_IMAGE_TAG}#g" roles/ycsb/templates/*
+  sed -i "s#${default_ripsaw_image_prefix}/vegeta:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/vegeta:${SNAFU_IMAGE_TAG}#g" roles/vegeta/templates/*
   image_spec=$image_location/$image_account/benchmark-operator:$SNAFU_IMAGE_TAG
   $SUDO operator-sdk build $image_spec --image-builder $image_builder
 
@@ -31,24 +42,11 @@ function update_operator_image() {
       exit $NOTOK
     fi
   done
-  sed -i \
-    "s|          image: $default_operator_image|          image: $image_spec # |" \
-    resources/operator.yaml
+  sed -i "s|image: $default_operator_image|image: $image_spec|g" resources/operator.yaml
 }
 
 function wait_clean {
-  kubectl delete benchmark --all -n my-ripsaw
-  kubectl delete all --all -n my-ripsaw
-  for i in {1..30}; do
-    if [ `kubectl get pods --namespace my-ripsaw | wc -l` -ge 1 ]; then
-      sleep 5
-    else
-      break
-    fi
-  done
-  if [[ `kubectl get namespace my-ripsaw` ]]; then
-    kubectl delete namespace my-ripsaw --wait=true
-  fi
+  kubectl delete namespace my-ripsaw --wait=true --ignore-not-found
 }
 
 # Takes 2 arguments. $1 is the uuid and $2 is a space-separated list of indexes to check
@@ -64,28 +62,6 @@ function check_es() {
     python3 ci/check_es.py -s $es_server -p $es_port -u $uuid -i $my_index \
       || exit $NOTOK
   done
-}
-
-# Takes test script as parameter and returns the uuid
-function get_uuid() {
-  my_test=$1
-  
-  sed -i '/trap finish EXIT/d' tests/$my_test
-
-  rm -f uuid
-  (
-  source tests/$my_test || :
-
-  # Get UUID
-  uuid=`kubectl -n my-ripsaw get benchmarks -o jsonpath='{.items[0].status.uuid}'`
-
-  # while we're here, let's verify that right image location and account got used
-
-  kubectl -n my-ripsaw describe pods | grep -i pulled
-
-  finish
-  echo $uuid > uuid
-  )
 }
 
 # Takes 2 argumentes. $1 is the Dockerfile path and $2 is the image name

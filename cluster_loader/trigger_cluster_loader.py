@@ -53,7 +53,11 @@ class _trigger_cluster_loader:
         with open(str(execution_output_file)) as f:
             output_file_content = f.readlines()
         pattern = re.compile('^{.*}')
-        cl_output_json = list(filter(pattern.match, output_file_content))[0].strip()
+        match_list = list(filter(pattern.match, output_file_content))
+        if not match_list:
+            self.logger.error("Clusterloader exited without completing")
+            exit(1)
+        cl_output_json = match_list[0].strip()
         cl_output_dict = json.loads(cl_output_json)
         self.logger.info("cl output is {}".format(
             cl_output_json))

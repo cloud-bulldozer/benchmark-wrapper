@@ -78,9 +78,9 @@ class Trigger_uperf():
 
     def _run_uperf(self):
         cmd = "uperf -v -a -x -i 1 -m {}".format(self.workload)
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
-        return stdout.strip().decode("utf-8"), stderr, process.returncode
+        return stdout.strip().decode("utf-8"), stderr.strip().decode("utf-8"), process.returncode
 
     def _parse_stdout(self, stdout):
         # This will effectivly give us:
@@ -107,8 +107,12 @@ class Trigger_uperf():
             if rc == 1:
                 logger.error("UPerf failed to execute, trying one more time..")
                 stdout, stderr, rc = self._run_uperf()
+                logger.error("stdout: %s" % stdout)
+                logger.error("stderr: %s" % stderr)
                 if rc == 1:
                     logger.critical("UPerf failed to execute a second time, stopping...")
+                    logger.critical("stdout: %s" % stdout)
+                    logger.critical("stderr: %s" % stderr)
                     exit(1)
             data = self._parse_stdout(stdout)
             documents = self._json_payload(data, s)

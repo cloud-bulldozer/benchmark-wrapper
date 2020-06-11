@@ -42,7 +42,7 @@ class Trigger_vegeta():
             "duration": self.duration,
             "workers": self.workers,
             "keepalive": self.keepalive,
-            "targets": self.targets,
+            "targets": os.path.basename(self.targets),
             "hostname": socket.gethostname()
         }
         payload.update(data)
@@ -101,8 +101,8 @@ class Trigger_vegeta():
             stdout, stderr, rc = self._run_vegeta()
             if rc:
                 logger.critical("Vegeta failed with returncode %d, stopping benchmark" % rc)
-                logger.error("stdout: %s" % stdout)
-                logger.error("stderr: %s" % stderr)
+                logger.critical("stdout: %s" % stdout)
+                logger.critical("stderr: %s" % stderr)
                 exit(1)
             for data in self._parse_stdout():
                 es_data = self._json_payload(data, s)

@@ -9,7 +9,7 @@ rm -rf ripsaw
 git clone https://github.com/cloud-bulldozer/ripsaw.git --depth 1
 
 if [[ $ghprbPullLongDescription = *"Depends-On:"* ]]; then
-  ripsaw_change_id="$(echo $ghprbPullLongDescription | sed -n -e 's/^.*Depends-On: //p')"
+  ripsaw_change_id="$(echo -e $ghprbPullLongDescription | sed -n -e 's/^.*Depends-On: //p' | dos2unix)"
   echo $ripsaw_change_id
   cd ripsaw
   git fetch origin pull/$ripsaw_change_id/head:local_change

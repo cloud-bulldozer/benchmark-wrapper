@@ -87,7 +87,7 @@ def main():
             logger.info("Connected to the elasticsearch cluster with info as follows:{0}".format(
                 str(es.info())))
         except Exception as e:
-            logger.warn("Elasticsearch connection caused an exception : %s" % e)
+            logger.warning("Elasticsearch connection caused an exception : %s" % e)
             index_args.index_results = False
 
     index_args.document_size_capacity_bytes = 0

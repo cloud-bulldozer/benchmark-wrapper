@@ -8,6 +8,7 @@ from fs_drift_wrapper.fs_drift_wrapper import fs_drift_wrapper
 from cluster_loader.cluster_loader import cluster_loader_wrapper
 from hammerdb.hammerdb_wrapper import hammerdb_wrapper
 from ycsb_wrapper.ycsb_wrapper import ycsb_wrapper
+from vegeta_wrapper.vegeta_wrapper import vegeta_wrapper
 
 import logging
 logger = logging.getLogger("snafu")
@@ -20,7 +21,8 @@ wrapper_dict = {
     "hammerdb": hammerdb_wrapper,
     "ycsb": ycsb_wrapper,
     "uperf": uperf_wrapper,
-    "pgbench": pgbench_wrapper
+    "pgbench": pgbench_wrapper,
+    "vegeta": vegeta_wrapper
 }
 #    "backpack": pgbench_wrapper,
 #    "fio": fio_wrapper,

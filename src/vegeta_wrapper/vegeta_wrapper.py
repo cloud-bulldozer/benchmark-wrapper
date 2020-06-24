@@ -13,7 +13,7 @@
 
 import os
 import argparse
-from vegeta_wrapper.trigger_vegeta import Trigger_vegeta
+from .trigger_vegeta import Trigger_vegeta
 
 
 class vegeta_wrapper():

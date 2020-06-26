@@ -5,3 +5,4 @@ numpy
 pyyaml
 requests
 redis
+python-dateutil

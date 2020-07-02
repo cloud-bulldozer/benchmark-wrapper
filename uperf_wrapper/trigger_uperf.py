@@ -77,7 +77,7 @@ class Trigger_uperf():
         return processed
 
     def _run_uperf(self):
-        cmd = "uperf -v -a -x -i 1 -m {}".format(self.workload)
+        cmd = "uperf -v -a -R -i 1 -m {}".format(self.workload)
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         return stdout.strip().decode("utf-8"), stderr.strip().decode("utf-8"), process.returncode

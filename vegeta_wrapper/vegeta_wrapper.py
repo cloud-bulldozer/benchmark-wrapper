@@ -24,7 +24,12 @@ class vegeta_wrapper():
         parser = parser_object.add_argument_group("Vegeta benchmark")
         parser.add_argument(
             '--targets',
-            help='Targets file in http format', required=True)
+            required=False,
+            help='Targets file in http format')
+        parser.add_argument(
+            '--target_name',
+            required=False,
+            help='Name of the target hit attacked. Note: only used when -r is passed.')
         parser.add_argument(
             '-w', '--workers',
             default=1,
@@ -52,6 +57,10 @@ class vegeta_wrapper():
             type=int,
             default=1,
             help='Number of times to run the benchmark')
+        parser.add_argument(
+            '-r', '--results',
+            required=False,
+            help='Load Vegeta result file')
         self.args = parser_object.parse_args()
 
         self.args.cluster_name = os.getenv("clustername", "mycluster")

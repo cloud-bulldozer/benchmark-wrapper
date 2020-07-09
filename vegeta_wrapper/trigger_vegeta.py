@@ -76,7 +76,7 @@ class Trigger_vegeta():
             vegeta_log = self.results
         else :
             vegeta_log = "vegeta.log"
-        for l in open("vegeta.log").readlines():
+        for l in open(vegeta_log).readlines():
             data = json.loads(l)
             rps = int(data["rate"])
             throughput = int(data["throughput"])

@@ -1,7 +1,8 @@
 #!/bin/bash
 
-es_server="marquez.perf.lab.eng.rdu2.redhat.com"
-es_port=9200
+es_server=${ES_SERVER:-foo.esserver.com}
+es_port=${ES_PORT:-80}
+
 default_operator_image="quay.io/benchmark-operator/benchmark-operator:master"
 
 image_location=${RIPSAW_CI_IMAGE_LOCATION:-quay.io}

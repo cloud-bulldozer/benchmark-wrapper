@@ -6,6 +6,7 @@ import time
 class Trigger_hammerdb():
     def __init__(self, args):
         self.uuid = args.uuid
+        self.db_type = args.db_type
         self.db_server = args.db_server
         self.db_port = args.db_port
         self.db_warehouses = args.db_warehouses
@@ -20,7 +21,7 @@ class Trigger_hammerdb():
         self.timed_test = args.timed_test
 
     def _run_hammerdb(self):
-        cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload.tcl"
+        cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload-self.db_type.tcl"
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         return stdout.strip().decode("utf-8"), process.returncode

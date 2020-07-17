@@ -27,6 +27,7 @@ import ssl
 from utils.py_es_bulk import streaming_bulk
 from utils.common_logging import setup_loggers
 from utils.wrapper_factory import wrapper_factory
+from utils.request_cache_drop import drop_cache
 
 logger = logging.getLogger("snafu")
 
@@ -128,9 +129,11 @@ def main():
 def process_generator(index_args, parser):
     benchmark_wrapper_object_generator = generate_wrapper_object(index_args, parser)
 
+    drop_cache()
     for wrapper_object in benchmark_wrapper_object_generator:
         for data_object in wrapper_object.run():
             for action, index in data_object.emit_actions():
+                drop_cache()  # before the next
                 es_index = index_args.prefix + '-' + index
                 es_valid_document = {"_index": es_index,
                                      "_op_type": "create",

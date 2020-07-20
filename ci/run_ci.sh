@@ -13,13 +13,6 @@ UUID=$(uuidgen)
 
 sed -i "s/my-ripsaw/my-ripsaw-$UUID/g" ci/common.sh
 
-cd ripsaw
-sed -i "s/ES_SERVER/$ES_SERVER/g" tests/test_crs/*
-sed -i "s/ES_PORT/$ES_PORT/g" tests/test_crs/*
-sed -i "s/my-ripsaw/my-ripsaw-$UUID/g" `grep -Rl my-ripsaw`
-sed -i "s/sql-server/sql-server-$UUID/g" tests/mssql.yaml tests/test_crs/valid_hammerdb.yaml tests/test_hammerdb.sh
-cd ..
-
 if [[ $ghprbPullLongDescription = *"Depends-On:"* ]]; then
   ripsaw_change_id="$(echo -e $ghprbPullLongDescription | sed -n -e 's/^.*Depends-On: //p' | dos2unix)"
   echo $ripsaw_change_id
@@ -28,6 +21,13 @@ if [[ $ghprbPullLongDescription = *"Depends-On:"* ]]; then
   git checkout local_change
   cd ..
 fi
+
+cd ripsaw
+sed -i "s/ES_SERVER/$ES_SERVER/g" tests/test_crs/*
+sed -i "s/ES_PORT/$ES_PORT/g" tests/test_crs/*
+sed -i "s/my-ripsaw/my-ripsaw-$UUID/g" `grep -Rl my-ripsaw`
+sed -i "s/sql-server/sql-server-$UUID/g" tests/mssql.yaml tests/test_crs/valid_hammerdb.yaml tests/test_hammerdb.sh
+cd ..
 
 # Podman image prune
 podman image prune -a

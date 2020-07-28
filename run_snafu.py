@@ -132,8 +132,9 @@ def process_generator(index_args, parser):
     drop_cache()
     for wrapper_object in benchmark_wrapper_object_generator:
         for data_object in wrapper_object.run():
+            # drop cache after every sample
+            drop_cache()
             for action, index in data_object.emit_actions():
-                drop_cache()  # before the next
                 es_index = index_args.prefix + '-' + index
                 es_valid_document = {"_index": es_index,
                                      "_op_type": "create",

@@ -24,7 +24,7 @@ class Trigger_hammerdb():
         self.timed_test = args.timed_test
 
     def _run_hammerdb(self):
-        cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload-"self.db_type".tcl"
+        cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload-"+self.db_type+".tcl"
         logger.info(cmd)
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()

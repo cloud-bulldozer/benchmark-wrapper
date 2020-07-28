@@ -2,6 +2,9 @@
 
 import subprocess
 import time
+import logging
+
+logger = logging.getLogger("snafu")
 
 class Trigger_hammerdb():
     def __init__(self, args):
@@ -21,7 +24,8 @@ class Trigger_hammerdb():
         self.timed_test = args.timed_test
 
     def _run_hammerdb(self):
-        cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload-self.db_type.tcl"
+        cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload-"self.db_type".tcl"
+        logger.info(cmd)
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         return stdout.strip().decode("utf-8"), process.returncode
@@ -32,8 +36,10 @@ class Trigger_hammerdb():
         return stdout, 0
 
     def _parse_stdout(self, stdout):
+        logger.info("parsing stdout")
         data = []
         for line in stdout.splitlines():
+            logger.info(line)
             if "TEST RESULT" in line:
                 worker = (line.split(":"))[0]
                 tpm = (line.split(" "))[6]
@@ -45,6 +51,7 @@ class Trigger_hammerdb():
     def _json_payload(self, data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp,
                       db_user,
                       transactions, test_type, runtime, rampup, samples, timed_test, timestamp):
+        logger.info("generating json payload")
         processed = []
         for current_worker in range(0, int(db_num_workers)):
             for current_sample in range(0, int(samples)):
@@ -74,6 +81,7 @@ class Trigger_hammerdb():
         return processed
 
     def _summarize_data(self, data):
+        logger.info("summarizing data")
         max_workers = int(data[0]['db_num_workers'])
         max_samples = int(data[0]['samples'])
         for current_worker in range(0, max_workers):
@@ -110,6 +118,7 @@ class Trigger_hammerdb():
 
     def emit_actions(self):
         timestamp = str(int(time.time()))
+        logger.info("Starting hammerdb run")
         stdout = self._run_hammerdb()
         # stdout = _fake_run()
         if stdout[1] == 1:
@@ -124,7 +133,7 @@ class Trigger_hammerdb():
                                        self.db_user, self.transactions, self.test_type,
                                        self.runtime, self.rampup, self.samples,
                                        self.timed_test, timestamp)
-        # print(documents)
+        logger.info(documents)
         if len(documents) > 0:
             self._summarize_data(documents)
         if len(documents) > 0:

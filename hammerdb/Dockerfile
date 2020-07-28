@@ -1,18 +1,20 @@
 FROM registry.access.redhat.com/ubi8:latest
 
 # install requirements
+COPY image_resources/centos8.repo /etc/yum.repos.d/centos8.repo
+COPY image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
 RUN dnf install -y --nodocs tcl unixODBC python3-pip python3-requests
 RUN dnf install -y --nodocs procps-ng iproute net-tools ethtool nmap iputils
+RUN dnf -y install --nodocs mysql-libs mysql-common mysql-devel mysql-errmsg
 
 RUN curl https://packages.microsoft.com/config/rhel/8/prod.repo -o /etc/yum.repos.d/mssql-release.repo
-COPY image_resources/centos8.repo /etc/yum.repos.d/centos8.repo
 RUN ACCEPT_EULA=Y dnf -y install --nodocs msodbcsql17 --enablerepo=centos8
 RUN dnf clean all
 COPY . /opt/snafu
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Download and install the hammer suite
-RUN curl -L 'https://downloads.sourceforge.net/project/hammerdb/HammerDB/HammerDB-3.2/HammerDB-3.2-Linux-x86-64-Install?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fhammerdb%2Ffiles%2FHammerDB%2FHammerDB-3.2%2FHammerDB-3.2-Linux-x86-64-Install%2Fdownload&ts=1564587940&use_mirror=autoselect' -o hammer_installer
+RUN curl -L 'https://github.com/TPC-Council/HammerDB/releases/download/v3.3/HammerDB-3.3-Linux-x86-64-Install' -o hammer_installer
 RUN mkdir /hammer
 RUN chmod 755 hammer_installer
 RUN ./hammer_installer --prefix /hammer --mode silent

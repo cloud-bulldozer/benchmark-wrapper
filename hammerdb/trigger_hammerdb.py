@@ -48,8 +48,7 @@ class Trigger_hammerdb():
         return data
 
     def _json_payload(self, data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_mssql_tcp,
-                      db_user,
-                      transactions, test_type, runtime, rampup, samples, timestamp):
+                      db_user, transactions, runtime, rampup, samples, timestamp):
         logger.info("generating json payload")
         processed = []
         for current_worker in range(0, int(db_num_workers)):

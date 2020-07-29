@@ -65,7 +65,6 @@ class Trigger_hammerdb():
                         "db_mssql_tcp": db_mssql_tcp,
                         "db_user": db_user,
                         "transactions": transactions,
-                        "test_type": test_type,
                         "runtime": runtime,
                         "rampup": rampup,
                         "samples": samples,
@@ -127,11 +126,12 @@ class Trigger_hammerdb():
         data = self._parse_stdout(stdout[0])
         documents = self._json_payload(data, self.uuid, self.db_server, self.db_port,
                                        self.db_warehouses, self.db_num_workers, self.db_mssql_tcp,
-                                       self.db_user, self.transactions, self.test_type,
+                                       self.db_user, self.transactions, 
                                        self.runtime, self.rampup, self.samples,
                                        timestamp)
         logger.info(documents)
         if len(documents) > 0:
+            logger.info("Length of documents: ", len(documents))
             self._summarize_data(documents)
         if len(documents) > 0:
             for document in documents:

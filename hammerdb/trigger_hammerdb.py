@@ -126,7 +126,7 @@ class Trigger_hammerdb():
                 exit(1)
         data = self._parse_stdout(stdout[0])
         documents = self._json_payload(data, self.uuid, self.db_server, self.db_port,
-                                       self.db_warehouses, self.db_num_workers, self.mssql_db_tcp,
+                                       self.db_warehouses, self.db_num_workers, self.db_mssql_tcp,
                                        self.db_user, self.transactions, self.test_type,
                                        self.runtime, self.rampup, self.samples,
                                        timestamp)

@@ -119,11 +119,11 @@ class hammerdb_wrapper():
             self.args.db_mssql_linux_odbc = os.environ["db_mssql_linux_odbc"]
         if "db_mssql_imdb" in os.environ:
             self.args.db_mssql_imdb = os.environ["db_mssql_imdb"]
-        if "db_mssql_bucket" in os_environ:
+        if "db_mssql_bucket" in os.environ:
             self.args.db_mssql_bucket = os.environ["db_mssql_bucket"]
-        if "db_mssql_durability" in os_environ:
+        if "db_mssql_durability" in os.environ:
             self.args.db_mssql_durability = os.environ["db_mssql_durability"]
-        if "db_mssql_checkpoint" in os_environ:
+        if "db_mssql_checkpoint" in os.environ:
             self.args.db_mssql_checkpoint = os.environ["db_mssql_checkpoint"]
         # mysql:
         if "db_mysql_storage_engine" in os.environ:

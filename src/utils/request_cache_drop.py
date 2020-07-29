@@ -13,7 +13,7 @@ import logging
 class RunSnafuCacheDropException(Exception):
     pass
 
-dropKernelCachePort = 9435  # FIXME: hardcoded for now
+dropKernelCachePort = int(os.getenv("KCACHE_DROP_PORT_NUM")
 dropCephCachePort = 9437  # FIXME: hardcoded for now
 logger = logging.getLogger("snafu")
 
@@ -33,7 +33,7 @@ def drop_cache():
     ceph_cache_drop_pod_ip = os.getenv('ceph_drop_pod_ip')
     logger.info('ceph OSD cache drop pod: %s' % str(ceph_cache_drop_pod_ip))
     if ceph_cache_drop_pod_ip != None:
-        conn = http.client.HTTPConnection(ceph_cache_drop_pod_ip, port=dropKernelCachePort, timeout=http_timeout)
+        conn = http.client.HTTPConnection(ceph_cache_drop_pod_ip, port=dropCephCachePort, timeout=http_timeout)
         if http_debug_level > 0:
             conn.set_debuglevel(http_debug_level)
         logger.info('requesting ceph to drop cache via %s:%d' % (ip, dropCephCachePort))
@@ -41,7 +41,7 @@ def drop_cache():
         rsp = conn.getresponse()
         if rsp.status != http_ok:
             logger.error('HTTP ERROR %d: %s' % (rsp.status, rsp.reason))
-            raise RunSnafuCacheDropException('Ceph OSD cache drop %s:%d' % (ip, dropKernelCachePort))
+            raise RunSnafuCacheDropException('Ceph OSD cache drop %s:%d' % (ip, dropCephCachePort))
 
     # drop kernel cache if requested to
 

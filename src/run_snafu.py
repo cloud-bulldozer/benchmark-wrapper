@@ -129,7 +129,6 @@ def main():
 def process_generator(index_args, parser):
     benchmark_wrapper_object_generator = generate_wrapper_object(index_args, parser)
 
-    drop_cache()
     for wrapper_object in benchmark_wrapper_object_generator:
         for data_object in wrapper_object.run():
             # drop cache after every sample

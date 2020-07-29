@@ -62,7 +62,7 @@ class Trigger_hammerdb():
                         "db_port": db_port,
                         "db_warehouses": db_warehouses,
                         "db_num_workers": db_num_workers,
-                        "db_mssql_tcp": db_mssql)tcp,
+                        "db_mssql_tcp": db_mssql_tcp,
                         "db_user": db_user,
                         "transactions": transactions,
                         "test_type": test_type,

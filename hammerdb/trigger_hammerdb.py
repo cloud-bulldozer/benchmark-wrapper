@@ -14,14 +14,13 @@ class Trigger_hammerdb():
         self.db_port = args.db_port
         self.db_warehouses = args.db_warehouses
         self.db_num_workers = args.db_num_workers
-        self.db_tcp = args.db_tcp
+        self.db_mssql_tcp = args.db_mssql_tcp
         self.db_user = args.db_user
         self.transactions = args.transactions
         self.test_type = args.test_type
         self.runtime = args.runtime
         self.rampup = args.rampup
         self.samples = args.samples
-        self.timed_test = args.timed_test
 
     def _run_hammerdb(self):
         cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload-"+self.db_type+".tcl"
@@ -48,9 +47,9 @@ class Trigger_hammerdb():
                 data.append(entry)
         return data
 
-    def _json_payload(self, data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp,
+    def _json_payload(self, data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_mssql_tcp,
                       db_user,
-                      transactions, test_type, runtime, rampup, samples, timed_test, timestamp):
+                      transactions, test_type, runtime, rampup, samples, timestamp):
         logger.info("generating json payload")
         processed = []
         for current_worker in range(0, int(db_num_workers)):
@@ -63,7 +62,7 @@ class Trigger_hammerdb():
                         "db_port": db_port,
                         "db_warehouses": db_warehouses,
                         "db_num_workers": db_num_workers,
-                        "db_tcp": db_tcp,
+                        "db_mssql_tcp": db_mssql)tcp,
                         "db_user": db_user,
                         "transactions": transactions,
                         "test_type": test_type,
@@ -72,7 +71,6 @@ class Trigger_hammerdb():
                         "samples": samples,
                         "current_sample": current_sample,
                         "current_worker": current_worker,
-                        "timed_test": timed_test,
                         "worker": data[i][0],
                         "tpm": data[i][1],
                         "nopm": data[i][2],
@@ -97,7 +95,7 @@ class Trigger_hammerdb():
                     print("Database port: {}".format(entry['db_port']))
                     print("Number of database warehouses: {}".format(entry['db_warehouses']))
                     print("Number of workers: {}".format(entry['db_num_workers']))
-                    print("TCP connection to the DB: {}".format(entry['db_tcp']))
+                    print("TCP connection to the DB: {}".format(entry['db_mssql_tcp']))
                     print("Database user: {}".format(entry['db_user']))
                     print("Transactions: {}".format(entry['transactions']))
                     print("Test type: {}".format(entry['test_type']))
@@ -106,7 +104,6 @@ class Trigger_hammerdb():
                     print("Worker: {}".format(current_worker))
                     print("Samples: {}".format(entry['samples']))
                     print("Current sample {}".format(current_sample))
-                    print("Timed test: {}".format(entry['timed_test']))
                     print("HammerDB results (TPM):")
                     print("""
                           TPM: {}""".format(entry['tpm']))
@@ -132,7 +129,7 @@ class Trigger_hammerdb():
                                        self.db_warehouses, self.db_num_workers, self.db_tcp,
                                        self.db_user, self.transactions, self.test_type,
                                        self.runtime, self.rampup, self.samples,
-                                       self.timed_test, timestamp)
+                                       timestamp)
         logger.info(documents)
         if len(documents) > 0:
             self._summarize_data(documents)

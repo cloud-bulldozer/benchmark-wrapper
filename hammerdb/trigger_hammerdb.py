@@ -17,14 +17,13 @@ class Trigger_hammerdb():
         self.db_mssql_tcp = args.db_mssql_tcp
         self.db_user = args.db_user
         self.transactions = args.transactions
-        self.test_type = args.test_type
+        self.test_type = args.driver
         self.runtime = args.runtime
         self.rampup = args.rampup
         self.samples = args.samples
 
     def _run_hammerdb(self):
         cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload-"+self.db_type+".tcl"
-        logger.info(cmd)
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         return stdout.strip().decode("utf-8"), process.returncode
@@ -35,10 +34,8 @@ class Trigger_hammerdb():
         return stdout, 0
 
     def _parse_stdout(self, stdout):
-        logger.info("parsing stdout")
         data = []
         for line in stdout.splitlines():
-            logger.info(line)
             if "TEST RESULT" in line:
                 worker = (line.split(":"))[0]
                 tpm = (line.split(" "))[6]
@@ -77,7 +74,6 @@ class Trigger_hammerdb():
         return processed
 
     def _summarize_data(self, data):
-        logger.info("summarizing data")
         max_workers = int(data[0]['db_num_workers'])
         max_samples = int(data[0]['samples'])
         for current_worker in range(0, max_workers):
@@ -96,7 +92,7 @@ class Trigger_hammerdb():
                     print("TCP connection to the DB: {}".format(entry['db_mssql_tcp']))
                     print("Database user: {}".format(entry['db_user']))
                     print("Transactions: {}".format(entry['transactions']))
-                    print("Test type: {}".format(entry['test_type']))
+                    #print("Test type: {}".format(entry['test_type']))
                     print("Runtime: {}".format(entry['runtime']))
                     print("Rampup time: {}".format(entry['rampup']))
                     print("Worker: {}".format(current_worker))
@@ -128,9 +124,7 @@ class Trigger_hammerdb():
                                        self.db_user, self.transactions, 
                                        self.runtime, self.rampup, self.samples,
                                        timestamp)
-        logger.info(documents)
         if len(documents) > 0:
-            logger.info("Length of documents: ", len(documents))
             self._summarize_data(documents)
         if len(documents) > 0:
             for document in documents:

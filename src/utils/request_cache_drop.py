@@ -10,11 +10,18 @@ import http.client
 import sys
 import logging
 
+def getPortNum(envVar, defaultPort):
+    portStr = os.getenv(envVar)
+    if portStr != None:
+        return int(portStr)
+    return defaultPort
+
 class RunSnafuCacheDropException(Exception):
     pass
 
-dropKernelCachePort = int(os.getenv("KCACHE_DROP_PORT_NUM")
-dropCephCachePort = 9437  # FIXME: hardcoded for now
+dropKernelCachePort = getPortNum('KCACHE_DROP_PORT_NUM', 9435)
+dropCephCachePort = getPortNum('CEPH_CACHE_DROP_PORT_NUM', 9437)
+
 logger = logging.getLogger("snafu")
 
 dbgLevel = os.getenv('DROP_CACHE_DEBUG_LEVEL') 

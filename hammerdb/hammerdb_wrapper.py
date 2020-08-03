@@ -36,9 +36,9 @@ class hammerdb_wrapper():
         self.args.samples = ""
         # database specific parameters
         # mssql
-        self.args.db_mssql_tcp = ""
-        self.args.db_mssql_azure = ""
-        self.args.db_mssql_authentication = ""
+        self.args.db_mssql_tcp = "unset"
+        self.args.db_mssql_azure = "unset"
+        self.args.db_mssql_authentication = "unset"
         self.args.db_mssql_linux_authent = ""
         self.args.db_mssql_odbc_driver = ""
         self.args.db_mssql_linux_odbc = ""

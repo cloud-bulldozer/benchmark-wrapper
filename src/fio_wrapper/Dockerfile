@@ -2,7 +2,7 @@ FROM registry.access.redhat.com/ubi8:latest as builder
 COPY src/image_resources/centos8.repo /etc/yum.repos.d/centos8.repo
 RUN dnf install -y --enablerepo=centos8 make gcc libaio zlib-devel libaio-devel
 RUN curl -L https://github.com/axboe/fio/archive/fio-3.19.tar.gz | tar xzf -
-RUN pushd fio-fio-3.19 && make -j2
+RUN pushd fio-fio-3.19 && ./configure --disable-native && make -j2
 
 FROM registry.access.redhat.com/ubi8:latest
 COPY --from=builder /fio-fio-3.19/fio /usr/local/bin/fio

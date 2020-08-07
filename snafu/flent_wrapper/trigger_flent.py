@@ -83,16 +83,10 @@ class Trigger_flent():
     def emit_actions(self):
         logger.info("Strating flent benchmark")
         stdout, stderr, rc = self._run_flent()
-        if rc == 1:
-            logger.error("Flent failed to execute, trying one more time..")
-            stdout, stderr, rc = self._run_flent=()
-            logger.error("stdout: %s" % stdout)
-            logger.error("stderr: %s" % stderr)
-            if rc == 1:
-                logger.critical("Flent failed to execute a second time, stopping...")
-                logger.critical("stdout: %s" % stdout)
-                logger.critical("stderr: %s" % stderr)
-                exit(1)
+        if rc != 0 or stderr.find("ERROR") != -1:
+            print("Failed. Stderr:", stderr)
+            exit(1)
+
         raw, summary = self._parse_stdout(stdout)
         yield raw, 'raw'
         yield summary, 'summary'

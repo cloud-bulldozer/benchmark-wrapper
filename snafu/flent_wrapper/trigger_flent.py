@@ -1,0 +1,106 @@
+#!/usr/bin/env python
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+import gzip
+import json
+import os
+import re
+import subprocess
+from datetime import datetime
+import logging
+
+logger = logging.getLogger("snafu")
+
+
+class Trigger_flent():
+    def __init__(self, args):
+        self.ftest = args.ftest
+        self.remoteip = args.remoteip
+        self.length = args.length
+        self.server_node = args.server_node
+        self.client_node = args.client_node
+        self.cluster_name = args.cluster_name
+
+    def _json_payload(self, raw):
+        processed = []
+        print(raw)
+        results = raw["results"]
+        # There is an unknown quantity (usually 2 or 3) of
+        # dictionaries in results. They contain the same number
+        # of items, and are in parallel.
+        # This code will convert the parallel arrays to items
+        # with each of those.
+
+        keys = list(results.keys())
+
+        quantity = len(results[keys[0]])
+        print("Number of results:", quantity)
+
+        for i in range(0, quantity):
+            new_item = {
+                "workload": "flent",
+                "test_type": self.ftest,
+                "remote_ip": self.remoteip,
+                "client_node": self.client_node,
+                "server_node": self.server_node
+            }
+            new_results_item = {}
+            for key in keys:
+                new_results_item[key] = results[key][i]
+            new_item["results"] = new_results_item
+            processed.append(new_item)
+
+        return processed
+
+    def _run_flent(self):
+        cmd = "flent {} -p totals -l {} -f summary -H {}".format(self.ftest, self.length, self.remoteip)
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        return stdout.strip().decode("utf-8"), stderr.strip().decode("utf-8"), process.returncode
+
+    def _parse_stdout(self, stdout):
+        # This is set to csv output, so process that.
+        print(stdout)
+        search_results = re.search("Data file written to (\./.+.gz)(.+)", stdout)
+        file_name = search_results[1]
+        raw = {}
+        print("Opening results file", file_name)
+        with gzip.open(file_name, 'rb') as f:
+            raw = json.load(f)
+        summary = search_results[2]
+        return raw, summary
+
+    def emit_actions(self):
+        logger.info("Strating flent benchmark")
+        stdout, stderr, rc = self._run_flent()
+        if rc == 1:
+            logger.error("Flent failed to execute, trying one more time..")
+            stdout, stderr, rc = self._run_flent=()
+            logger.error("stdout: %s" % stdout)
+            logger.error("stderr: %s" % stderr)
+            if rc == 1:
+                logger.critical("Flent failed to execute a second time, stopping...")
+                logger.critical("stdout: %s" % stdout)
+                logger.critical("stderr: %s" % stderr)
+                exit(1)
+        raw, summary = self._parse_stdout(stdout)
+        yield raw, 'raw'
+        yield summary, 'summary'
+        documents = self._json_payload(raw)
+        if len(documents) > 0:
+            for document in documents:
+                print(document)
+                yield document, 'results'
+        logger.info(documents)
+        logger.info(stdout)
+        logger.info("Finished executing flent")

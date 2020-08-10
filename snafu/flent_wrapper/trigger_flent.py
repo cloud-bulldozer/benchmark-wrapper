@@ -13,10 +13,8 @@
 
 import gzip
 import json
-import os
 import re
 import subprocess
-from datetime import datetime
 import logging
 
 logger = logging.getLogger("snafu")
@@ -47,20 +45,25 @@ class Trigger_flent():
         print("Number of results:", quantity)
 
         for i in range(0, quantity):
-            new_item = {
-                "workload": "flent",
-                "test_type": self.ftest,
-                "remote_ip": self.remoteip,
-                "client_node": self.client_node,
-                "server_node": self.server_node
-            }
             new_results_item = {}
             for key in keys:
                 new_results_item[key] = results[key][i]
-            new_item["results"] = new_results_item
+            new_item = self._json_result("results", new_results_item)
             processed.append(new_item)
 
         return processed
+
+    def _json_result(self, name, value):
+        new_item = {
+            "workload": "flent",
+            "test_type": self.ftest,
+            "remote_ip": self.remoteip,
+            "client_node": self.client_node,
+            "server_node": self.server_node,
+            name: value
+        }
+        return new_item
+
 
     def _run_flent(self):
         cmd = "flent {} -p totals -l {} -f summary -H {}".format(self.ftest, self.length, self.remoteip)
@@ -71,7 +74,7 @@ class Trigger_flent():
     def _parse_stdout(self, stdout):
         # This is set to csv output, so process that.
         print(stdout)
-        search_results = re.search("Data file written to (\./.+.gz)(.+)", stdout)
+        search_results = re.search("Data file written to (\\./.+.gz)(.+)", stdout)
         file_name = search_results[1]
         raw = {}
         print("Opening results file", file_name)
@@ -88,8 +91,8 @@ class Trigger_flent():
             exit(1)
 
         raw, summary = self._parse_stdout(stdout)
-        yield raw, 'raw'
-        yield summary, 'summary'
+        yield self._json_result("raw", raw), 'raw'
+        yield self._json_result("summary", summary), 'summary'
         documents = self._json_payload(raw)
         if len(documents) > 0:
             for document in documents:

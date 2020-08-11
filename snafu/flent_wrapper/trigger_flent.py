@@ -64,7 +64,6 @@ class Trigger_flent():
         }
         return new_item
 
-
     def _run_flent(self):
         cmd = "flent {} -p totals -l {} -f summary -H {}".format(self.ftest, self.length, self.remoteip)
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

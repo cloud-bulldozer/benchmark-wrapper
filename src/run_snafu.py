@@ -29,6 +29,7 @@ from utils.common_logging import setup_loggers
 from utils.wrapper_factory import wrapper_factory
 from utils.get_prometheus_data import get_prometheus_data
 
+
 logger = logging.getLogger("snafu")
 
 # mute elasticsearch and urllib3 logging

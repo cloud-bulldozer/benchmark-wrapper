@@ -136,7 +136,7 @@ def process_generator(index_args, parser):
                                      "_op_type": "create",
                                      "_source": action,
                                      "_id": ""}
-                es_valid_document["_id"] = hashlib.md5(str(action).encode()).hexdigest()
+                es_valid_document["_id"] = hashlib.sha256(str(action).encode()).hexdigest()
                 document_size_bytes = sys.getsizeof(es_valid_document)
                 index_args.document_size_capacity_bytes += document_size_bytes
                 logger.debug("document size is: %s" % document_size_bytes)

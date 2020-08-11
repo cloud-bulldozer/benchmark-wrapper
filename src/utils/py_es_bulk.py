@@ -33,7 +33,9 @@ _op_type = "create"
 # 100,000 minute timeout talking to Elasticsearch; basically we just don't
 # want to timeout waiting for Elasticsearch and then have to retry, as that
 # can add undue burden to the Elasticsearch cluster.
-_request_timeout = 100000*60.0
+
+_request_timeout = 100000 * 60.0
+
 
 
 def _tstos(ts=None):
@@ -52,7 +54,6 @@ def quiet_loggers():
     """
     logging.getLogger("urllib3").setLevel(logging.FATAL)
     logging.getLogger(_es_logger).setLevel(logging.FATAL)
-
 
 def put_template(es, name, body):
     """
@@ -89,7 +90,6 @@ def put_template(es, name, body):
             retry = False
     end = time.time()
     return beg, end, retry_count
-
 
 def streaming_bulk(es, actions, parallel=False):
     """
@@ -134,6 +134,7 @@ def streaming_bulk(es, actions, parallel=False):
                     retry_actions.append(actions_retry_deque.popleft())
                 for retry_count, retry_action in retry_actions:
                     actions_deque.append((retry_count, retry_action))  # Append to the right side ...
+
                     yield retry_action
                 # if after yielding all the actions to be retried, some show up
                 # on the retry deque again, we extend our sleep backoff to avoid
@@ -174,6 +175,7 @@ def streaming_bulk(es, actions, parallel=False):
             assert not ok
             # resp is not of expected form
             logger.warn(resp)
+
             status = 999
         else:
             assert action['_id'] == resp['_id']
@@ -188,13 +190,14 @@ def streaming_bulk(es, actions, parallel=False):
                     # ... otherwise consider it successful.
                     successes += 1
             elif status == 400:
-                doc = {"action": action,
-                       "ok": ok,
-                       "resp": resp,
-                       "retry_count": retry_count,
-                       "timestamp": _tstos(time.time())
-                       }
-                jsonstr = json.dumps(doc, indent=4, sort_keys=True)
+                doc = {
+                    "action": action,
+                    "ok": ok,
+                    "resp": resp,
+                    "retry_count": retry_count,
+                    "timestamp": _tstos(time.time())
+                }
+                jsonstr = json.dumps(doc, indent=4, sort_keys=True,default=str)
                 print(jsonstr)
                 # errorsfp.flush()
                 failures += 1

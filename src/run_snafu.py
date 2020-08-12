@@ -95,7 +95,7 @@ def main():
     index_args.document_size_capacity_bytes = 0
     if index_args.index_results:
         # call py es bulk using a process generator to feed it ES documents
-        
+
         parallel_setting = os.environ.get('parallel', 'false')
         res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(es,
                                                                                  process_generator(
@@ -150,7 +150,7 @@ def process_generator(index_args, parser):
                               test_config: {...}
                             }
                     """
-                    index_prom_data(prometheus_doc, index_args, action)
+                    index_prom_data(index_args, action)
                 else:
                     es_valid_document = get_valid_es_document(action,
                                                               index,
@@ -180,7 +180,7 @@ def get_valid_es_document(action, index, index_args):
 def index_prom_data(prometheus_doc, index_args, action):
 
     # definition of prometheus data getter, will yield back prom doc
-    def get_prometheus_generator(prometheus_doc, index_args, action):
+    def get_prometheus_generator(index_args, action):
         prometheus_doc_generator = get_prometheus_data(action)
         for prometheus_doc in prometheus_doc_generator.get_all_metrics():
             es_valid_document = get_valid_es_document(prometheus_doc,
@@ -195,16 +195,17 @@ def index_prom_data(prometheus_doc, index_args, action):
             logger.info("Using Prometheus elasticsearch server with host:" + str(es['server']))
         if os.environ["prom_port"] != "":
             es['port'] = os.environ["prom_port"]
-            logger.info("Using Prometheus elasticsearch server with port:" + str(es['port']))    
+            logger.info("Using Prometheus elasticsearch server with port:" + str(es['port']))
 
     if index_args.index_results:
         parallel_setting = os.environ.get('parallel', 'false')
-        res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(es,
-                                                                            get_prometheus_generator(
-                                                                                prometheus_doc,
-                                                                                index_args,
-                                                                                action),
-                                                                            parallel_setting)
+        res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(
+                                                                    es,
+                                                                    get_prometheus_generator(
+                                                                        prometheus_doc,
+                                                                        index_args,
+                                                                        action),
+                                                                    parallel_setting)
 
         start_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_beg))
         end_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_end))
@@ -218,5 +219,6 @@ def index_prom_data(prometheus_doc, index_args, action):
         logger.info("Prometheus indexing duration of execution - %s" % (tdelta))
 
 if __name__ == "__main__":
+    
+    
     sys.exit(main())
-

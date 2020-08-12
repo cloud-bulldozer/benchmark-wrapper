@@ -6,7 +6,7 @@ RUN pushd fio-fio-3.19 && ./configure --disable-native && make -j2
 
 FROM registry.access.redhat.com/ubi8:latest
 COPY --from=builder /fio-fio-3.19/fio /usr/local/bin/fio
-RUN dnf install -y --nodocs git python3-pip python3-requests python3-numpy libaio zlib procps-ng iproute net-tools ethtool nmap iputils && dnf clean all
+RUN dnf install -y --nodocs git python3-pip libaio zlib procps-ng iproute net-tools ethtool nmap iputils && dnf clean all
 RUN ln -s /usr/bin/python3 /usr/bin/python
 COPY . /opt/snafu/
 RUN pip3 install -e /opt/snafu/

@@ -1,6 +1,6 @@
 FROM registry.access.redhat.com/ubi8:latest
 
-RUN dnf install -y --nodocs git python3-pip python3-numpy python3-requests python3-scipy
+RUN dnf install -y --nodocs git python3-pip
 RUN dnf install -y --nodocs procps-ng iproute net-tools ethtool nmap iputils
 RUN ln -s /usr/bin/python3 /usr/bin/python
 ADD https://api.github.com/repos/distributed-system-analysis/smallfile/git/refs/heads/master /tmp/bustcache

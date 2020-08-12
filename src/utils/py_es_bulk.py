@@ -19,7 +19,7 @@ except ImportError:
     from elasticsearch import VERSION as es_VERSION, helpers, exceptions as es_excs
     _es_logger = "elasticsearch"
 
-
+logger = logging.getLogger("snafu")
 # Use the random number generator provided by the host OS to calculate our
 # random backoff.
 _r = SystemRandom()
@@ -128,7 +128,7 @@ def streaming_bulk(es, actions, parallel=False):
                 time.sleep(_calc_backoff_sleep(backoff))
                 retries_tracker['retries'] += 1
                 retry_actions = []
-                # First drain the retry deque entirely so that we know when we
+                # First drain                                    "rate_of_change_per_second": ROC,the retry deque entirely so that we know when we
                 # have cycled through the entire list to be retried.
                 while len(actions_retry_deque) > 0:
                     retry_actions.append(actions_retry_deque.popleft())

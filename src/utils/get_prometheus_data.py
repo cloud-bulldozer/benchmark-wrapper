@@ -39,7 +39,7 @@ class get_prometheus_data():
             self.url = os.environ["prom_url"]
             bearer = "Bearer " + token
             self.headers = {'Authorization': bearer}
-            self.pc = PrometheusConnect(url=self.url, headers=self.headers, disable_ssl=disable_ssl)
+            self.pc = PrometheusConnect(url=self.url, headers=self.headers, disable_ssl=True)
         else:
             logger.warn("""snafu service account token and prometheus url not set \n
                         No Prometheus data will be indexed""")
@@ -101,7 +101,6 @@ class get_prometheus_data():
                                     "metric": result["metric"],
                                     "Date": timestamp,
                                     "value": metric_value,
-                                    "rate_of_change_per_second": ROC,
                                     "test_config": self.test_config
                                     }
 

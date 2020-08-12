@@ -1,5 +1,4 @@
 import os
-import requests
 import json
 import logging
 import urllib3
@@ -18,11 +17,11 @@ class get_prometheus_data():
         self.user = action["user"]
         self.cluster_name = action["cluster_name"]
         self.test_config = action["test_config"]
-        
+
         # change datetime in seconds string to datetime object
-        startime = datetime.fromtimestamp(int(action["starttime"]))
+        starttime = datetime.fromtimestamp(int(action["starttime"]))
         self.start = starttime.datetime()
-        
+
         # change datetime in seconds string to datetime object
         endtime = datetime.fromtimestamp(int(action["endtime"]))
         # add 120s buffer to end time
@@ -54,7 +53,7 @@ class get_prometheus_data():
             with open(filename, 'r') as f:
                 datastore = json.load(f)
 
-            #for label in self.get_label_list():
+            # for label in self.get_label_list():
             for label in datastore["data"]:
 
                 # query_start_time = time.time()
@@ -64,12 +63,12 @@ class get_prometheus_data():
                 """
                 step = str(self.T_Delta) + "s"
                 try:
-                    #response = self.api_call(query)
-                    response = self.pc.custom_query_range(query = query,
-                                                          start_time = self.start,
-                                                          end_time = self.end,
-                                                          step = step,
-                                                          params = None)
+                    # response = self.api_call(query)
+                    response = self.pc.custom_query_range(query,
+                                                          self.start,
+                                                          self.end,
+                                                          step,
+                                                          None)
                 except Exception as e:
                     logger.warn("failure to get metric results %s" % e)
 
@@ -79,7 +78,7 @@ class get_prometheus_data():
                 """
                     TODO: update with proper parsing of response document
                 """
-                
+
                 for result in results:
                     # clean up name key from __name__ to name
                     result["metric"]["name"] = ""

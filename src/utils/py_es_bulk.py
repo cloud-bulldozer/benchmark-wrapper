@@ -36,17 +36,13 @@ _op_type = "create"
 
 _request_timeout = 100000 * 60.0
 
-
-
 def _tstos(ts=None):
     return time.strftime("%Y-%m-%dT%H:%M:%S-%Z", time.gmtime(ts))
-
 
 def _calc_backoff_sleep(backoff):
     global _r
     b = math.pow(2, backoff)
     return _r.uniform(0, min(b, _MAX_SLEEP_TIME))
-
 
 def quiet_loggers():
     """
@@ -128,7 +124,7 @@ def streaming_bulk(es, actions, parallel=False):
                 time.sleep(_calc_backoff_sleep(backoff))
                 retries_tracker['retries'] += 1
                 retry_actions = []
-                # First drain                                    "rate_of_change_per_second": ROC,the retry deque entirely so that we know when we
+                # First drain, the retry deque entirely so that we know when we
                 # have cycled through the entire list to be retried.
                 while len(actions_retry_deque) > 0:
                     retry_actions.append(actions_retry_deque.popleft())
@@ -160,10 +156,11 @@ def streaming_bulk(es, actions, parallel=False):
                                                          raise_on_exception=False,
                                                          request_timeout=_request_timeout)
     else:
-        streaming_bulk_generator = helpers.streaming_bulk(es, generator,
-                                                  raise_on_error=False,
-                                                  raise_on_exception=False,
-                                                  request_timeout=_request_timeout)
+        streaming_bulk_generator = helpers.streaming_bulk(es, 
+                                                          generator,
+                                                          raise_on_error=False,
+                                                          raise_on_exception=False,
+                                                          request_timeout=_request_timeout)
 
     for ok, resp_payload in streaming_bulk_generator:
         retry_count, action = actions_deque.popleft()

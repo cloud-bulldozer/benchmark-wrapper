@@ -199,13 +199,12 @@ def index_prom_data(prometheus_doc, index_args, action):
 
     if index_args.index_results:
         parallel_setting = os.environ.get('parallel', 'false')
-        res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(
-                                                                    es,
-                                                                    get_prometheus_generator(
-                                                                        prometheus_doc,
-                                                                        index_args,
-                                                                        action),
-                                                                    parallel_setting)
+        res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(es,
+                                                                                 get_prometheus_generator(
+                                                                                     prometheus_doc,
+                                                                                     index_args,
+                                                                                     action),
+                                                                                 parallel_setting)
 
         start_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_beg))
         end_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_end))
@@ -219,6 +218,5 @@ def index_prom_data(prometheus_doc, index_args, action):
         logger.info("Prometheus indexing duration of execution - %s" % (tdelta))
 
 if __name__ == "__main__":
-    
-    
+
     sys.exit(main())

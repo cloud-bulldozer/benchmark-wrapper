@@ -11,7 +11,7 @@ import math
 
 from random import SystemRandom
 from collections import Counter, deque
-from urllib3 import exceptions as ul_excs
+# from urllib3 import exceptions as ul_excs
 try:
     from elasticsearch1 import VERSION as es_VERSION, helpers, exceptions as es_excs
     _es_logger = "elasticsearch1"
@@ -20,6 +20,7 @@ except ImportError:
     _es_logger = "elasticsearch"
 
 logger = logging.getLogger("snafu")
+logger.debug("elasticsearch version: %s" % es_VERSION)
 # Use the random number generator provided by the host OS to calculate our
 # random backoff.
 _r = SystemRandom()
@@ -72,6 +73,7 @@ def put_template(es, name, body):
             es.indices.put_template(name=name, body=body)
         except es_excs.ConnectionError as exc:
             # We retry all connection errors
+            logger.warn(exc)
             time.sleep(_calc_backoff_sleep(backoff))
             backoff += 1
             retry_count += 1
@@ -156,7 +158,7 @@ def streaming_bulk(es, actions, parallel=False):
                                                          raise_on_exception=False,
                                                          request_timeout=_request_timeout)
     else:
-        streaming_bulk_generator = helpers.streaming_bulk(es, 
+        streaming_bulk_generator = helpers.streaming_bulk(es,
                                                           generator,
                                                           raise_on_error=False,
                                                           raise_on_exception=False,

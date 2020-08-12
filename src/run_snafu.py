@@ -217,6 +217,6 @@ def index_prom_data(prometheus_doc, index_args, action):
         tdelta = end_t - start_t
         logger.info("Prometheus indexing duration of execution - %s" % (tdelta))
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     sys.exit(main())

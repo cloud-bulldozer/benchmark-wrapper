@@ -28,7 +28,7 @@ from utils.py_es_bulk import streaming_bulk
 from utils.common_logging import setup_loggers
 from utils.wrapper_factory import wrapper_factory
 from utils.get_prometheus_data import get_prometheus_data
-
+from utils.request_cache_drop import drop_cache
 
 logger = logging.getLogger("snafu")
 
@@ -133,6 +133,8 @@ def process_generator(index_args, parser):
 
     for wrapper_object in benchmark_wrapper_object_generator:
         for data_object in wrapper_object.run():
+            # drop cache after every sample
+            drop_cache()
             for action, index in data_object.emit_actions(): 
                 if "get_prometheus_trigger" in index:
                     # Action will contain the following
@@ -152,6 +154,7 @@ def process_generator(index_args, parser):
                                                               index,
                                                               index_args)
                     yield es_valid_document
+
 
 def generate_wrapper_object(index_args, parser):
     benchmark_wrapper_object = wrapper_factory(index_args.tool, parser)

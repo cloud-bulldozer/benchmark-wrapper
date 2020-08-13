@@ -11,7 +11,6 @@ import math
 
 from random import SystemRandom
 from collections import Counter, deque
-# from urllib3 import exceptions as ul_excs
 try:
     from elasticsearch1 import VERSION as es_VERSION, helpers, exceptions as es_excs
     _es_logger = "elasticsearch1"
@@ -20,7 +19,7 @@ except ImportError:
     _es_logger = "elasticsearch"
 
 logger = logging.getLogger("snafu")
-logger.debug("elasticsearch version: %s" % es_VERSION)
+logger.debug("elasticsearch module version: %d.%d.%d" % es_VERSION)
 # Use the random number generator provided by the host OS to calculate our
 # random backoff.
 _r = SystemRandom()

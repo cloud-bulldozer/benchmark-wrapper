@@ -24,6 +24,7 @@ import logging
 import hashlib
 import json
 import ssl
+from distutils.util import strtobool
 from utils.py_es_bulk import streaming_bulk
 from utils.common_logging import setup_loggers
 from utils.wrapper_factory import wrapper_factory
@@ -96,7 +97,7 @@ def main():
     if index_args.index_results:
         # call py es bulk using a process generator to feed it ES documents
 
-        parallel_setting = os.environ.get('parallel', 'false')
+        parallel_setting = strtobool(os.environ.get('parallel', "false"))
         res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(es,
                                                                                  process_generator(
                                                                                      index_args,
@@ -192,13 +193,13 @@ def index_prom_data(prometheus_doc, index_args, action):
         es = {}
         if os.environ["prom_es"] != "":
             es['server'] = os.environ["prom_es"]
-            logger.info("Using Prometheus elasticsearch server with host:" + str(es['server']))
+            logger.info("Using Prometheus elasticsearch server with host: %s" % es['server'])
         if os.environ["prom_port"] != "":
             es['port'] = os.environ["prom_port"]
-            logger.info("Using Prometheus elasticsearch server with port:" + str(es['port']))
+            logger.info("Using Prometheus elasticsearch server with port: %s" % es['port'])
 
     if index_args.index_results:
-        parallel_setting = os.environ.get('parallel', 'false')
+        parallel_setting = strtobool(os.environ.get('parallel', "false"))
         res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(es,
                                                                                  get_prometheus_generator(
                                                                                      prometheus_doc,
@@ -215,7 +216,7 @@ def index_prom_data(prometheus_doc, index_args, action):
 
         # get time delta for indexing run
         tdelta = end_t - start_t
-        logger.info("Prometheus indexing duration of execution - %s" % (tdelta))
+        logger.info("Prometheus indexing duration of execution - %s" % tdelta)
 
 
 if __name__ == "__main__":

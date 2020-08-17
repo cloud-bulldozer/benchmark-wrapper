@@ -147,6 +147,7 @@ def streaming_bulk(es, actions, parallel=False):
     generator = actions_tracking_closure(actions)
 
     if parallel:
+        logger.info("Using parallel bulk indexer")
         streaming_bulk_generator = helpers.parallel_bulk(es,
                                                          generator,
                                                          chunk_size=10000000,
@@ -157,6 +158,7 @@ def streaming_bulk(es, actions, parallel=False):
                                                          raise_on_exception=False,
                                                          request_timeout=_request_timeout)
     else:
+        logger.info("Using streaming bulk indexer")
         streaming_bulk_generator = helpers.streaming_bulk(es,
                                                           generator,
                                                           raise_on_error=False,

@@ -87,8 +87,9 @@ def main():
                                                  ssl_context=ssl_ctx, use_ssl=True)
             else:
                 es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST')
-            logger.info("Connected to the elasticsearch cluster with info as follows:{0}".format(
-                str(es.info())))
+            logger.info("Connected to the elasticsearch cluster with info as follows:")
+            logger.info(json.dumps(es.info(), indent=4))
+
         except Exception as e:
             logger.warn("Elasticsearch connection caused an exception : %s" % e)
             index_args.index_results = False
@@ -130,7 +131,6 @@ def main():
     total_capacity_bytes = index_args.document_size_capacity_bytes
     logger.info("Duration of execution - %s, with total size of %s bytes" % (tdelta, total_capacity_bytes))
 
-
 def process_generator(index_args, parser):
     benchmark_wrapper_object_generator = generate_wrapper_object(index_args, parser)
 
@@ -146,18 +146,19 @@ def process_generator(index_args, parser):
                               "uuid": <uuid>
                               "user": <user>
                               "clustername": <clustername>
+                              "sample": <int>
                               "starttime": <datetime> datetime.utcnow().strftime('%s')
                               "endtime": <datetime>
                               test_config: {...}
                             }
                     """
+
                     index_prom_data(index_args, action)
                 else:
                     es_valid_document = get_valid_es_document(action,
                                                               index,
                                                               index_args)
                     yield es_valid_document
-
 
 def generate_wrapper_object(index_args, parser):
     benchmark_wrapper_object = wrapper_factory(index_args.tool, parser)
@@ -181,35 +182,69 @@ def get_valid_es_document(action, index, index_args):
 
     return es_valid_document
 
-def index_prom_data(prometheus_doc, index_args, action):
+def index_prom_data(index_args, action):
 
     # definition of prometheus data getter, will yield back prom doc
     def get_prometheus_generator(index_args, action):
         prometheus_doc_generator = get_prometheus_data(action)
         for prometheus_doc in prometheus_doc_generator.get_all_metrics():
+
             es_valid_document = get_valid_es_document(prometheus_doc,
                                                       "prometheus_data",
                                                       index_args)
+
             yield es_valid_document
 
+    es = {}
     if "prom_es" in os.environ:
-        es = {}
         if os.environ["prom_es"] != "":
             es['server'] = os.environ["prom_es"]
             logger.info("Using Prometheus elasticsearch server with host: %s" % es['server'])
         if os.environ["prom_port"] != "":
             es['port'] = os.environ["prom_port"]
             logger.info("Using Prometheus elasticsearch server with port: %s" % es['port'])
+    es_verify_cert = os.getenv("es_verify_cert", "true")
+    if len(es.keys()) == 2:
+        if os.environ["es_index"] != "":
+            index_args.prefix = os.environ["es_index"]
+            logger.info("Using index prefix for ES:" + index_args.prefix)
+        index_args.index_results = True
+        try:
+            _es_connection_string = str(es['server']) + ':' + str(es['port'])
+            if es_verify_cert == "false":
+                logger.info("Turning off TLS certificate verification")
+                import urllib3
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                ssl_ctx = ssl.create_default_context()
+                ssl_ctx.check_hostname = False
+                ssl_ctx.verify_mode = ssl.CERT_NONE
+                es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST',
+                                                 ssl_context=ssl_ctx, use_ssl=True)
+            else:
+                es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST')
+            logger.info("Connected to the elasticsearch cluster with info as follows:")
+            logger.info(json.dumps(es.info(), indent=4))
 
-    if index_args.index_results:
+        except Exception as e:
+            logger.warn("Elasticsearch connection caused an exception : %s" % e)
+            index_args.index_results = False
+
+    # check that we want to index and that the prom_es exist.
+    if index_args.index_results and "prom_es" in os.environ:
+        logger.info("initializing prometheus indexing")
         parallel_setting = strtobool(os.environ.get('parallel', "false"))
         res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(es,
                                                                                  get_prometheus_generator(
-                                                                                     prometheus_doc,
                                                                                      index_args,
                                                                                      action),
                                                                                  parallel_setting)
 
+        logger.info(
+            "Prometheus indexed results - %s success, %s duplicates, %s failures, with %s retries." % (
+                res_suc,
+                res_dup,
+                res_fail,
+                res_retry))
         start_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_beg))
         end_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_end))
         # set up a standard format for time

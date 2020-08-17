@@ -1,0 +1,432 @@
+{
+  "data": {
+    "Average_Disk_IOPS_Read": {
+        "label": "node_disk_reads_completed_total",
+        "query": "(irate(node_disk_reads_completed_total{device!~\"dm.*\",device!~\"rb.*\",device!~\"nbd.*\"}[1m]))"
+    },
+    "Average_Disk_IOPS_Write": {
+        "label": "node_disk_writes_completed_total",
+        "query": "(irate(node_disk_writes_completed_total{device!~\"dm.*\",device!~\"rb.*\",device!~\"nbd.*\"}[1m]))"
+    },
+    "Average_Disk_Throughput_Read": {
+        "label": "node_disk_read_bytes_total",
+        "query": "(irate(node_disk_read_bytes_total{device!~\"dm.*\",device!~\"rb.*\",device!~\"nbd.*\"}[1m]))"
+    },
+    "Average_Disk_Throughput_Write": {
+        "label": "node_disk_written_bytes_total",
+        "query": "(irate(node_disk_written_bytes_total{device!~\"dm.*\",device!~\"rb.*\",device!~\"nbd.*\"}[1m]))"
+    },
+    "Average_Network_Throughput_Rx": {
+        "label": "node_network_receive_bytes_total",
+        "query": "(irate(node_network_receive_bytes_total{device!~\"tun.*\",device!~\"vxlan.*\",device!~\"ovs.*\",device!~\"br.*\",device!~\"veth.*\"}[1m]) * 8)"
+    },
+    "Average_Network_Throughput_Tx": {
+        "label": "node_network_transmit_bytes_total",
+        "query": "(irate(node_network_transmit_bytes_total{device!~\"tun.*\",device!~\"vxlan.*\",device!~\"ovs.*\",device!~\"br.*\",device!~\"veth.*\"}[1m]) * 8)"
+    },
+    "Average_CPU_Usage_per_Instance": {
+        "label": "node_cpu_seconds_total",
+        "query": "(irate(node_cpu_seconds_total[1m]))"
+    },
+    "Average_Memory_Usage_Active": {
+        "label": "node_memory_MemTotal_bytes",
+        "query": "avg(node_memory_Active_bytes) by (instance)"
+    },
+    "Average_Memory_Usage_Cached_Buffers": {
+        "label": "node_memory_Cached_bytes,node_memory_Buffers_bytes",
+        "query": "avg(node_memory_Cached_bytes) by (instance) + avg(node_memory_Buffers_bytes) by (instance)"
+    },
+    "Average_Memory_Usage_Available": {
+        "label": "node_memory_MemAvailable_bytes,node_memory_Cached_bytes,node_memory_Buffers_bytes",
+        "query": "avg(node_memory_MemAvailable_bytes) by (instance) - (avg(node_memory_Cached_bytes) by (instance) + avg(node_memory_Buffers_bytes) by (instance))"
+    },
+    "Ceph_Per_OSD_Throughput_Read": {
+        "label": "ceph_osd_op_r_out_bytes",
+        "query": "irate(ceph_osd_op_r_out_bytes[1m]) "
+    },
+    "Ceph_Per_OSD_Throughput_Write": {
+        "label": "ceph_osd_op_w_in_bytes",
+        "query": "irate(ceph_osd_op_w_in_bytes[1m]) "
+    },
+    "Ceph_Per_OSD_Throughput_Read-Modify-Write_in": {
+        "label": "ceph_osd_op_rw_in_bytes",
+        "query": "irate(ceph_osd_op_rw_in_bytes[1m])"
+    },
+    "Ceph_Per_OSD_Throughput_Read-Modify-Write_out": {
+        "label": "ceph_osd_op_rw_out_bytes",
+        "query": "irate(ceph_osd_op_rw_out_bytes[1m])"
+    },
+    "Ceph_Avg_OSD_Op_Latency_read": {
+        "label": "ceph_osd_op_r_latency_sum,ceph_osd_op_r_latency_count",
+        "query": "avg(rate(ceph_osd_op_r_latency_sum[5m]) / rate(ceph_osd_op_r_latency_count[5m]) >= 0)"
+    },
+    "Ceph_Avg_OSD_Op_Latency_write": {
+        "label": "ceph_osd_op_w_latency_sum,ceph_osd_op_w_latency_count",
+        "query": "avg(rate(ceph_osd_op_w_latency_sum[5m]) / rate(ceph_osd_op_w_latency_count[5m]) >= 0)"
+    },
+    "Memory_Usage_RSS": {
+        "label": "container_memory_rss",
+        "query": "sum(container_memory_rss) by (service, node)"
+    },
+    "Ceph-OSD_Containers_CPU_usage": {
+        "label": "container_cpu_usage_seconds_total",
+        "query": "(irate(container_cpu_usage_seconds_total[1m]))"
+    },
+    "Number_of_PVCs": {
+        "label": "kube_persistentvolumeclaim_info",
+        "query": "avg(count(kube_persistentvolumeclaim_info))"
+    },
+    "Load_1m": {
+        "label": "node_load1",
+        "query": "avg(node_load1) by (instance)"
+    },
+    "Load_5m": {
+        "label": "node_load5",
+        "query": "avg(node_load5) by (instance)"
+    },
+    "load_15m": {
+        "label": "node_load15",
+        "query": "avg(node_load15) by (instance)"
+    },
+    "ceph_health": {
+        "label": "ceph_health_status",
+        "query": "sum(ceph_health_status)"
+    },
+    "ceph_in": {
+        "label": "ceph_osd_in",
+        "query": "sum(ceph_osd_in)"
+    },
+    "ceph_out": {
+        "label": "ceph_osd_out",
+        "query": "count(ceph_osd_up) - count(ceph_osd_in)"
+    },
+    "ceph_up": {
+        "label": "ceph_osd_up",
+        "query": "sum(ceph_osd_up)"
+    },
+    "ceph_down": {
+        "label": "ceph_osd_down",
+        "query": "count(ceph_osd_up == 0) OR vector(0)"
+    },
+    "ceph_average_PGs Per OSD": {
+        "label": "ceph_osd_numpg",
+        "query": "avg(ceph_osd_numpg) by (ceph_daemon)"
+    },
+    "ceph_monitor_in_quorum": {
+        "label": "ceph_mon_quorum_status",
+        "query": "sum(ceph_mon_quorum_status)"
+    },
+    "ceph_avg_available_capacity": {
+        "label": "ceph_cluster_total_bytes,ceph_cluster_total_used_bytes",
+        "query": "avg(ceph_cluster_total_used_bytes) / avg(ceph_cluster_total_bytes)"
+    },
+    "ceph_sum_available_capacity": {
+        "label": "ceph_cluster_total_bytes,ceph_cluster_total_used_bytes",
+        "query": "sum(ceph_cluster_total_bytes - ceph_cluster_total_used_bytes)"
+    },
+    "ceph_sum_total_capacity": {
+        "label": "ceph_cluster_total_bytes,ceph_cluster_total_used_bytes",
+        "query": "sum(ceph_cluster_total_bytes)"
+    },
+    "ceph_sum_used_capacity": {
+        "label": "ceph_cluster_total_bytes,ceph_cluster_total_used_bytes",
+        "query": "sum(ceph_cluster_total_used_bytes)"
+    },
+    "ceph_IOPS_write": {
+        "label": "ceph_osd_op_w",
+        "query": "sum(rate(ceph_osd_op_w[1m]))"
+    },
+    "ceph_IOPS_read": {
+        "label": "ceph_osd_op_r",
+        "query": "sum(rate(ceph_osd_op_r[1m]))"
+    },
+    "ceph_througput_write": {
+        "label": "ceph_osd_op_w_in_bytes",
+        "query": "sum(irate(ceph_osd_op_w_in_bytes[1m]))"
+    },
+    "ceph_throughput_read": {
+        "label": "ceph_osd_op_r_in_bytes",
+        "query": "sum(irate(ceph_osd_op_r_out_bytes[1m]))"
+    },
+    "ceph_Average_OSD_Apply_Latency": {
+        "label": "ceph_osd_apply_latency_ms",
+        "query": "avg(ceph_osd_apply_latency_ms)"
+    },
+    "ceph_Average_OSD_Commit_Latency": {
+        "label": "ceph_osd_commit_latency_ms",
+        "query": "avg(ceph_osd_commit_latency_ms)"
+    },
+    "ceph_Objects_in_the_Cluster": {
+        "label": "ceph_pool_objects",
+        "query": "sum(ceph_pool_objects)"
+    },
+    "ceph_Per OSD Capacity_stat": {
+        "label": "Per OSD Capacity",
+        "query": "sum(ceph_osd_stat_bytes) by (ceph_daemon)"
+    },
+    "ceph_Per OSD Capacity_used": {
+        "label": "ceph_osd_stat_bytes_used",
+        "query": "sum(ceph_osd_stat_bytes_used) by (ceph_daemon)"
+    },
+    "ceph_Per OSD Capacity_percentage": {
+        "label": "ceph_osd_stat_bytes_used,ceph_osd_stat_bytes",
+        "query": "(sum (ceph_osd_stat_bytes_used) by (ceph_daemon) / sum(ceph_osd_stat_bytes) by (ceph_daemon)) * 100"
+    },
+    "ceph_PGs_active": {
+        "label": "ceph_pg_active",
+        "query": "sum(ceph_pg_active)"
+    },
+    "ceph_PGs_clean": {
+        "label": "ceph_pg_clean",
+        "query": "sum(ceph_pg_clean)"
+    },
+    "ceph_PGs_peering": {
+        "label": "ceph_pg_peering",
+        "query": "sum(ceph_pg_peering)"
+    },
+    "ceph_PGs_degraded": {
+        "label": "ceph_pg_degraded",
+        "query": "sum(ceph_pg_degraded)"
+    },
+    "ceph_PGs_stale": {
+        "label": "ceph_pg_stale",
+        "query": "sum(ceph_pg_stale)"
+    },
+    "ceph_PGs_unclean_pgs": {
+        "label": "ceph_unclean_pgs",
+        "query": "sum(ceph_unclean_pgs)"
+    },
+    "ceph_PGs_undersized": {
+        "label": "ceph_pg_undersized",
+        "query": "sum(ceph_pg_undersized)"
+    },
+    "ceph_PGs_incomplete": {
+        "label": "ceph_pg_incomplete",
+        "query": "sum(ceph_pg_incomplete)"
+    },
+    "ceph_PGs_forced_backfill": {
+        "label": "ceph_pg_forced_backfill",
+        "query": "sum(ceph_pg_forced_backfill)"
+    },
+    "ceph_PGs_inconsistent": {
+        "label": "ceph_pg_inconsistent",
+        "query": "sum(ceph_pg_inconsistent)"
+    },
+    "ceph_PGs_forced_recovery": {
+        "label": "ceph_pg_forced_recovery",
+        "query": "sum(ceph_pg_forced_recovery)"
+    },
+    "ceph_PGs_creating": {
+        "label": "ceph_pg_creating",
+        "query": "sum(ceph_pg_creating)"
+    },
+    "ceph_PGs_wait_backfill": {
+        "label": "ceph_pg_wait_backfill",
+        "query": "sum(ceph_pg_wait_backfill)"
+    },
+    "ceph_PGs_deep": {
+        "label": "ceph_pg_deep",
+        "query": "sum(ceph_pg_deep)"
+    },
+    "ceph_PGs_scrubbing": {
+        "label": "ceph_pg_scrubbing",
+        "query": "sum(ceph_pg_scrubbing)"
+    },
+    "ceph_PGs_recovering": {
+        "label": "ceph_pg_recovering",
+        "query": "sum(ceph_pg_recovering)"
+    },
+    "ceph_PGs_repair": {
+        "label": "ceph_pg_repair",
+        "query": "sum(ceph_pg_repair)"
+    },
+    "ceph_PGs_down": {
+        "label": "ceph_pg_down",
+        "query": "sum(ceph_pg_down)"
+    },
+    "ceph_PGs_peered": {
+        "label": "ceph_pg_peered",
+        "query": "sum(ceph_pg_peered)"
+    },
+    "ceph_PGs_backfill": {
+        "label": "ceph_pg_backfill",
+        "query": "sum(ceph_pg_backfill)"
+    },
+    "ceph_PGs_remapped": {
+        "label": "ceph_pg_remapped",
+        "query": "sum(ceph_pg_remapped)"
+    },
+    "ceph_PGs_backfill_toofull": {
+        "label": "ceph_pg_backfill_toofull",
+        "query": "sum(ceph_pg_backfill_toofull)"
+    },
+    "ceph_Average_OSD_Resource_Quota_TABLE_CPU": {
+        "label": "node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate",
+        "query": "avg(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{namespace=\"openshift-storage\"}) by (container)"
+    },
+    "ceph_Average_OSD_Resource_Quota_TABLE_CPU_limit_percentage": {
+        "label": "node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate,kube_pod_container_resource_limits_cpu_cores",
+        "query": "avg(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{namespace=\"openshift-storage\"}) by (container) / avg(kube_pod_container_resource_limits_cpu_cores{namespace=\"openshift-storage\"}) by (container)"
+    },
+    "ceph_Average_OSD_Resource_Quota_TABLE_MEM": {
+        "label": "container_memory_working_set_bytes",
+        "query": "avg(container_memory_working_set_bytes{namespace=\"openshift-storage\"}) by (container)"
+    },
+    "ceph_Average_OSD_Resource_Quota_TABLE_MEM_limit_percentage": {
+        "label": "container_memory_working_set_bytes,kube_pod_container_resource_limits_memory_bytes",
+        "query": "avg(container_memory_working_set_bytes{namespace=\"openshift-storage\"})  by (container) / avg(kube_pod_container_resource_limits_memory_bytes{namespace=\"openshift-storage\"})  by (container)"
+    },
+    "ceph_OSD_Resource_Quota_mem_used": {
+        "label": "container_memory_working_set_bytes",
+        "query": "sum(container_memory_working_set_bytes{namespace=\"openshift-storage\"}) by (container, pod)"
+    },
+    "ceph_OSD_Resource_Quota_mem_request": {
+        "label": "kube_pod_container_resource_requests_memory_bytes",
+        "query": "sum(kube_pod_container_resource_requests_memory_bytes{namespace=\"openshift-storage\"}) by (container, pod)"
+    },
+    "ceph_OSD_Resource_Quota_mem_limit": {
+        "label": "kube_pod_container_resource_limits_memory_bytes",
+        "query": "sum(kube_pod_container_resource_limits_memory_bytes{namespace=\"openshift-storage\"}) by (container, pod)"
+    },
+    "ceph_OSD_Resource_Quota_mem_RSS_used": {
+        "label": "container_memory_rss",
+        "query": "sum(container_memory_rss{namespace=\"openshift-storage\"}) by (container, pod)"
+    },
+    "ceph_OSD_Resource_Quota_mem_cache_used": {
+        "label": "container_memory_cache",
+        "query": "sum(container_memory_cache{namespace=\"openshift-storage\"}) by (container, pod)"
+    },
+    "ceph_OSD_Resource_Quota_mem_swap_used": {
+        "label": "container_memory_swap",
+        "query": "sum(container_memory_swap{namespace=\"openshift-storage\"}) by (container, pod)"
+    },
+    "ceph_OSD_Resource_Quota_CPU_usage": {
+        "label": "node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate",
+        "query": "sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{namespace=\"openshift-storage\"}) by (container, pod)"
+    },
+    "ceph_OSD_Resource_Quota_CPU_request": {
+        "label": "kube_pod_container_resource_requests_cpu_cores",
+        "query": "sum(kube_pod_container_resource_requests_cpu_cores{namespace=\"openshift-storage\"}) by (container, pod)"
+    },
+    "ceph_OSD_Resource_Quota_CPU_limit": {
+        "label": "kube_pod_container_resource_limits_cpu_cores",
+        "query": "sum(kube_pod_container_resource_limits_cpu_cores{namespace=\"openshift-storage\"}) by (container, pod)"
+    },
+    "ceph_CPU_Quota_TABLE_usage": {
+        "label": "node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate",
+        "query": "sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{namespace=\"openshift-storage\"}) by (pod)"
+    },
+    "ceph_CPU_Quota_TABLE_request": {
+        "label": "kube_pod_container_resource_requests_cpu_cores",
+        "query": "sum(kube_pod_container_resource_requests_cpu_cores{namespace=\"openshift-storage\"}) by (pod)"
+    },
+    "ceph_CPU_Quota_TABLE_percentage_request_used": {
+        "label": "node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate,kube_pod_container_resource_requests_cpu_cores",
+        "query": "sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{namespace=\"openshift-storage\"}) by (pod) / sum(kube_pod_container_resource_requests_cpu_cores{namespace=\"openshift-storage\"}) by (pod)"
+    },
+    "ceph_CPU_Quota_TABLE_limit": {
+        "label": "kube_pod_container_resource_limits_cpu_cores",
+        "query": "sum(kube_pod_container_resource_limits_cpu_cores{namespace=\"openshift-storage\"}) by (pod)"
+    },
+    "ceph_CPU_Quota_TABLE_percentage_limit_used": {
+        "label": "node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate,kube_pod_container_resource_limits_cpu_cores",
+        "query": "sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{namespace=\"openshift-storage\"}) by (pod) / sum(kube_pod_container_resource_limits_cpu_cores{namespace=\"openshift-storage\"}) by (pod)"
+    },
+    "ceph_Memory_Quota_TABLE_mem_usage": {
+        "label": "container_memory_working_set_bytes",
+        "query": "sum(container_memory_working_set_bytes{namespace=\"openshift-storage\",id=~\"slice$\"}) by (pod)"
+    },
+    "ceph_Memory_Quota_TABLE_mem_request": {
+        "label": "kube_pod_container_resource_requests_memory_bytes",
+        "query": "sum(kube_pod_container_resource_requests_memory_bytes{namespace=\"openshift-storage\"}) by (pod)"
+    },
+    "ceph_Memory_Quota_TABLE_mem_request_used": {
+        "label": "container_memory_working_set_bytes,kube_pod_container_resource_requests_memory_bytes",
+        "query": "sum(container_memory_working_set_bytes{namespace=\"openshift-storage\",id=~\"slice$\"}) by (pod) / sum(kube_pod_container_resource_requests_memory_bytes{namespace=\"openshift-storage\"}) by (pod)"
+    },
+    "ceph_Memory_Quota_TABLE_mem_limit": {
+        "label": "kube_pod_container_resource_limits_memory_bytes",
+        "query": "sum(kube_pod_container_resource_limits_memory_bytes{namespace=\"openshift-storage\"}) by (pod) "
+    },
+    "ceph_Memory_Quota_TABLE_percentage_mem_limit_used": {
+        "label": "container_memory_working_set_bytes,kube_pod_container_resource_limits_memory_bytes",
+        "query": "sum(container_memory_working_set_bytes{namespace=\"openshift-storage\",id=~\"slice$\"}) by (pod) / sum(kube_pod_container_resource_limits_memory_bytes{namespace=\"openshift-storage\"}) by (pod)"
+    },
+    "ceph_Memory_Quota_TABLE_mem_usage_rss": {
+        "label": "container_memory_rss",
+        "query": "sum(container_memory_rss{namespace=\"openshift-storage\",id=~\"slice$\"}) by (pod)"
+    },
+    "ceph_Memory_Quota_TABLE_mem_usage_cache": {
+        "label": "container_memory_cache",
+        "query": "sum(container_memory_cache{namespace=\"openshift-storage\",id=~\"slice$\"}) by (pod)"
+    },
+    "ceph_Memory_Quota_TABLE_mem_usage_swap": {
+        "label": "container_memory_swap",
+        "query": "sum(container_memory_swap{namespace=\"openshift-storage\",id=~\"slice$\"}) by (pod)"
+    },
+    "ceph_OSD_Operations_Latency": {
+        "label": "ceph_osd_op_latency_sum,ceph_osd_op_latency_count",
+        "query": "avg(rate(ceph_osd_op_latency_sum{namespace=\"openshift-storage\"}[1m]) / rate(ceph_osd_op_latency_count{namespace=\"openshift-storage\"}[1m]) >= 0) by (ceph_daemon)"
+    },
+    "ceph_Average OSD Read Operation latency (ms)": {
+        "label": "ceph_osd_op_r_latency_sum,ceph_osd_op_r_latency_count",
+        "query": "avg(rate(ceph_osd_op_r_latency_sum{namespace=\"openshift-storage\"}[1m]) / rate(ceph_osd_op_r_latency_count{namespace=\"openshift-storage\"}[1m]) >= 0) by (ceph_daemon)"
+    },
+    "ceph_OSD Read Op Latency Distribution (ms)": {
+        "label": "ceph_osd_op_r_latency_sum",
+        "query": "rate(ceph_osd_op_r_latency_sum{namespace=\"openshift-storage\"}[1m]) / rate(ceph_osd_op_r_latency_count{namespace=\"openshift-storage\"}[1m]) >= 0"
+    },
+    "ceph_Average OSD Write Operation latency (ms)": {
+        "label": "ceph_osd_op_w_latency_sum,ceph_osd_op_w_latency_count",
+        "query": "avg(rate(ceph_osd_op_w_latency_sum{namespace=\"openshift-storage\"}[1m]) / rate(ceph_osd_op_w_latency_count{namespace=\"openshift-storage\"}[1m]) >= 0) by (ceph_daemon)"
+    },
+    "ceph_OSD Write Op Latency Distribution (ms)": {
+        "label": "ceph_osd_op_w_latency_sum,ceph_osd_op_w_latency_count",
+        "query": "rate(ceph_osd_op_w_latency_sum{namespace=\"openshift-storage\"}[1m]) / rate(ceph_osd_op_w_latency_count{namespace=\"openshift-storage\"}[1m]) >= 0"
+    },
+    "ceph_OSD Red-Modify-Write Operation latency (ms)": {
+        "label": "ceph_osd_op_rw_latency_sum",
+        "query": "sum(irate(ceph_osd_op_rw_latency_sum{namespace=\"openshift-storage\"}[1m])) by (ceph_daemon)"
+    },
+    "ceph_OSD Read Operations Out (bytes)": {
+        "label": "ceph_osd_op_r_out_bytes",
+        "query": "sum(irate(ceph_osd_op_r_out_bytes{namespace=\"openshift-storage\"}[1m])) by (ceph_daemon)"
+    },
+    "ceph_OSD Write Operations In (bytes)": {
+        "label": "ceph_osd_op_w_in_bytes",
+        "query": "sum(irate(ceph_osd_op_w_in_bytes{namespace=\"openshift-storage\"}[1m])) by (ceph_daemon)"
+    },
+    "ceph_Bluefs Slow Used Bytes": {
+        "label": "ceph_bluefs_slow_used_bytes",
+        "query": "avg(irate(ceph_bluefs_slow_used_bytes{namespace=\"openshift-storage\"}[10s])) by (ceph_daemon)"
+    },
+    "ceph_Bluefs Read Bytes": {
+        "label": "ceph_bluefs_read_bytes",
+        "query": "avg(ceph_bluefs_read_bytes{namespace=\"openshift-storage\"}) by (ceph_daemon)"
+    },
+    "ceph_Bluefs Read Prefetch Bytes": {
+        "label": "ceph_bluefs_read_prefetch_bytes",
+        "query": "avg(ceph_bluefs_read_prefetch_bytes{namespace=\"openshift-storage\"}) by (ceph_daemon)"
+    },
+    "ceph_Bluefs DB Used Bytes": {
+        "label": "ceph_bluefs_db_used_bytes",
+        "query": "avg(ceph_bluefs_db_used_bytes{namespace=\"openshift-storage\"}) by (ceph_daemon)"
+    },
+    "ceph_Recovery Operations": {
+        "label": "ceph_osd_recovery_ops",
+        "query": "sum(irate(ceph_osd_recovery_ops{namespace=\"openshift-storage\"}[1m]))"
+    },
+    "ceph_bluestore_compressed": {
+        "label": "ceph_bluestore_bluestore_compressed",
+        "query": "irate(ceph_bluestore_bluestore_compressed[1m])"
+    },
+    "ceph_bluestore_compressed_allocated": {
+        "label": "ceph_bluestore_bluestore_compressed_allocated",
+        "query": "irate(ceph_bluestore_bluestore_compressed_allocated[1m])"
+    },
+    "ceph_bluestore_compressed_original": {
+        "label": "ceph_bluestore_bluestore_compressed_original",
+        "query": "irate(ceph_bluestore_bluestore_compressed_original[1m])"
+    }
+  }
+}

@@ -4,22 +4,22 @@ such opinions for creating templates (put_template()) and bulk indexing
 (streaming_bulk).
 """
 
+import time
 import json
 import logging
 import math
-import time
-from collections import Counter, deque
-from random import SystemRandom
 
+from random import SystemRandom
+from collections import Counter, deque
 try:
     from elasticsearch1 import VERSION as es_VERSION, helpers, exceptions as es_excs
-
     _es_logger = "elasticsearch1"
 except ImportError:
-    from elasticsearch import VERSION as es_VERSION, helpers, exceptions as es_excs  # noqa
-
+    from elasticsearch import VERSION as es_VERSION, helpers, exceptions as es_excs
     _es_logger = "elasticsearch"
 
+logger = logging.getLogger("snafu")
+logger.debug("elasticsearch module version: %d.%d.%d" % es_VERSION)
 # Use the random number generator provided by the host OS to calculate our
 # random backoff.
 _r = SystemRandom()
@@ -33,26 +33,23 @@ _op_type = "create"
 # 100,000 minute timeout talking to Elasticsearch; basically we just don't
 # want to timeout waiting for Elasticsearch and then have to retry, as that
 # can add undue burden to the Elasticsearch cluster.
-_request_timeout = 100000 * 60.0
 
+_request_timeout = 100000 * 60.0
 
 def _tstos(ts=None):
     return time.strftime("%Y-%m-%dT%H:%M:%S-%Z", time.gmtime(ts))
-
 
 def _calc_backoff_sleep(backoff):
     global _r
     b = math.pow(2, backoff)
     return _r.uniform(0, min(b, _MAX_SLEEP_TIME))
 
-
 def quiet_loggers():
     """
     A convenience function to quiet the urllib3 and elasticsearch1 loggers.
     """
     logging.getLogger("urllib3").setLevel(logging.FATAL)
-    logging.getLogger(es_logger).setLevel(logging.FATAL)  # noqa
-
+    logging.getLogger(_es_logger).setLevel(logging.FATAL)
 
 def put_template(es, name, body):
     """
@@ -73,8 +70,9 @@ def put_template(es, name, body):
     while retry:
         try:
             es.indices.put_template(name=name, body=body)
-        except es_excs.ConnectionError as exc:  # noqa
+        except es_excs.ConnectionError as exc:
             # We retry all connection errors
+            logger.warn(exc)
             time.sleep(_calc_backoff_sleep(backoff))
             backoff += 1
             retry_count += 1
@@ -90,8 +88,7 @@ def put_template(es, name, body):
     end = time.time()
     return beg, end, retry_count
 
-
-def streaming_bulk(es, actions):
+def streaming_bulk(es, actions, parallel=False):
     """
     streaming_bulk(es, actions)
     Arguments:
@@ -128,13 +125,13 @@ def streaming_bulk(es, actions):
                 time.sleep(_calc_backoff_sleep(backoff))
                 retries_tracker['retries'] += 1
                 retry_actions = []
-                # First drain the retry deque entirely so that we know when we
+                # First drain, the retry deque entirely so that we know when we
                 # have cycled through the entire list to be retried.
                 while len(actions_retry_deque) > 0:
                     retry_actions.append(actions_retry_deque.popleft())
                 for retry_count, retry_action in retry_actions:
-                    actions_deque.append(
-                        (retry_count, retry_action))  # Append to the right side ...
+                    actions_deque.append((retry_count, retry_action))  # Append to the right side ...
+
                     yield retry_action
                 # if after yielding all the actions to be retried, some show up
                 # on the retry deque again, we extend our sleep backoff to avoid
@@ -149,19 +146,34 @@ def streaming_bulk(es, actions):
     # Create the generator that closes over the external generator, "actions"
     generator = actions_tracking_closure(actions)
 
-    streaming_bulk_generator = helpers.streaming_bulk(es, generator,
-                                                      raise_on_error=False,
-                                                      raise_on_exception=False,
-                                                      request_timeout=_request_timeout)
+    if parallel:
+        streaming_bulk_generator = helpers.parallel_bulk(es,
+                                                         generator,
+                                                         chunk_size=10000000,
+                                                         max_chunk_bytes=104857600,
+                                                         thread_count=8,
+                                                         queue_size=4,
+                                                         raise_on_error=False,
+                                                         raise_on_exception=False,
+                                                         request_timeout=_request_timeout)
+    else:
+        streaming_bulk_generator = helpers.streaming_bulk(es,
+                                                          generator,
+                                                          raise_on_error=False,
+                                                          raise_on_exception=False,
+                                                          request_timeout=_request_timeout)
+
     for ok, resp_payload in streaming_bulk_generator:
         retry_count, action = actions_deque.popleft()
         try:
             resp = resp_payload[_op_type]
             status = resp['status']
-        except KeyError as e:  # noqa
+        except KeyError as e:
+            logger.error(e)
             assert not ok
             # resp is not of expected form
-            print(resp)
+            logger.warn(resp)
+
             status = 999
         else:
             assert action['_id'] == resp['_id']

@@ -1,7 +1,7 @@
 FROM registry.access.redhat.com/ubi8:latest
 
 # install requirements
-RUN dnf install -y --nodocs tcl unixODBC python3-pip python3-requests
+RUN dnf install -y --nodocs tcl unixODBC python3-pip
 RUN dnf install -y --nodocs procps-ng iproute net-tools ethtool nmap iputils
 
 RUN curl https://packages.microsoft.com/config/rhel/8/prod.repo -o /etc/yum.repos.d/mssql-release.repo

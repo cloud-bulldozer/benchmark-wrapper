@@ -6,3 +6,4 @@ pyyaml
 requests
 redis
 python-dateutil
+prometheus_api_client

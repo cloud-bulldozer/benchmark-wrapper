@@ -1,7 +1,7 @@
 FROM registry.access.redhat.com/ubi8:latest
 
 RUN dnf install -y --nodocs https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-RUN dnf install -y --nodocs python3-pip python3-numpy python3-requests postgresql11
+RUN dnf install -y --nodocs python3-pip postgresql11
 COPY src/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
 RUN dnf install -y --nodocs redis --enablerepo=centos8-appstream
 RUN dnf install -y --nodocs procps-ng iproute net-tools ethtool nmap iputils

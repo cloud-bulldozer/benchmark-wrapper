@@ -1,6 +1,6 @@
 FROM registry.access.redhat.com/ubi8:latest
 
-RUN dnf install -y --nodocs python3-pip python3-numpy python3-requests python3-numpy
+RUN dnf install -y --nodocs python3-pip
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN mkdir -p /opt/snafu/
 COPY . /opt/snafu/

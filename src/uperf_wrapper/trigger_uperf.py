@@ -24,6 +24,7 @@ class Trigger_uperf():
     def __init__(self, args):
         self.uuid = args.uuid
         self.user = args.user
+
         self.clientips = args.clientips
         self.remoteip = args.remoteip
         self.hostnetwork = args.hostnetwork

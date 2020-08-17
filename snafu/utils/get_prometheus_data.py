@@ -2,9 +2,8 @@ import os
 import json
 import logging
 import urllib3
-from datetime import datetime, timedelta
+from datetime import datetime
 import time
-import sys
 from prometheus_api_client import PrometheusConnect
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -13,23 +12,27 @@ logger = logging.getLogger("snafu")
 class get_prometheus_data():
     def __init__(self, action):
 
+        self.sample_info_dict = action
         self.uuid = action["uuid"]
         self.user = action["user"]
         self.cluster_name = action["cluster_name"]
         self.test_config = action["test_config"]
 
         # change datetime in seconds string to datetime object
-        starttime = datetime.fromtimestamp(int(action["starttime"]))
-        self.start = starttime.datetime()
+        starttime = datetime.fromtimestamp(int(self.sample_info_dict["starttime"]))
+        self.start = starttime
 
         # change datetime in seconds string to datetime object
-        endtime = datetime.fromtimestamp(int(action["endtime"]))
-        # add 120s buffer to end time
-        endtime = endtime + timedelta(seconds=120)
-        self.end = endtime.datetime
+        endtime = datetime.fromtimestamp(int(self.sample_info_dict["endtime"]))
+        self.end = endtime
 
         # step value to be used in prometheus query
-        self.T_Delta = 30
+        # default is 30 seconds(openshift default scraping interval)
+        # but can be overridden with env
+        if "prom_step" in os.environ:
+            self.T_Delta = os.environ["prom_step"]
+        else:
+            self.T_Delta = 30
 
         self.get_data = False
         if "prom_token" in os.environ and "prom_url" in os.environ:
@@ -49,41 +52,49 @@ class get_prometheus_data():
         if self.get_data:
             start_time = time.time()
 
-            filename = os.path.join(sys.path[0], 'utils/prometheus_labels/included_labels.json')
+            # resolve directory  the tool include file
+            dirname = os.path.dirname(__file__)
+            include_file_dir = os.path.join(dirname, '/utils/prometheus_labels/')
+            tool_include_file = include_file_dir + self.sample_info_dict["tool"] + "_included_labels.json"
+
+            # check if tools include file is there
+            # if not use the default include file
+            if os.path.isfile(tool_include_file):
+                filename = tool_include_file
+            else:
+                filename = os.path.join(include_file_dir, 'included_labels.json')
+
+            # open tools include file and loop through all
             with open(filename, 'r') as f:
                 datastore = json.load(f)
 
-            # for label in self.get_label_list():
-            for label in datastore["data"]:
+            for metric_name in datastore["data"]:
 
-                # query_start_time = time.time()
-                query = "irate(%s[1m])" % label
-                """
-                If there are additional queries need we should create a list or dict that can be iterated on
-                """
+                query_item = datastore["data"][metric_name]
+                query = query_item["query"]
+                label = query_item["label"]
+
                 step = str(self.T_Delta) + "s"
                 try:
-                    # response = self.api_call(query)
+                    # Execute custom query to pull the desired labels between X and Y time.
                     response = self.pc.custom_query_range(query,
                                                           self.start,
                                                           self.end,
                                                           step,
                                                           None)
+
                 except Exception as e:
+                    logger.info(query)
                     logger.warn("failure to get metric results %s" % e)
 
-                results = response['result']
-
-                # results is a list of all hits
-                """
-                    TODO: update with proper parsing of response document
-                """
-
-                for result in results:
+                for result in response:
                     # clean up name key from __name__ to name
                     result["metric"]["name"] = ""
-                    result["metric"]["name"] = result["metric"]["__name__"]
-                    del result["metric"]["__name__"]
+                    if "__name__" in result["metric"]:
+                        result["metric"]["name"] = result["metric"]["__name__"]
+                        del result["metric"]["__name__"]
+                    else:
+                        result["metric"]["name"] = label
                     # each result has a list, we must flatten it out in order to send to ES
                     for value in result["values"]:
                         # fist index is time stamp
@@ -94,18 +105,14 @@ class get_prometheus_data():
                         else:
                             metric_value = float(value[1])
 
-                        flat_doc = {"uuid": self.uuid,
-                                    "user": self.user,
-                                    "cluster_name": self.cluster_name,
-                                    "metric": result["metric"],
-                                    "Date": timestamp,
-                                    "value": metric_value,
-                                    "test_config": self.test_config
-                                    }
+                        flat_doc = {
+                            "metric": result["metric"],
+                            "Date": timestamp,
+                            "value": metric_value,
+                            "metric_name": metric_name
+                            }
 
+                        flat_doc.update(self.sample_info_dict)
                         yield flat_doc
-                else:
-                    pass
-                    # logger.debug("Not exporting data for %s" % label)
 
             logger.debug("Total Time --- %s seconds ---" % (time.time() - start_time))

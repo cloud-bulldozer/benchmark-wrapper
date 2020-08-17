@@ -261,7 +261,11 @@ class _trigger_fio:
             fio_output_file = os.path.join(job_dir, "fio-result.json")
             fio_job_file = os.path.join(job_dir, "fiojob")
             self._build_fio_job(job, job_dir, fio_job_file)
+
+            # capture sample start time, used for prom data collection
+            sample_starttime = datetime.utcnow().strftime('%s')
             stdout, stderr, rc = self._run_fiod(fio_job_file, job_dir, fio_output_file)
+
             if rc != 0:
                 logger.error("Fio failed to execute")
                 with open(fio_output_file, "r") as output:
@@ -276,6 +280,8 @@ class _trigger_fio:
                 "are in the dir {}\n".format(
                     self.sample, job, job_dir))
 
+            # capture sample end time, used for prom data collection
+            sample_endtime = datetime.utcnow().strftime('%s')
             with open(fio_output_file) as f:
                 data = json.load(f)
             fio_endtime = int(data['timestamp'])  # in epoch seconds
@@ -328,7 +334,18 @@ class _trigger_fio:
                 self._process_histogram(job, job_dir, processed_histogram_prefix, histogram_output_file)
                 histogram_documents = self._histogram_payload(histogram_output_file, earliest_starttime, job)
                 # if indexing is turned on yield back normalized data
-
                 index = "hist-log"
                 for document in histogram_documents:
                     yield document, index
+            # trigger collection of prom data
+            sample_info_dict = {"uuid": self.uuid,
+                                "user": self.user,
+                                "cluster_name": self.cluster_name,
+                                "starttime": sample_starttime,
+                                "endtime": sample_endtime,
+                                "sample": self.sample,
+                                "tool": "fio",
+                                "test_config": self.fio_jobs_dict
+                                }
+
+            yield sample_info_dict, "get_prometheus_trigger"

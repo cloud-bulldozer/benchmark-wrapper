@@ -34,6 +34,16 @@ class flent_wrapper():
             '-r', '--remoteip',
             required=True,
             help='The address of the netserver')
+        parser.add_argument(
+            '-u', '--uuid',
+            required=True,
+            help='Provide the uuid')
+        parser.add_argument(
+            '--user',
+            required=True,
+            default="snafu",
+            help='Enter the user')
+
         self.args = parser_object.parse_args()
 
         self.args.server_node = os.getenv("server_node", "")

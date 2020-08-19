@@ -48,7 +48,7 @@ You must supply a "wrapper", which provides these functions:
 * runs the benchmark and stores the benchmark-specific results to an elasticsearch server
 
 Note: snafu is a python library, so please add the new python libraries you import
-to the requirements.txt
+to the setup.txt
 
 Your ripsaw benchmark will define several environment variables relevant to Elasticsearch:
 * es - hostname of elasticsearch server
@@ -84,7 +84,7 @@ The Dockerfile should *not* git clone snafu - this makes it harder to develop wr
 will be built like this:
 
 ```
-# docker build -f src/Your_Benchmark_wrapper/Dockerfile .
+# docker build -f snafu/Your_Benchmark_wrapper/Dockerfile .
 ```
 
 And use the Dockerfile command:
@@ -209,7 +209,7 @@ And here is a simple example of a ci_test.sh (they all look very similar):
 source ci/common.sh
 default_image_spec="quay.io/cloud-bulldozer/your_wrapper:master"
 image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/your_wrapper:$SNAFU_IMAGE_TAG
-build_and_push src/your_wrapper/Dockerfile $image_spec
+build_and_push snafu/your_wrapper/Dockerfile $image_spec
 
 cd ripsaw
 sed -i "s#$default_image_spec#$image_spec#" roles/your_wrapper_in_ripsaw/templates/*

@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 set -x
 
@@ -7,6 +7,11 @@ source ci/common.sh
 # Clone ripsaw so we can use it for testing
 rm -rf ripsaw
 git clone https://github.com/cloud-bulldozer/ripsaw.git --depth 1
+
+# Generate uuid
+UUID=$(uuidgen)
+
+sed -i "s/my-ripsaw/my-ripsaw-$UUID/g" ci/common.sh
 
 if [[ $ghprbPullLongDescription = *"Depends-On:"* ]]; then
   ripsaw_change_id="$(echo -e $ghprbPullLongDescription | sed -n -e 's/^.*Depends-On: //p' | dos2unix)"
@@ -17,8 +22,12 @@ if [[ $ghprbPullLongDescription = *"Depends-On:"* ]]; then
   cd ..
 fi
 
-# Clean out minikube docker cache
-minikube ssh "docker image prune -af"
+cd ripsaw
+sed -i "s/ES_SERVER/$ES_SERVER/g" tests/test_crs/*
+sed -i "s/ES_PORT/$ES_PORT/g" tests/test_crs/*
+sed -i "s/my-ripsaw/my-ripsaw-$UUID/g" `grep -Rl my-ripsaw`
+sed -i "s/sql-server/sql-server-$UUID/g" tests/mssql.yaml tests/test_crs/valid_hammerdb.yaml tests/test_hammerdb.sh
+cd ..
 
 # Podman image prune
 podman image prune -a
@@ -41,11 +50,11 @@ diff_list=`git diff origin/master --name-only | grep -Ev "*\.(md|png)"`
 
 if [[ `echo "${diff_list}" | grep -cv /` -gt 0 || `echo ${diff_list} | grep -E "(ci|utils|image_resources)/|requirements\.txt"` ]]; then
   echo "Running full test"
-  test_list=`find * -maxdepth 1 -name ci_test.sh -type f -exec dirname {} \;`
+  test_list=`find * -maxdepth 2 -name ci_test.sh -type f -exec dirname {} \;`
 else
   echo "Running specific tests"
   echo $diff_list
-  test_list=`echo "${diff_list}" | awk -F "/" '{print $1}' | uniq`
+  test_list=`echo "${diff_list}" | awk -F "/" '{print $1"/"$2}' | uniq`
 fi
 
 echo -e "Running tests in the following directories:\n${test_list}"

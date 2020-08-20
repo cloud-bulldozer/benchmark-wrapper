@@ -15,7 +15,6 @@ class hammerdb_wrapper():
         self.args.es_port = ""
         # generic benchmark parameters
         self.args.db_type = ""
-        self.args.test_type = ""
         self.args.db_server = ""
         self.args.db_port = ""
         self.args.db_warehouses = ""
@@ -36,9 +35,9 @@ class hammerdb_wrapper():
         self.args.samples = ""
         # database specific parameters
         # mssql
-        self.args.db_mssql_tcp = "unset"
-        self.args.db_mssql_azure = "unset"
-        self.args.db_mssql_authentication = "unset"
+        self.args.db_mssql_tcp = ""
+        self.args.db_mssql_azure = ""
+        self.args.db_mssql_authentication = ""
         self.args.db_mssql_linux_authent = ""
         self.args.db_mssql_odbc_driver = ""
         self.args.db_mssql_linux_odbc = ""
@@ -65,8 +64,6 @@ class hammerdb_wrapper():
             self.args.es_port = os.environ["es_port"]
         if "db_type" in os.environ:
             self.args.db_type = os.environ["db_type"]
-        if "test_type" in os.environ:
-            self.args.test_type = os.environ["test_type"]
         if "db_server" in os.environ:
             self.args.db_server = os.environ["db_server"]
         if "db_port" in os.environ:

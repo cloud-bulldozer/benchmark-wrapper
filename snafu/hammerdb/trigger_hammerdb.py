@@ -106,7 +106,6 @@ class Trigger_hammerdb():
                       async_delay, timestamp):
         db_info = self._pack_db_info()
         logger.info("generating json payload")
-        logger.info(db_num_workers, samples, data)
         processed = []
         i = 0
         for current_worker in range(0, int(db_num_workers)):

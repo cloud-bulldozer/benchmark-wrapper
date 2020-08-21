@@ -1,26 +1,84 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import subprocess
 import time
+import logging
+
+logger = logging.getLogger("snafu")
 
 class Trigger_hammerdb():
     def __init__(self, args):
         self.uuid = args.uuid
+        # generic arguments
+        self.db_type = args.db_type
         self.db_server = args.db_server
         self.db_port = args.db_port
         self.db_warehouses = args.db_warehouses
         self.db_num_workers = args.db_num_workers
-        self.db_tcp = args.db_tcp
         self.db_user = args.db_user
         self.transactions = args.transactions
-        self.test_type = args.test_type
+        self.raiseerror = args.raiseerror
+        self.keyandthink = args.keyandthink
+        self.driver = args.driver
         self.runtime = args.runtime
         self.rampup = args.rampup
+        self.allwarehouse = args.allwarehouse
+        self.timeprofile = args.timeprofile
+        self.async_scale = args.async_scale
+        self.async_client = args.async_client
+        self.async_verbose = args.async_verbose
+        self.async_delay = args.async_delay
         self.samples = args.samples
-        self.timed_test = args.timed_test
+        # db specific arguments
+        # mssql 
+        self.db_mssql_tcp = args.db_mssql_tcp
+        self.db_mssql_azure = args.db_mssql_azure
+        self.db_mssql_authentication = args.db_mssql_authentication
+        self.db_mssql_linux_authent = args.db_mssql_linux_authent
+        self.db_mssql_odbc_driver = args.db_mssql_odbc_driver
+        self.db_mssql_linux_odbc = args.db_mssql_linux_odbc
+        self.db_mssql_imdb = args.db_mssql_imdb
+        self.db_mssql_bucket = args.db_mssql_bucket
+        self.db_mssql_durability = args.db_mssql_durability
+        self.db_mssql_checkpoint = args.db_mssql_checkpoint
+        # mysql
+        self.db_mysql_storage_engine = args.db_mysql_storage_engine
+        self.db_mysql_partition = args.db_mysql_partition
+        # postgresql
+        self.db_postgresql_superuser = args.db_postgresql_superuser
+        self.db_postgresql_defaultdbase = args.db_postgresql_defaultdbase
+        self.db_postgresql_vacuum = args.db_postgresql_vacuum
+        self.db_postgresql_dritasnap = args.db_postgresql_dritasnap
+        self.db_postgresql_oracompat = args.db_postgresql_oracompat
+        self.db_postgresql_storedprocs = args.db_postgresql_storedprocs
+
+    def _pack_db_info(self):
+        db_info = []
+        if self.db_type == "mssql":
+            db_info.append({'db_mssql_tcp': self.db_mssql_tcp})
+            db_info.append({'db_mssql_azure': self.db_mssql_azure})
+            db_info.append({'db_mssql_authentication': self.db_mssql_authentication})
+            db_info.append({'db_mssql_linux_authent': self.db_mssql_linux_authent})
+            db_info.append({'db_mssql_odbc_driver': self.db_mssql_odbc_driver})
+            db_info.append({'db_mssql_linux_odbc': self.db_mssql_linux_odbc})
+            db_info.append({'db_mssql_imdb': self.db_mssql_imdb})
+            db_info.append({'db_mssql_bucket': self.db_mssql_bucket})
+            db_info.append({'db_mssql_durability': self.db_mssql_durability})
+            db_info.append({'db_mssql_checkpoint': self.db_mssql_checkpoint})
+        if self.db_type == "mysql":
+            db_info.append({'db_mysql_storage_engine': self.db_mysql_storage_engine})
+            db_info.append({'db_mysql_partition': self.db_mysql_partition})
+        if self.db_type == "pg":
+            db_info.append({'db_postgresql_superuser': self.db_postgresql_superuser})
+            db_info.append({'db_postgresql_defaultdbase': self.db_postgresql_defaultdbase})
+            db_info.append({'db_postgresql_vacuum': self.db_postgresql_vacuum})
+            db_info.append({'db_postgresql_dritasnap': self.db_postgresql_dritasnap})
+            db_info.append({'db_postgresql_oracompat': self.db_postgresql_oracompat})
+            db_info.append({'db_postgresql_storedprocs': self.db_postgresql_storedprocs})
+        return db_info
 
     def _run_hammerdb(self):
-        cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload.tcl"
+        cmd = "cd /hammer; ./hammerdbcli auto /workload/tpcc-workload-"+self.db_type+".tcl"
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         return stdout.strip().decode("utf-8"), process.returncode
@@ -31,6 +89,7 @@ class Trigger_hammerdb():
         return stdout, 0
 
     def _parse_stdout(self, stdout):
+        logger.info("Parsing stdout")
         data = []
         for line in stdout.splitlines():
             if "TEST RESULT" in line:
@@ -41,76 +100,98 @@ class Trigger_hammerdb():
                 data.append(entry)
         return data
 
-    def _json_payload(self, data, uuid, db_server, db_port, db_warehouses, db_num_workers, db_tcp,
-                      db_user,
-                      transactions, test_type, runtime, rampup, samples, timed_test, timestamp):
+    def _json_payload(self, data, uuid, db_type, db_server, db_port, db_warehouses, db_num_workers,
+                      db_user, transactions, runtime, rampup, samples, raiseerror, keyandthink,
+                      driver, allwarehouse, timeprofile, async_scale, async_client, async_verbose,
+                      async_delay, timestamp):
+        db_info = self._pack_db_info()
+        logger.info("generating json payload")
+        logger.info(db_num_workers, samples, data)
         processed = []
+        i = 0
         for current_worker in range(0, int(db_num_workers)):
             for current_sample in range(0, int(samples)):
-                for i in range(0, len(data)):
-                    processed.append({
-                        "workload": "hammerdb",
-                        "uuid": uuid,
-                        "db_server": db_server,
-                        "db_port": db_port,
-                        "db_warehouses": db_warehouses,
-                        "db_num_workers": db_num_workers,
-                        "db_tcp": db_tcp,
-                        "db_user": db_user,
-                        "transactions": transactions,
-                        "test_type": test_type,
-                        "runtime": runtime,
-                        "rampup": rampup,
-                        "samples": samples,
-                        "current_sample": current_sample,
-                        "current_worker": current_worker,
-                        "timed_test": timed_test,
-                        "worker": data[i][0],
-                        "tpm": data[i][1],
-                        "nopm": data[i][2],
-                        "timestamp": timestamp
+                processed.append({
+                    "workload": "hammerdb",
+                    "uuid": uuid,
+                    "db_type": db_type,
+                    "db_server": db_server,
+                    "db_port": db_port,
+                    "db_warehouses": db_warehouses,
+                    "db_num_workers": db_num_workers,
+                    "db_user": db_user,
+                    "transactions": transactions,
+                    "runtime": runtime,
+                    "rampup": rampup,
+                    "raiseerror": raiseerror,
+                    "keyandthink": keyandthink,
+                    "driver" : driver,
+                    "allwarehouse": allwarehouse,
+                    "timeprofile": timeprofile,
+                    "async_scale": async_scale,
+                    "async_client": async_client,
+                    "async_verbose": async_verbose,
+                    "async_delay": async_delay,
+                    "samples": samples,
+                    "current_sample": current_sample,
+                    "current_worker": current_worker,
+                    "worker": data[i][0],
+                    "tpm": data[i][1],
+                    "nopm": data[i][2],
+                    "timestamp": timestamp
                     })
+                i += 1
+        # we need to add the db specific information to the processed list
+        for item in db_info:
+            for k,v in item.items():
+                processed.append({k : v})
         return processed
 
     def _summarize_data(self, data):
-        max_workers = int(data[0]['db_num_workers'])
-        max_samples = int(data[0]['samples'])
-        for current_worker in range(0, max_workers):
-            for current_sample in range(0, max_samples):
-                for i in range(0, len(data)):
-                    entry = data[i]
-                    print("+{} HammerDB Results {}+".format("-" * (50), "-" * (50)))
-                    print("HammerDB setup")
-                    print("")
-                    print("HammerDB results for:")
-                    print("UUID: {}".format(entry['uuid']))
-                    print("Database server: {}".format(entry['db_server']))
-                    print("Database port: {}".format(entry['db_port']))
-                    print("Number of database warehouses: {}".format(entry['db_warehouses']))
-                    print("Number of workers: {}".format(entry['db_num_workers']))
-                    print("TCP connection to the DB: {}".format(entry['db_tcp']))
-                    print("Database user: {}".format(entry['db_user']))
-                    print("Transactions: {}".format(entry['transactions']))
-                    print("Test type: {}".format(entry['test_type']))
-                    print("Runtime: {}".format(entry['runtime']))
-                    print("Rampup time: {}".format(entry['rampup']))
-                    print("Worker: {}".format(current_worker))
-                    print("Samples: {}".format(entry['samples']))
-                    print("Current sample {}".format(current_sample))
-                    print("Timed test: {}".format(entry['timed_test']))
-                    print("HammerDB results (TPM):")
-                    print("""
-                          TPM: {}""".format(entry['tpm']))
-                    print("HammerDB results (NOPM):")
-                    print("""
-                          NOPM: {}""".format(entry['nopm']))
-                    print("Timestamp: {}".format(entry['timestamp']))
-                    print("+{}+".format("-" * (115)))
+        db_info = self._pack_db_info()
+        i = 0
+        for current_worker in range(0, int(self.db_num_workers)):
+            for current_sample in range(0, int(self.samples)):
+                entry = data[i]
+                print("+{} HammerDB Results {}+".format("-" * (50), "-" * (50)))
+                print("HammerDB setup")
+                print("")
+                print("HammerDB results for:")
+                print("UUID: {}".format(entry['uuid']))
+                print("Database server: {}".format(entry['db_server']))
+                print("Database port: {}".format(entry['db_port']))
+                print("Number of database warehouses: {}".format(entry['db_warehouses']))
+                print("Max. number of workers: {}".format(entry['db_num_workers']))
+                print("Database user: {}".format(entry['db_user']))
+                print("Transactions: {}".format(entry['transactions']))
+                print("Test driver: {}".format(entry['driver']))
+                print("Runtime: {}".format(entry['runtime']))
+                print("Rampup time: {}".format(entry['rampup']))
+                print("Worker(s): {}".format((current_worker +1)))
+                print("Total samples: {}".format(entry['samples']))
+                print("Current sample {}".format((current_sample +1)))
+                print("HammerDB results (TPM):")
+                print("""
+                      TPM: {}""".format(entry['tpm']))
+                print("HammerDB results (NOPM):")
+                print("""
+                      NOPM: {}""".format(entry['nopm']))
+                print("DB specific settings:")
+                for item in db_info:
+                    for k,v in item.items():
+                        print(k + " : " + v)
+                print("Timestamp: {}".format(entry['timestamp']))
+                print("+{}+".format("-" * (115)))
+                i += 1
+
 
     def emit_actions(self):
         timestamp = str(int(time.time()))
+        #logger.info("Collecting DB specific information")
+        #self._pack_db_info()
+        logger.info("Starting hammerdb run")
         stdout = self._run_hammerdb()
-        # stdout = _fake_run()
+        #stdout = self._fake_run()
         if stdout[1] == 1:
             print("hammerdbcli failed to execute, trying one more time..")
             stdout = self._run_hammerdb()
@@ -118,16 +199,20 @@ class Trigger_hammerdb():
                 print("hammerdbcli failed to execute a second time, stopping...")
                 exit(1)
         data = self._parse_stdout(stdout[0])
-        documents = self._json_payload(data, self.uuid, self.db_server, self.db_port,
-                                       self.db_warehouses, self.db_num_workers, self.db_tcp,
-                                       self.db_user, self.transactions, self.test_type,
-                                       self.runtime, self.rampup, self.samples,
-                                       self.timed_test, timestamp)
-        # print(documents)
+        print("data: ", data)
+        documents = self._json_payload(data, self.uuid, self.db_server, self.db_type, self.db_port,
+                                       self.db_warehouses, self.db_num_workers,
+                                       self.db_user, self.transactions,
+                                       self.runtime, self.rampup, self.samples, self.raiseerror,
+                                       self.keyandthink, self.driver, self.allwarehouse, self.timeprofile,
+                                       self.async_scale, self.async_client, self.async_verbose, self.async_delay,
+                                       timestamp)
+        logger.info("Documents: %s", documents)
         if len(documents) > 0:
-            self._summarize_data(documents)
+           self._summarize_data(documents)
         if len(documents) > 0:
             for document in documents:
                 yield document, 'results'
         else:
             raise Exception('Failed to produce hammerdb results document')
+

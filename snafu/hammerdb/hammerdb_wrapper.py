@@ -45,7 +45,7 @@ class hammerdb_wrapper():
         self.args.db_mssql_bucket = ""
         self.args.db_mssql_durability = ""
         self.args.db_mssql_checkpoint = ""
-        # mysql 
+        # mysql
         self.args.db_mysql_storage_engine = ""
         self.args.db_mysql_partition = ""
         # postgresql

@@ -30,7 +30,7 @@ class Trigger_hammerdb():
         self.async_delay = args.async_delay
         self.samples = args.samples
         # db specific arguments
-        # mssql 
+        # mssql
         self.db_mssql_tcp = args.db_mssql_tcp
         self.db_mssql_azure = args.db_mssql_azure
         self.db_mssql_authentication = args.db_mssql_authentication
@@ -167,9 +167,9 @@ class Trigger_hammerdb():
                 print("Test driver: {}".format(entry['driver']))
                 print("Runtime: {}".format(entry['runtime']))
                 print("Rampup time: {}".format(entry['rampup']))
-                print("Worker(s): {}".format((current_worker +1)))
+                print("Worker(s): {}".format((current_worker + 1)))
                 print("Total samples: {}".format(entry['samples']))
-                print("Current sample {}".format((current_sample +1)))
+                print("Current sample {}".format((current_sample + 1)))
                 print("HammerDB results (TPM):")
                 print("""
                       TPM: {}""".format(entry['tpm']))
@@ -184,14 +184,11 @@ class Trigger_hammerdb():
                 print("+{}+".format("-" * (115)))
                 i += 1
 
-
     def emit_actions(self):
         timestamp = str(int(time.time()))
-        #logger.info("Collecting DB specific information")
-        #self._pack_db_info()
         logger.info("Starting hammerdb run")
         stdout = self._run_hammerdb()
-        #stdout = self._fake_run()
+        # stdout = self._fake_run()
         if stdout[1] == 1:
             print("hammerdbcli failed to execute, trying one more time..")
             stdout = self._run_hammerdb()
@@ -205,14 +202,13 @@ class Trigger_hammerdb():
                                        self.db_user, self.transactions,
                                        self.runtime, self.rampup, self.samples, self.raiseerror,
                                        self.keyandthink, self.driver, self.allwarehouse, self.timeprofile,
-                                       self.async_scale, self.async_client, self.async_verbose, self.async_delay,
-                                       timestamp)
+                                       self.async_scale, self.async_client, self.async_verbose,
+                                       self.async_delay, timestamp)
         logger.info("Documents: %s", documents)
         if len(documents) > 0:
-           self._summarize_data(documents)
+            self._summarize_data(documents)
         if len(documents) > 0:
             for document in documents:
                 yield document, 'results'
         else:
             raise Exception('Failed to produce hammerdb results document')
-

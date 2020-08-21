@@ -19,7 +19,7 @@ RUN curl -L 'https://github.com/TPC-Council/HammerDB/releases/download/v3.3/Hamm
 RUN mkdir /hammer
 RUN chmod 755 hammer_installer
 RUN ./hammer_installer --prefix /hammer --mode silent
-COPY src/hammerdb/uid_entrypoint /usr/local/bin/
+COPY snafu/hammerdb/uid_entrypoint /usr/local/bin/
 RUN chmod g+w /etc/passwd
 RUN chmod 755 /usr/local/bin/uid_entrypoint
 RUN /usr/local/bin/uid_entrypoint

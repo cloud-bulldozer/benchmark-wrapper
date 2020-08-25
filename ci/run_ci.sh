@@ -7,9 +7,6 @@ source ci/common.sh
 # Clone ripsaw so we can use it for testing
 rm -rf ripsaw
 git clone https://github.com/cloud-bulldozer/ripsaw.git --depth 1
-pushd ripsaw
-update_operator_image
-popd
 
 # Generate uuid
 UUID=$(uuidgen)
@@ -22,6 +19,10 @@ if [[ $ghprbPullLongDescription = *"Depends-On:"* ]]; then
   git checkout local_change
   cd ..
 fi
+
+pushd ripsaw
+update_operator_image
+popd
 
 cd ripsaw
 sed -i "s/ES_SERVER/$ES_SERVER/g" tests/test_crs/*

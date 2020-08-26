@@ -97,7 +97,9 @@ class Trigger_hammerdb():
                 tpm = (line.split(" "))[6]
                 nopm = (line.split(" "))[-2]
                 entry = [worker, tpm, nopm]
+                logger.info("Current entry: %s", entry)
                 data.append(entry)
+        logger.info("Resulting data: %d", data) 
         return data
 
     def _json_payload(self, data, uuid, db_type, db_server, db_port, db_warehouses, db_num_workers,
@@ -110,6 +112,7 @@ class Trigger_hammerdb():
         i = 0
         for current_worker in range(0, int(db_num_workers)):
             for current_sample in range(0, int(samples)):
+                logger.info("Sample: %d, i: %d", current_sample, i)
                 processed.append({
                     "workload": "hammerdb",
                     "uuid": uuid,
@@ -138,7 +141,7 @@ class Trigger_hammerdb():
                     "tpm": data[i][1],
                     "nopm": data[i][2],
                     "timestamp": timestamp
-                    })
+                })
                 i += 1
         # we need to add the db specific information to the processed list
         for item in db_info:

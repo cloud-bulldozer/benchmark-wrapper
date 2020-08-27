@@ -108,8 +108,8 @@ class Trigger_hammerdb():
         logger.info("generating json payload")
         processed = []
         i = 0
-        #for current_worker in range(0, int(self.db_num_workers)):
-        current_worker=1
+        # for current_worker in range(0, int(self.db_num_workers)):
+        current_worker = 1
         while current_worker <= (int(self.db_num_workers)):
             for current_sample in range(0, int(self.samples)):
                 processed.append({
@@ -153,9 +153,9 @@ class Trigger_hammerdb():
     def _summarize_data(self, data):
         db_info = self._pack_db_info()
         i = 0
-        #for current_worker in range(0, int(self.db_num_workers)):
-        current_worker=1
-        while current_worker <= (int(self.db_num_workers)): 
+        # for current_worker in range(0, int(self.db_num_workers)):
+        current_worker = 1
+        while current_worker <= (int(self.db_num_workers)):
             for current_sample in range(0, int(self.samples)):
                 entry = data[i]
                 print("+{} HammerDB Results {}+".format("-" * (50), "-" * (50)))
@@ -188,7 +188,7 @@ class Trigger_hammerdb():
                 print("Timestamp: {}".format(entry['timestamp']))
                 print("+{}+".format("-" * (115)))
                 i += 1
-            current_worker *=2
+            current_worker *= 2
 
     def emit_actions(self):
         timestamp = str(int(time.time()))

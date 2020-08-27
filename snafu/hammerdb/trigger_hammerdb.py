@@ -97,9 +97,7 @@ class Trigger_hammerdb():
                 tpm = (line.split(" "))[6]
                 nopm = (line.split(" "))[-2]
                 entry = [worker, tpm, nopm]
-                logger.info("Current entry: %s", entry)
                 data.append(entry)
-        logger.info("Resulting data: %d", data) 
         return data
 
     def _json_payload(self, data, uuid, db_type, db_server, db_port, db_warehouses, db_num_workers,
@@ -110,9 +108,10 @@ class Trigger_hammerdb():
         logger.info("generating json payload")
         processed = []
         i = 0
-        for current_worker in range(0, int(db_num_workers)):
-            for current_sample in range(0, int(samples)):
-                logger.info("Sample: %d, i: %d", current_sample, i)
+        #for current_worker in range(0, int(self.db_num_workers)):
+        current_worker=1
+        while current_worker <= (int(self.db_num_workers)):
+            for current_sample in range(0, int(self.samples)):
                 processed.append({
                     "workload": "hammerdb",
                     "uuid": uuid,
@@ -143,6 +142,8 @@ class Trigger_hammerdb():
                     "timestamp": timestamp
                 })
                 i += 1
+            current_worker *= 2
+
         # we need to add the db specific information to the processed list
         for item in db_info:
             for k,v in item.items():
@@ -152,7 +153,9 @@ class Trigger_hammerdb():
     def _summarize_data(self, data):
         db_info = self._pack_db_info()
         i = 0
-        for current_worker in range(0, int(self.db_num_workers)):
+        #for current_worker in range(0, int(self.db_num_workers)):
+        current_worker=1
+        while current_worker <= (int(self.db_num_workers)): 
             for current_sample in range(0, int(self.samples)):
                 entry = data[i]
                 print("+{} HammerDB Results {}+".format("-" * (50), "-" * (50)))
@@ -169,7 +172,7 @@ class Trigger_hammerdb():
                 print("Test driver: {}".format(entry['driver']))
                 print("Runtime: {}".format(entry['runtime']))
                 print("Rampup time: {}".format(entry['rampup']))
-                print("Worker(s): {}".format((current_worker + 1)))
+                print("Worker(s): {}".format((current_worker)))
                 print("Total samples: {}".format(entry['samples']))
                 print("Current sample {}".format((current_sample + 1)))
                 print("HammerDB results (TPM):")
@@ -185,6 +188,7 @@ class Trigger_hammerdb():
                 print("Timestamp: {}".format(entry['timestamp']))
                 print("+{}+".format("-" * (115)))
                 i += 1
+            current_worker *=2
 
     def emit_actions(self):
         timestamp = str(int(time.time()))
@@ -198,7 +202,6 @@ class Trigger_hammerdb():
                 print("hammerdbcli failed to execute a second time, stopping...")
                 exit(1)
         data = self._parse_stdout(stdout[0])
-        print("data: ", data)
         documents = self._json_payload(data, self.uuid, self.db_server, self.db_type, self.db_port,
                                        self.db_warehouses, self.db_num_workers,
                                        self.db_user, self.transactions,
@@ -206,7 +209,6 @@ class Trigger_hammerdb():
                                        self.keyandthink, self.driver, self.allwarehouse, self.timeprofile,
                                        self.async_scale, self.async_client, self.async_verbose,
                                        self.async_delay, timestamp)
-        logger.info("Documents: %s", documents)
         if len(documents) > 0:
             self._summarize_data(documents)
         if len(documents) > 0:

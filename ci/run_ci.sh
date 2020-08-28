@@ -33,7 +33,7 @@ sed -i "s/sql-server/sql-server-$UUID/g" tests/mssql.yaml tests/test_crs/valid_h
 cd ..
 
 # Podman image prune
-podman image prune -a
+podman image prune -a -f 
 
 # Prep results.markdown file
 cat > results.markdown << EOF

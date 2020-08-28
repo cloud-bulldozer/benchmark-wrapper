@@ -1,8 +1,6 @@
 FROM registry.access.redhat.com/ubi8:latest
 
 # install requirements
-#COPY image_resources/centos8.repo /etc/yum.repos.d/centos8.repo
-#COPY image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
 COPY snafu/image_resources/centos8.repo /etc/yum.repos.d/centos8.repo
 COPY snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
 RUN dnf install -y --enablerepo=centos8 --enablerepo=centos8-appstream --nodocs tcl unixODBC python3-pip python3-requests

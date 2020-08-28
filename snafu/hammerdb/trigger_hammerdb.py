@@ -194,7 +194,6 @@ class Trigger_hammerdb():
         timestamp = str(int(time.time()))
         logger.info("Starting hammerdb run")
         stdout = self._run_hammerdb()
-        # stdout = self._fake_run()
         if stdout[1] == 1:
             print("hammerdbcli failed to execute, trying one more time..")
             stdout = self._run_hammerdb()

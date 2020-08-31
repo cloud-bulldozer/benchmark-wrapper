@@ -34,7 +34,7 @@ cd ..
 sed -i "s/my-ripsaw/my-ripsaw-$UUID/g" ci/common.sh
 
 # Podman image prune
-podman image prune -a
+podman image prune -a -f 
 
 # Prep results.markdown file
 cat > results.markdown << EOF

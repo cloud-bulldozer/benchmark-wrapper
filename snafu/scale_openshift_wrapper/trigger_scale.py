@@ -33,7 +33,7 @@ class Trigger_scale():
         self.cluster_name = args.cluster_name
         self.incluster = args.incluster
         self.poll_interval = args.poll_interval
-        self.kubeconfig = args.kubneconfig
+        self.kubeconfig = args.kubeconfig
 
     def _json_payload(self, data):
         payload = {

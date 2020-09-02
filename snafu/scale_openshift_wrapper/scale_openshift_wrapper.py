@@ -16,7 +16,7 @@ import argparse
 from .trigger_scale import Trigger_scale
 
 
-class scale_wrapper():
+class scale_openshift_wrapper():
 
     def __init__(self, parent_parser):
         parser_object = argparse.ArgumentParser(description="Scale Wrapper script", parents=[parent_parser],

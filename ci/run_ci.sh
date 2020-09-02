@@ -60,6 +60,7 @@ else
   test_list=`echo "${diff_list}" | awk -F "/" '{print $1"/"$2}' | uniq`
 fi
 
+test_list="snafu/scale_openshift_wrapper"
 echo -e "Running tests in the following directories:\n${test_list}"
 test_rc=0
 

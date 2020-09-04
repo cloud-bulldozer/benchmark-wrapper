@@ -31,8 +31,9 @@ class Trigger_flent():
 
     def _json_payload(self, raw):
         processed = []
-        print(raw)
+        # Useful reference: https://flent.org/data-format.html
         results = raw["results"]
+        timestamps = raw["x_values"]
         # There is an unknown quantity (usually 2 or 3) of
         # dictionaries in results. They contain the same number
         # of items, and are in parallel.
@@ -48,6 +49,7 @@ class Trigger_flent():
             new_results_item = {}
             for key in keys:
                 new_results_item[key] = results[key][i]
+            new_results_item["flent_ts"] = datetime.fromtimestamp(timestamps[i])
             new_item = self._json_result("results", new_results_item)
             processed.append(new_item)
 

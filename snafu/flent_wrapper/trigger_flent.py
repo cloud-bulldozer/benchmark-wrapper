@@ -16,6 +16,7 @@ import json
 import re
 import subprocess
 from datetime import datetime
+from dateutil import parser
 import logging
 
 logger = logging.getLogger("snafu")
@@ -32,9 +33,11 @@ class Trigger_flent():
 
     def _json_payload(self, raw):
         processed = []
+        print("Raw:", raw)
         # Useful reference: https://flent.org/data-format.html
         results = raw["results"]
-        timestamps = raw["x_values"]
+        start_time = parser.isoparse(raw["metadata"]["TIME"])
+        times = raw["x_values"]
         # There is an unknown quantity (usually 2 or 3) of
         # dictionaries in results. They contain the same number
         # of items, and are in parallel.
@@ -50,19 +53,19 @@ class Trigger_flent():
             new_results_item = {}
             for key in keys:
                 new_results_item[key] = results[key][i]
-            new_results_item["flent_ts"] = datetime.fromtimestamp(timestamps[i])
-            new_item = self._json_result("results", new_results_item)
+            new_item = self._json_result("results", new_results_item, start_time + datetime.timedelta(seconds=times[i]))
             processed.append(new_item)
 
         return processed
 
-    def _json_result(self, name, value):
+    def _json_result(self, name, value, time):
         new_item = {
             "workload": "flent",
             "test_type": self.ftest,
             "remote_ip": self.remoteip,
             "client_node": self.client_node,
             "server_node": self.server_node,
+            "timestamp": time,
             name: value
         }
         return new_item

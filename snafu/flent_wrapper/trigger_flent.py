@@ -54,7 +54,7 @@ class Trigger_flent():
             new_results_item = {}
             for key in keys:
                 new_results_item[key] = results[key][i]
-            new_item = self._json_result("results", new_results_item, start_time + datetime.timedelta(seconds=times[i]))
+            new_item = self._json_result("results", new_results_item, start_time + timedelta(seconds=times[i]))
             processed.append(new_item)
 
         return processed

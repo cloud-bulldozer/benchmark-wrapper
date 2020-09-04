@@ -37,12 +37,8 @@ class Trigger_scale():
 
     def _json_payload(self, data):
         payload = {
-            "workload": "scale",
             "uuid": self.uuid,
-            "user": self.user,
-            "scale": self.scale,
             "cluster_name": self.cluster_name,
-            "hostname": socket.gethostname()
         }
         payload.update(data)
         return payload
@@ -67,12 +63,14 @@ class Trigger_scale():
         
         nodes = dyn_client.resources.get(api_version='v1', kind='Node')
         machinesets = dyn_client.resources.get(kind='MachineSet')
+        
+        worker_count = len(nodes.get(label_selector='node-role.kubernetes.io/worker').attributes.items) or 0
+        workload_count = len(nodes.get(label_selector='node-role.kubernetes.io/workload').attributes.items) or 0
+        master_count = len(nodes.get(label_selector='node-role.kubernetes.io/master').attributes.items) or 0
+        infra_count = len(nodes.get(label_selector='node-role.kubernetes.io/infra').attributes.items) or 0
 
-        # All worker node names
-        worker_name_list = nodes.get(label_selector='node-role.kubernetes.io/worker')
-
-        # Number of workers currently
-        worker_count = len(worker_name_list.attributes.items)
+        infra = dyn_client.resources.get(kind='Infrastructure')
+        platform = infra.get().attributes.items[0].spec.platformSpec.type or "Unknown"
 
         # Machine set name list
         machineset_worker_list = machinesets.get(namespace='openshift-machine-api', label_selector='machine.openshift.io/cluster-api-machine-role!=infra,machine.openshift.io/cluster-api-machine-role!=workload').attributes.items
@@ -80,7 +78,8 @@ class Trigger_scale():
         # If we are already at the requested scale exit
         if worker_count == self.scale:
             logger.info("Already at requested worker count")
-            return worker_count, len(nodes.get(label_selector='node-role.kubernetes.io/worker').attributes.items)
+            return worker_count, master_count, infra_count, workload_count, platform
+        
         logger.info("Current Worker count %s" % (worker_count))
 
         # Number of workers to add per machine set
@@ -128,15 +127,21 @@ class Trigger_scale():
                 time.sleep(self.poll_interval)
         logger.info("All workers schedulable")
 
-        return worker_count, len(nodes.get(label_selector='node-role.kubernetes.io/worker').attributes.items)
+        worker_count = len(nodes.get(label_selector='node-role.kubernetes.io/worker').attributes.items) or 0
+        workload_count = len(nodes.get(label_selector='node-role.kubernetes.io/workload').attributes.items) or 0
+        master_count = len(nodes.get(label_selector='node-role.kubernetes.io/master').attributes.items) or 0
+        infra_count = len(nodes.get(label_selector='node-role.kubernetes.io/infra').attributes.items) or 0
+
+        return worker_count, master_count, infra_count, workload_count, platform
         
     def emit_actions(self):
         logger.info("Scaling cluster %s to %d workers with uuid %s and polling interval %d" % (self.cluster_name, self.scale, self.uuid, self.poll_interval))
+        timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
         start_time = time.time()
-        starting_count, ending_count = self._run_scale()
+        worker_count, master_count, infra_count, workload_count, platform = self._run_scale()
         end_time = time.time()
         elaspsed_time = end_time - start_time
-        data = {"start_time": start_time, "end_time": end_time, "duration": elaspsed_time, "starting_worker_count": starting_count, "ending_worker_count": ending_count}
+        data = {"timestamp": timestamp, "duration": int(elaspsed_time), "worker_count": worker_count, "master_count": master_count, "infra_count": infra_count, "workload_count": workload_count, "action": "scale", "total_count": worker_count+master_count+infra_count+workload_count, "platform": platform}
         es_data = self._json_payload(data)
-        yield es_data, 'results'
+        yield es_data, ''
         logger.info("Finished executing scaling of cluster %s to %d workers" % (self.cluster_name, self.scale))

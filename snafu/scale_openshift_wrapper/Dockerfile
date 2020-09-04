@@ -5,7 +5,6 @@ RUN dnf install -y --nodocs python3 python3-pip  && dnf clean all
 RUN dnf install -y --nodocs redis --enablerepo=centos8-appstream && dnf clean all
 RUN curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | tar xz -C /usr/bin/ oc
 RUN ln -s /usr/bin/python3 /usr/bin/python
-RUN pip3 install openshift
 RUN mkdir -p /opt/snafu/
 COPY . /opt/snafu/
 RUN pip3 install -e /opt/snafu/

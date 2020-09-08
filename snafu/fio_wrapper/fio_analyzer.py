@@ -39,12 +39,12 @@ class Fio_Analyzer:
         for fio_result in self.fio_processed_results_list:
             if fio_result['document']['fio']['jobname'] != 'All clients':
                 sample = fio_result['document']['sample']
-                
+
                 if bool(fio_result['document']['global_options']['bs']):
                     bs_value = fio_result['document']['global_options']['bs']
                 elif bool(fio_result['document']['global_options']['bsrange']):
                     bs_value = fio_result['document']['global_options']['bsrange']
-                    
+
                 rw = fio_result['document']['fio']['job options']['rw']
 
                 if sample not in self.sample_list:
@@ -66,18 +66,18 @@ class Fio_Analyzer:
         for fio_result in self.fio_processed_results_list:
             if fio_result['document']['fio']['jobname'] != 'All clients':
                 sample = fio_result['document']['sample']
-                
+
                 if bool(fio_result['document']['global_options']['bs']):
                     bs_value = fio_result['document']['global_options']['bs']
                 elif bool(fio_result['document']['global_options']['bsrange']):
                     bs_value = fio_result['document']['global_options']['bsrange']
-                    
+
                 rw = fio_result['document']['fio']['job options']['rw']
 
                 if not self.sumdoc[sample][rw][bs_value]:
                     time_s = fio_result['starttime'] / 1000.0
                     self.sumdoc[sample][rw][bs_value]['date'] = time.strftime('%Y-%m-%dT%H:%M:%S.000Z',
-                                                                        time.gmtime(time_s))
+                                                                              time.gmtime(time_s))
                     self.sumdoc[sample][rw][bs_value]['write'] = 0
                     self.sumdoc[sample][rw][bs_value]['read'] = 0
 

@@ -4,6 +4,17 @@ set -x
 
 source ci/common.sh
 
+# Presetting test_choice to be blank. 
+test_choice=''
+
+while getopts t: flag
+do
+    case "${flag}" in
+        t) test_choice=${OPTARG};;
+    esac
+done
+
+
 # Clone ripsaw so we can use it for testing
 rm -rf ripsaw
 git clone https://github.com/cloud-bulldozer/ripsaw.git --depth 1
@@ -52,7 +63,10 @@ diff_list=`git diff origin/master --name-only | grep -Ev "*\.(md|png)"`
 # - anything in utils has been changed
 # Else only run tests on directories that have changed
 
-if [[ `echo "${diff_list}" | grep -cv /` -gt 0 || `echo ${diff_list} | grep -E "(ci|utils|image_resources)/|requirements\.txt"` ]]; then
+if [[ ${test_choice} != '' ]]; then
+  echo "Running chosen test: "${test_choice}
+  test_list=${test_choice}
+elif [[ `echo "${diff_list}" | grep -cv /` -gt 0 || `echo ${diff_list} | grep -E "(ci|utils|image_resources)/|requirements\.txt"` ]]; then
   echo "Running full test"
   test_list=`find * -maxdepth 2 -name ci_test.sh -type f -exec dirname {} \;`
 else

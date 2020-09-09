@@ -11,13 +11,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import os
-import subprocess
-import json
-import socket
-import dateutil.parser
 import logging
-import yaml
 import time
 from kubernetes import client, config
 from openshift.dynamic import DynamicClient
@@ -60,33 +54,40 @@ class Trigger_scale():
             k8s_client = config.new_client_from_config()
 
         dyn_client = DynamicClient(k8s_client)
-        
+
         nodes = dyn_client.resources.get(api_version='v1', kind='Node')
         machinesets = dyn_client.resources.get(kind='MachineSet')
-        
-        worker_count = len(nodes.get(label_selector='node-role.kubernetes.io/worker').attributes.items) or 0
-        workload_count = len(nodes.get(label_selector='node-role.kubernetes.io/workload').attributes.items) or 0
-        master_count = len(nodes.get(label_selector='node-role.kubernetes.io/master').attributes.items) or 0
-        infra_count = len(nodes.get(label_selector='node-role.kubernetes.io/infra').attributes.items) or 0
+
+        worker_count = len(nodes.get(label_selector='node-role.kubernetes.io/worker').attributes.items)\
+            or 0
+        workload_count = len(nodes.get(label_selector='node-role.kubernetes.io/workload').attributes.items)\
+            or 0
+        master_count = len(nodes.get(label_selector='node-role.kubernetes.io/master').attributes.items)\
+            or 0
+        infra_count = len(nodes.get(label_selector='node-role.kubernetes.io/infra').attributes.items)\
+            or 0
 
         infra = dyn_client.resources.get(kind='Infrastructure')
         platform = infra.get().attributes.items[0].spec.platformSpec.type or "Unknown"
 
         # Machine set name list
-        machineset_worker_list = machinesets.get(namespace='openshift-machine-api', label_selector='machine.openshift.io/cluster-api-machine-role!=infra,machine.openshift.io/cluster-api-machine-role!=workload').attributes.items
+        machineset_worker_list = \
+            machinesets.get(namespace='openshift-machine-api',
+                            label_selector='machine.openshift.io/cluster-api-machine-role!=infra,\
+                            machine.openshift.io/cluster-api-machine-role!=workload').attributes.items
 
         # If we are already at the requested scale exit
         if worker_count == self.scale:
             logger.info("Already at requested worker count")
             return worker_count, master_count, infra_count, workload_count, platform
-        
+
         logger.info("Current Worker count %s" % (worker_count))
 
         # Number of workers to add per machine set
         add_per = int(self.scale/len(machineset_worker_list))
 
         # Additional number of workers to add b/c math
-        extra = self.scale%len(machineset_worker_list)
+        extra = self.scale % len(machineset_worker_list)
 
         logger.info("Number of machine sets %s" % (len(machineset_worker_list)))
 
@@ -100,19 +101,27 @@ class Trigger_scale():
         logger.info("New worker per machine set %s" % (machine_spread))
 
         logger.info("Starting Patching of machine sets")
-        #Patch the machinesets
+        # Patch the machinesets
         for i in range(len(machineset_workers)):
-            body = {"spec": {"replicas": machine_spread[i] }}
-            machinesets.patch(body=body, namespace='openshift-machine-api', name=machineset_workers[i], content_type='application/merge-patch+json')
-
+            body = {"spec": {"replicas": machine_spread[i]}}
+            machinesets.patch(body=body,
+                              namespace='openshift-machine-api',
+                              name=machineset_workers[i],
+                              content_type='application/merge-patch+json')
 
         # Wait for worker machine sets to show the appropriate ready replicas
         for i in range(len(machineset_workers)):
-            new_machine_sets = machinesets.get(namespace='openshift-machine-api', label_selector='machine.openshift.io/cluster-api-machine-role!=infra,machine.openshift.io/cluster-api-machine-role!=workload').attributes.items
+            new_machine_sets = \
+                machinesets.get(namespace='openshift-machine-api',
+                                label_selector='machine.openshift.io/cluster-api-machine-role!=infra,\
+                                machine.openshift.io/cluster-api-machine-role!=workload').attributes.items
             while new_machine_sets[i].status.readyReplicas != machine_spread[i]:
                 if new_machine_sets[i].status.readyReplicas is None and machine_spread[i] == 0:
                     break
-                new_machine_sets = machinesets.get(namespace='openshift-machine-api', label_selector='machine.openshift.io/cluster-api-machine-role!=infra,machine.openshift.io/cluster-api-machine-role!=workload').attributes.items
+                new_machine_sets = \
+                    machinesets.get(namespace='openshift-machine-api',
+                                    label_selector='machine.openshift.io/cluster-api-machine-role!=infra,\
+                                    machine.openshift.io/cluster-api-machine-role!=workload').attributes.items
                 time.sleep(self.poll_interval)
 
         logger.info("Patching of machine sets complete")
@@ -127,21 +136,35 @@ class Trigger_scale():
                 time.sleep(self.poll_interval)
         logger.info("All workers schedulable")
 
-        worker_count = len(nodes.get(label_selector='node-role.kubernetes.io/worker').attributes.items) or 0
-        workload_count = len(nodes.get(label_selector='node-role.kubernetes.io/workload').attributes.items) or 0
-        master_count = len(nodes.get(label_selector='node-role.kubernetes.io/master').attributes.items) or 0
-        infra_count = len(nodes.get(label_selector='node-role.kubernetes.io/infra').attributes.items) or 0
+        worker_count = len(nodes.get(label_selector='node-role.kubernetes.io/worker').attributes.items)\
+            or 0
+        workload_count = len(nodes.get(label_selector='node-role.kubernetes.io/workload').attributes.items)\
+            or 0
+        master_count = len(nodes.get(label_selector='node-role.kubernetes.io/master').attributes.items)\
+            or 0
+        infra_count = len(nodes.get(label_selector='node-role.kubernetes.io/infra').attributes.items)\
+            or 0
 
         return worker_count, master_count, infra_count, workload_count, platform
-        
+
     def emit_actions(self):
-        logger.info("Scaling cluster %s to %d workers with uuid %s and polling interval %d" % (self.cluster_name, self.scale, self.uuid, self.poll_interval))
+        logger.info("Scaling cluster %s to %d workers with uuid %s and polling interval %d" %
+                    (self.cluster_name, self.scale, self.uuid, self.poll_interval))
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
         start_time = time.time()
         worker_count, master_count, infra_count, workload_count, platform = self._run_scale()
         end_time = time.time()
         elaspsed_time = end_time - start_time
-        data = {"timestamp": timestamp, "duration": int(elaspsed_time), "worker_count": worker_count, "master_count": master_count, "infra_count": infra_count, "workload_count": workload_count, "action": "scale", "total_count": worker_count+master_count+infra_count+workload_count, "platform": platform}
+        data = {"timestamp": timestamp,
+                "duration": int(elaspsed_time),
+                "worker_count": worker_count,
+                "master_count": master_count,
+                "infra_count": infra_count,
+                "workload_count": workload_count,
+                "action": "scale",
+                "total_count": worker_count+master_count+infra_count+workload_count,
+                "platform": platform}
         es_data = self._json_payload(data)
         yield es_data, ''
-        logger.info("Finished executing scaling of cluster %s to %d workers" % (self.cluster_name, self.scale))
+        logger.info("Finished executing scaling of cluster %s to %d workers" %
+                    (self.cluster_name, self.scale))

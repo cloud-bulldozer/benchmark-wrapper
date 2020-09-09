@@ -62,7 +62,8 @@ def drop_cache():
     # drop kernel cache if requested to
 
     kernel_cache_drop_pod_ips = os.getenv('kcache_drop_pod_ips')
-    if kernel_cache_drop_pod_ips.strip() != '':
+    if kernel_cache_drop_pod_ips is not None and \
+       kernel_cache_drop_pod_ips.strip() != '':
         logger.info('kernel cache drop pods: %s' %
                     str(kernel_cache_drop_pod_ips))
         logger.info('debug lvl %d, cachedrop timeout %d, cache reload time %d'

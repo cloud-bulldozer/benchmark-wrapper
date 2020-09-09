@@ -83,9 +83,9 @@ def drop_cache():
                 logger.error('HTTP code %d: %s' % (rsp.status, rsp.reason))
                 raise RunSnafuCacheDropException('kernel cache drop %s:%d' %
                                                  (ip, dropKernelCachePort))
-    # give kernel a chance to reload important cache items
-    # before hitting it with a workload
-    time.sleep(cache_reload_time)
+        # give kernel a chance to reload important cache items
+        # before hitting it with a workload
+        time.sleep(cache_reload_time)
 
 
 if __name__ == '__main__':

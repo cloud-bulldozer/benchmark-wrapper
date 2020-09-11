@@ -98,7 +98,7 @@ class Trigger_flent():
 
         raw, summary = self._parse_stdout(stdout)
         yield self._json_result("raw", raw, datetime.now()), 'raw'
-        yield self._json_result("summary", { "summary" : summary.encode("utf-8") }, datetime.now()), 'summary'
+        yield self._json_result("summary", { "summary" : summary }, datetime.now()), 'summary'
         documents = self._json_payload(raw)
         if len(documents) > 0:
             for document in documents:

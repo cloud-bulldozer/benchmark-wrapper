@@ -22,7 +22,7 @@ RUN pip3 install -e /opt/snafu/
 
 WORKDIR /
 RUN yum -y install gcc-c++
-RUN yum update
+RUN yum update -y
 RUN git clone https://git.code.sf.net/p/iperf2/code iperf2-code
 WORKDIR /iperf2-code
 RUN ./configure && make && make install

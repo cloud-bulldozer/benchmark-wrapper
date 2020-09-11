@@ -79,7 +79,6 @@ class Trigger_flent():
 
     def _parse_stdout(self, stdout):
         # This is set to csv output, so process that.
-        print(stdout)
         search_results = re.search("Data file written to (\\./.+.gz)(.+)", stdout)
         file_name = search_results[1]
         raw = {}
@@ -103,6 +102,5 @@ class Trigger_flent():
             for document in documents:
                 print(document)
                 yield document, 'results'
-        logger.info(documents)
         logger.info(stdout)
         logger.info("Finished executing flent")

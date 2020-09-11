@@ -40,9 +40,9 @@ class Fio_Analyzer:
             if fio_result['document']['fio']['jobname'] != 'All clients':
                 sample = fio_result['document']['sample']
 
-                if bool(fio_result['document']['global_options']['bs']):
+                if fio_result['document']['global_options'].get('bs'):
                     bs_value = fio_result['document']['global_options']['bs']
-                elif bool(fio_result['document']['global_options']['bsrange']):
+                elif fio_result['document']['global_options'].get('bsrange'):
                     bs_value = fio_result['document']['global_options']['bsrange']
 
                 rw = fio_result['document']['fio']['job options']['rw']
@@ -67,9 +67,9 @@ class Fio_Analyzer:
             if fio_result['document']['fio']['jobname'] != 'All clients':
                 sample = fio_result['document']['sample']
 
-                if bool(fio_result['document']['global_options']['bs']):
+                if fio_result['document']['global_options'].get('bs'):
                     bs_value = fio_result['document']['global_options']['bs']
-                elif bool(fio_result['document']['global_options']['bsrange']):
+                elif fio_result['document']['global_options'].get('bsrange'):
                     bs_value = fio_result['document']['global_options']['bsrange']
 
                 rw = fio_result['document']['fio']['job options']['rw']

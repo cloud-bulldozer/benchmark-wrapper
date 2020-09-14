@@ -165,7 +165,10 @@ def generate_wrapper_object(index_args, parser):
     yield benchmark_wrapper_object
 
 def get_valid_es_document(action, index, index_args):
-    es_index = index_args.prefix + '-' + index
+    if index != '':
+        es_index = index_args.prefix + '-' + index
+    else:
+        es_index = index_args.prefix
     es_valid_document = {"_index": es_index,
                          "_op_type": "create",
                          "_source": action,

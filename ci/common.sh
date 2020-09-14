@@ -31,6 +31,7 @@ function update_operator_image() {
   sed -i "s#${default_ripsaw_image_prefix}/uperf:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/uperf:${SNAFU_IMAGE_TAG}#g" roles/uperf/templates/*
   sed -i "s#${default_ripsaw_image_prefix}/ycsb-server:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/ycsb-server:${SNAFU_IMAGE_TAG}#g" roles/ycsb/templates/*
   sed -i "s#${default_ripsaw_image_prefix}/vegeta:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/vegeta:${SNAFU_IMAGE_TAG}#g" roles/vegeta/templates/*
+  sed -i "s#${default_ripsaw_image_prefix}/scale_openshift:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/scale_openshift:${SNAFU_IMAGE_TAG}#g" roles/scale_openshift/templates/*
   image_spec=$image_location/$image_account/benchmark-operator:$SNAFU_IMAGE_TAG
   $SUDO operator-sdk build $image_spec --image-builder $image_builder
 

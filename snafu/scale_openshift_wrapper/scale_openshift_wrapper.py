@@ -1,0 +1,61 @@
+#!/usr/bin/env python
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+import os
+import argparse
+from .trigger_scale import Trigger_scale
+
+
+class scale_openshift_wrapper():
+
+    def __init__(self, parent_parser):
+        parser_object = argparse.ArgumentParser(description="Scale Wrapper script", parents=[parent_parser],
+                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser = parser_object.add_argument_group("Scale benchmark")
+        parser.add_argument(
+            '-u', '--uuid',
+            required=True,
+            help='Provide the uuid')
+        parser.add_argument(
+            '--scale',
+            default="25",
+            type=int,
+            help='Provide the desired nodes to scale to')
+# Should we have a timeout here? currently unused
+        parser.add_argument(
+            '--timeout',
+            default="1000",
+            type=int,
+            help='Provide the desired amount of time to wait for scale to complete')
+        parser.add_argument(
+            '--user',
+            default="snafu",
+            help='Enter the user')
+        parser.add_argument(
+            '--incluster',
+            default="false",
+            help='Is this running from a pod within the cluster [true|false]')
+        parser.add_argument(
+            '--poll_interval',
+            default="5",
+            type=int,
+            help='Polling interval for checks while waiting on the machine scaling')
+        parser.add_argument(
+            '--kubeconfig',
+            help='Optional kubeconfig location. Incluster cannot be true')
+        self.args = parser_object.parse_args()
+
+        self.args.cluster_name = os.getenv("clustername", "mycluster")
+
+    def run(self):
+        yield Trigger_scale(self.args)

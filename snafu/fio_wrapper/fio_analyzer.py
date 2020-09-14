@@ -39,41 +39,51 @@ class Fio_Analyzer:
         for fio_result in self.fio_processed_results_list:
             if fio_result['document']['fio']['jobname'] != 'All clients':
                 sample = fio_result['document']['sample']
-                bs = fio_result['document']['global_options']['bs']
+
+                if fio_result['document']['global_options'].get('bs'):
+                    bs_value = fio_result['document']['global_options']['bs']
+                elif fio_result['document']['global_options'].get('bsrange'):
+                    bs_value = fio_result['document']['global_options']['bsrange']
+
                 rw = fio_result['document']['fio']['job options']['rw']
 
                 if sample not in self.sample_list:
                     self.sample_list.append(sample)
                 if rw not in self.operation_list:
                     self.operation_list.append(rw)
-                if bs not in self.io_size_list:
-                    self.io_size_list.append(bs)
+                if bs_value not in self.io_size_list:
+                    self.io_size_list.append(bs_value)
 
         for sample in self.sample_list:
             self.sumdoc[sample] = {}
             for rw in self.operation_list:
                 self.sumdoc[sample][rw] = {}
-                for bs in self.io_size_list:
-                    self.sumdoc[sample][rw][bs] = {}
+                for bs_value in self.io_size_list:
+                    self.sumdoc[sample][rw][bs_value] = {}
 
             # get measurements
 
         for fio_result in self.fio_processed_results_list:
             if fio_result['document']['fio']['jobname'] != 'All clients':
                 sample = fio_result['document']['sample']
-                bs = fio_result['document']['global_options']['bs']
+
+                if fio_result['document']['global_options'].get('bs'):
+                    bs_value = fio_result['document']['global_options']['bs']
+                elif fio_result['document']['global_options'].get('bsrange'):
+                    bs_value = fio_result['document']['global_options']['bsrange']
+
                 rw = fio_result['document']['fio']['job options']['rw']
 
-                if not self.sumdoc[sample][rw][bs]:
+                if not self.sumdoc[sample][rw][bs_value]:
                     time_s = fio_result['starttime'] / 1000.0
-                    self.sumdoc[sample][rw][bs]['date'] = time.strftime('%Y-%m-%dT%H:%M:%S.000Z',
-                                                                        time.gmtime(time_s))
-                    self.sumdoc[sample][rw][bs]['write'] = 0
-                    self.sumdoc[sample][rw][bs]['read'] = 0
+                    self.sumdoc[sample][rw][bs_value]['date'] = time.strftime('%Y-%m-%dT%H:%M:%S.000Z',
+                                                                              time.gmtime(time_s))
+                    self.sumdoc[sample][rw][bs_value]['write'] = 0
+                    self.sumdoc[sample][rw][bs_value]['read'] = 0
 
-                self.sumdoc[sample][rw][bs]['write'] += \
+                self.sumdoc[sample][rw][bs_value]['write'] += \
                     int(fio_result['document']['fio']["write"]["iops"])
-                self.sumdoc[sample][rw][bs]['read'] += \
+                self.sumdoc[sample][rw][bs_value]['read'] += \
                     int(fio_result['document']['fio']["read"]["iops"])
 
     def emit_actions(self):

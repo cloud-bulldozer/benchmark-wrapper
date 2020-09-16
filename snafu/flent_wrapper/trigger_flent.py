@@ -34,7 +34,6 @@ class Trigger_flent():
 
     def _json_payload(self, raw):
         processed = []
-        print("Raw:", raw)
         # Useful reference: https://flent.org/data-format.html
         results = raw["results"]
         start_time = parser.isoparse(raw["metadata"]["TIME"])
@@ -78,7 +77,8 @@ class Trigger_flent():
         return stdout.strip().decode("utf-8"), stderr.strip().decode("utf-8"), process.returncode
 
     def _parse_stdout(self, stdout):
-        # This is set to csv output, so process that.
+        # This is set to summary output, so process that.
+        # And open the raw file for the data.
         search_results = re.search("Data file written to (\\./.+.gz)(.+)", stdout)
         file_name = search_results[1]
         raw = {}

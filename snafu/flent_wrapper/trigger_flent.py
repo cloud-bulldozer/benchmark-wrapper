@@ -100,7 +100,6 @@ class Trigger_flent():
         documents = self._json_payload(raw)
         if len(documents) > 0:
             for document in documents:
-                print(document)
                 yield document, 'results'
         logger.info(stdout)
         logger.info("Finished executing flent")

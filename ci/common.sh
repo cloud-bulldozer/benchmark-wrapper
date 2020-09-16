@@ -50,21 +50,6 @@ function wait_clean {
   kubectl delete namespace my-ripsaw --wait=true --ignore-not-found
 }
 
-# Takes 2 arguments. $1 is the uuid and $2 is a space-separated list of indexes to check
-# Returns 0 if ALL indexes are found
-function check_es() {
-  if [[ ${#} != 2 ]]; then
-    echo "Wrong number of arguments: ${#}"
-    exit $NOTOK
-  fi
-  uuid=$1
-  index=${@:2}
-  for my_index in $index; do
-    python3 ci/check_es.py -s $es_server -p $es_port -u $uuid -i $my_index \
-      || exit $NOTOK
-  done
-}
-
 # Takes 2 argumentes. $1 is the Dockerfile path and $2 is the image name
 function build_and_push() {
   if ! $SUDO podman build --no-cache --tag=${2} -f ${1} . ; then

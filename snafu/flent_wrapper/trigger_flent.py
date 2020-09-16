@@ -53,7 +53,8 @@ class Trigger_flent():
             new_results_item = {}
             for key in keys:
                 new_results_item[key] = results[key][i]
-            new_item = self._json_result("results", new_results_item, start_time + timedelta(seconds=times[i]))
+            new_item = self._json_result("results",
+                 new_results_item, start_time + timedelta(seconds=times[i]))
             processed.append(new_item)
 
         return processed
@@ -71,7 +72,8 @@ class Trigger_flent():
         return new_item
 
     def _run_flent(self):
-        cmd = "flent {} -p totals -l {} -f summary -H {} --absolute-time".format(self.ftest, self.length, self.remoteip)
+        cmd = "flent {} -p totals -l {} -f summary -H {} --absolute-time"
+               .format(self.ftest, self.length, self.remoteip)
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         return stdout.strip().decode("utf-8"), stderr.strip().decode("utf-8"), process.returncode

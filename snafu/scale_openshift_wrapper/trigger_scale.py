@@ -58,7 +58,10 @@ class Trigger_scale():
         nodes = dyn_client.resources.get(api_version='v1', kind='Node')
         machinesets = dyn_client.resources.get(kind='MachineSet')
 
-        worker_count = len(nodes.get(label_selector='node-role.kubernetes.io/worker').attributes.items)\
+        worker_count = \
+            len(nodes.get(
+                label_selector='node-role.kubernetes.io/worker,!node-role.kubernetes.io/master')
+                .attributes.items)\
             or 0
         workload_count = len(nodes.get(label_selector='node-role.kubernetes.io/workload').attributes.items)\
             or 0
@@ -66,6 +69,7 @@ class Trigger_scale():
             or 0
         infra_count = len(nodes.get(label_selector='node-role.kubernetes.io/infra').attributes.items)\
             or 0
+        init_workers = worker_count
 
         infra = dyn_client.resources.get(kind='Infrastructure')
         platform = infra.get().attributes.items[0].spec.platformSpec.type or "Unknown"
@@ -77,9 +81,15 @@ class Trigger_scale():
                             machine.openshift.io/cluster-api-machine-role!=workload').attributes.items
 
         # If we are already at the requested scale exit
-        if worker_count == self.scale:
+        # Determine if we are scaling down or up
+        action = "scale_nochange"
+        if int(worker_count) == int(self.scale):
             logger.info("Already at requested worker count")
-            return worker_count, master_count, infra_count, workload_count, platform
+            return init_workers, worker_count, master_count, infra_count, workload_count, platform, action
+        elif int(worker_count) > int(self.scale):
+            action = "scale_down"
+        else:
+            action = "scale_up"
 
         logger.info("Current Worker count %s" % (worker_count))
 
@@ -136,7 +146,10 @@ class Trigger_scale():
                 time.sleep(self.poll_interval)
         logger.info("All workers schedulable")
 
-        worker_count = len(nodes.get(label_selector='node-role.kubernetes.io/worker').attributes.items)\
+        worker_count = \
+            len(nodes.get(
+                label_selector='node-role.kubernetes.io/worker,!node-role.kubernetes.io/master')
+                .attributes.items)\
             or 0
         workload_count = len(nodes.get(label_selector='node-role.kubernetes.io/workload').attributes.items)\
             or 0
@@ -145,14 +158,15 @@ class Trigger_scale():
         infra_count = len(nodes.get(label_selector='node-role.kubernetes.io/infra').attributes.items)\
             or 0
 
-        return worker_count, master_count, infra_count, workload_count, platform
+        return init_workers, worker_count, master_count, infra_count, workload_count, platform, action
 
     def emit_actions(self):
         logger.info("Scaling cluster %s to %d workers with uuid %s and polling interval %d" %
                     (self.cluster_name, self.scale, self.uuid, self.poll_interval))
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
         start_time = time.time()
-        worker_count, master_count, infra_count, workload_count, platform = self._run_scale()
+        init_workers, worker_count, master_count, infra_count, workload_count, platform, action = \
+            self._run_scale()
         end_time = time.time()
         elaspsed_time = end_time - start_time
         data = {"timestamp": timestamp,
@@ -161,7 +175,8 @@ class Trigger_scale():
                 "master_count": master_count,
                 "infra_count": infra_count,
                 "workload_count": workload_count,
-                "action": "scale",
+                "init_worker_count": init_workers,
+                "action": action,
                 "total_count": worker_count+master_count+infra_count+workload_count,
                 "platform": platform}
         es_data = self._json_payload(data)

@@ -15,9 +15,10 @@ class Trigger_stressng():
         self.vm_stressors = args.vm_stressors
         self.vm_bytes = args.vm_bytes
         self.mem_stressors = args.mem_stressors
+        self.jobfile = args.jobfile
 
     def _run_stressng(self):
-        cmd = "stress-ng --job /workload/jobfile --log-file stressng.lg -Y stressng.yml"
+        cmd = "stress-ng --job {} --log-file stressng.log -Y stressng.yml".format(self.jobfile)
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         return stdout.strip().decode("utf-8"), process.returncode
@@ -31,7 +32,6 @@ class Trigger_stressng():
             stressor = (metric["stressor"])
             bogoops = (metric["bogo-ops"])
             result = {stressor : bogoops}
-            print(result)
             results.append(result)
         return results
 
@@ -82,10 +82,10 @@ class Trigger_stressng():
         logger.info("Starting stress-ng")
         stdout = self._run_stressng()
         if stdout[1] == 1:
-            print("stressng failed to execute, trying one more time..")
+            logger.info("stressng failed to execute, trying one more time..")
             stdout = self._run_stressng()
             if stdout[1] == 1:
-                print("stressng failed to execute a second time, stopping...")
+                logger.info("stressng failed to execute a second time, stopping...")
                 exit(1)
         logger.info("Starting output parsing")
         data = self._parse_outfile()

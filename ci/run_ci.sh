@@ -21,15 +21,12 @@ if [[ $ghprbPullLongDescription = *"Depends-On:"* ]]; then
   cd ..
 fi
 
-pushd ripsaw
-update_operator_image
-popd
-
 cd ripsaw
 sed -i "s/ES_SERVER/$ES_SERVER/g" tests/test_crs/*
 sed -i "s/ES_PORT/$ES_PORT/g" tests/test_crs/*
 sed -i "s/my-ripsaw/my-ripsaw-$UUID/g" `grep -Rl my-ripsaw`
 sed -i "s/sql-server/sql-server-$UUID/g" tests/mssql.yaml tests/test_crs/valid_hammerdb.yaml tests/test_hammerdb.sh
+update_operator_image
 cd ..
 
 # Podman image prune

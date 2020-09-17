@@ -8,6 +8,7 @@
 import os
 import http.client
 import logging
+import time
 
 
 def getPortNum(envVar, defaultPort):
@@ -32,16 +33,17 @@ if dbgLevel is not None:
     logger.info('drop_cache debug log level')
 
 http_debug_level = int(os.getenv('HTTP_DEBUG_LEVEL', default=0))
-
-http_timeout = 10
+http_timeout = int(os.getenv('HTTP_CACHEDROP_TIMEOUT', default=30))
+cache_reload_time = int(os.getenv('CACHE_RELOAD_TIME', default=10))
 
 
 # drop Ceph OSD cache if requested to
 
 def drop_cache():
     ceph_cache_drop_pod_ip = os.getenv('ceph_drop_pod_ip')
-    logger.info('ceph OSD cache drop pod: %s' % str(ceph_cache_drop_pod_ip))
     if ceph_cache_drop_pod_ip is not None:
+        logger.info('ceph OSD cache drop pod: %s' %
+                    str(ceph_cache_drop_pod_ip))
         conn = http.client.HTTPConnection(ceph_cache_drop_pod_ip,
                                           port=dropCephCachePort,
                                           timeout=http_timeout)
@@ -60,8 +62,12 @@ def drop_cache():
     # drop kernel cache if requested to
 
     kernel_cache_drop_pod_ips = os.getenv('kcache_drop_pod_ips')
-    logger.info('kernel cache drop pods: %s' % str(kernel_cache_drop_pod_ips))
-    if kernel_cache_drop_pod_ips is not None:
+    if kernel_cache_drop_pod_ips is not None and \
+       kernel_cache_drop_pod_ips.strip() != '':
+        logger.info('kernel cache drop pods: %s' %
+                    str(kernel_cache_drop_pod_ips))
+        logger.info('debug lvl %d, cachedrop timeout %d, cache reload time %d'
+                    % (http_debug_level, http_timeout, cache_reload_time))
         pod_ip_list = kernel_cache_drop_pod_ips.split()
         for ip in pod_ip_list:
             conn = http.client.HTTPConnection(ip,
@@ -77,6 +83,9 @@ def drop_cache():
                 logger.error('HTTP code %d: %s' % (rsp.status, rsp.reason))
                 raise RunSnafuCacheDropException('kernel cache drop %s:%d' %
                                                  (ip, dropKernelCachePort))
+        # give kernel a chance to reload important cache items
+        # before hitting it with a workload
+        time.sleep(cache_reload_time)
 
 
 if __name__ == '__main__':

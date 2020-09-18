@@ -25,7 +25,7 @@ wrapper_dict = {
     "uperf": uperf_wrapper,
     "pgbench": pgbench_wrapper,
     "vegeta": vegeta_wrapper,
-    "scale": scale_openshift_wrapper
+    "scale": scale_openshift_wrapper,
     "stressng": stressng_wrapper
 }
 #    "backpack": pgbench_wrapper,

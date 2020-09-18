@@ -56,7 +56,6 @@ class Trigger_stressng():
 
     def _summarize_data(self, data, timestamp):
         print("Summarizing data")
-        print(data)
         print("")
         print("+{} stress-NG Results {}+".format("-" * (50), "-" * (50)))
         print("stressNG setup")

@@ -46,11 +46,13 @@ class uperf_wrapper():
 
         self.args.clientips = os.getenv("ips", "")
         self.args.remoteip = os.getenv("h", "")
-        self.args.hostnetwork = os.getenv("hostnet", "")
-        self.args.serviceip = os.getenv("serviceip", "")
+        self.args.hostnetwork = os.getenv("hostnet", "False")
+        self.args.serviceip = os.getenv("serviceip", "False")
         self.args.server_node = os.getenv("server_node", "")
         self.args.client_node = os.getenv("client_node", "")
         self.args.cluster_name = os.getenv("clustername", "mycluster")
+        self.args.num_pairs = os.getenv("num_pairs", "")
+        self.args.multus_client = os.getenv("multus_client", "")
 
     def run(self):
         uperf_wrapper_obj = Trigger_uperf(self.args)

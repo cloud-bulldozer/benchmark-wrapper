@@ -77,7 +77,7 @@ class Trigger_stressng():
         print("+{}  {}+".format("-" * (50), "-" * (50)))
 
     def emit_actions(self):
-        timestamp = str(int(time.time()))
+        timestamp = datetime.datetime.now()
         logger.info("Starting stress-ng")
         stdout = self._run_stressng()
         if stdout[1] == 1:

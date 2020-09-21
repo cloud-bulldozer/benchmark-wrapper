@@ -19,9 +19,6 @@ class stressng_wrapper():
         parser.add_argument(
             '-j', '--jobfile',
             help='Provide the jobfile for stressNG', required=True)
-        parser.add_argument(
-            'h', '--help',
-            help='Usage: stressng_wrapper.py -j <jobfile>', required=False)
         self.args = parser_object.parse_args()
 
         self.args.runtype = ""

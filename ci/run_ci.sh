@@ -57,8 +57,6 @@ else
   test_list=`echo "${diff_list}" | awk -F "/" '{print $1"/"$2}' | uniq`
 fi
 
-# temporary hack to limit the actual tests to stressng
-test_list="snafu/stressng_wrapper"
 echo -e "Running tests in the following directories:\n${test_list}"
 test_rc=0
 

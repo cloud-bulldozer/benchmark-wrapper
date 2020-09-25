@@ -5,7 +5,6 @@ COPY /snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-apps
 RUN dnf install -y --nodocs redis --enablerepo=centos8-appstream && dnf clean all
 
 RUN yum -y install wget gcc make --nodocs
-RUN dnf -y install python3-pip --nodocs
 RUN yum -y install bzip2 --nodocs
 RUN yum -y install iputils --nodocs
 RUN pip3 install flent

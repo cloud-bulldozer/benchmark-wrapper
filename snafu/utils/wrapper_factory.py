@@ -11,6 +11,7 @@ from snafu.hammerdb.hammerdb_wrapper import hammerdb_wrapper
 from snafu.ycsb_wrapper.ycsb_wrapper import ycsb_wrapper
 from snafu.scale_openshift_wrapper.scale_openshift_wrapper import scale_openshift_wrapper
 from snafu.stressng_wrapper.stressng_wrapper import stressng_wrapper
+from snafu.upgrade_openshift_wrapper.upgrade_openshift_wrapper  import upgrade_openshift_wrapper
 
 import logging
 logger = logging.getLogger("snafu")
@@ -26,7 +27,8 @@ wrapper_dict = {
     "pgbench": pgbench_wrapper,
     "vegeta": vegeta_wrapper,
     "scale": scale_openshift_wrapper,
-    "stressng": stressng_wrapper
+    "stressng": stressng_wrapper,
+    "upgrade": upgrade_openshift_wrapper
 }
 #    "backpack": pgbench_wrapper,
 #    "fio": fio_wrapper,

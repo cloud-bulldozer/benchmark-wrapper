@@ -62,7 +62,6 @@ class Trigger_upgrade():
         platform = infra.get().attributes.items[0].spec.platformSpec.type or "Unknown"
 
         clusterversion = self.dyn_client.resources.get(kind='ClusterVersion')
-        
         init_version = clusterversion.get().items[0].status.desired.version
         logger.info("Current cluster version is: %s" % init_version)
         logger.info("Desired cluster version is: %s" % self.version)
@@ -71,8 +70,8 @@ class Trigger_upgrade():
         if init_version == self.version:
             logger.info("Cluster version is already at desired version")
             the_time = datetime.datetime.strptime(
-                self._clusterversion.get().attributes.items[0].status.history[0].completionTime,time_format)
-            return init_version, self.version, platform, the_time, the_time, 0
+                clusterversion.get().attributes.items[0].status.history[0].completionTime,time_format)
+            return init_version, self.version, platform, the_time, the_time, (the_time - the_time)
 
         # If an image location was passed
         if self.toimage:
@@ -91,33 +90,35 @@ class Trigger_upgrade():
 
         logger.info(p)
 
+        c_state = "incomplete"
+        c_version = "0.0.0"
         before = int(time.time())
-        while self.timeout*60 >= int(time.time()) - before:
+        while self.timeout*60 >= int(time.time()) - before and \
+            (c_state != "Completed" and c_version != self.version):
             for i in range(10):
                 try:
                     c_state = clusterversion.get().attributes.items[0].status.history[0].state
-                except exception:
+                except Exception as err:
                     if i == 10:
-                        logger.error(exception)
+                        logger.error(err)
                         exit(1)
                     else:
-                        logger.warm(exception)
+                        logger.warn(err)
                         continue
                 else:
                     break
             for i in range(10):
                 try:
                     c_version = clusterversion.get().attributes.items[0].status.history[0].version
-                except exception:
+                except Exception as err:
                     if i == 10:
-                        logger.error(exception)
+                        logger.error(err)
                         exit(1)
                     else:
-                        logger.warm(exception)
+                        logger.warn(err)
                         continue
                 else:
                     break
-
 
             if c_state == "Completed" \
                 and c_version == self.version:
@@ -158,7 +159,7 @@ class Trigger_upgrade():
             logger.info("Operator: %s finished update at %s and took %s" % (op_name,op_time,update_time))
             op_data = {"operator": op_name,
                        "end_time": op_time,
-                       "update_time": str(update_time)}
+                       "update_time": int(update_time.total_seconds())}
             new_docs.append(self._json_payload(op_data))
 
         return new_docs
@@ -169,13 +170,13 @@ class Trigger_upgrade():
         self.timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
         self.init_version, self.end_version, self.platform, self.start_time, end_time, total_time = \
             self._run_upgrade()
-        if total_time != 0:
+        if int(total_time.total_seconds()) != 0:
             docs = self.get_timings()
         else:
             docs = []
         data = {"operator": "total",
                 "end_time": end_time.strftime(time_format),
-                "update_time": str(total_time),
+                "update_time": int(total_time.total_seconds()),
                 "image": self.toimage}
         docs.append(self._json_payload(data))
         for item in docs:

@@ -22,6 +22,7 @@ import time
 import datetime
 import logging
 import hashlib
+import urllib3
 import json
 import ssl
 from distutils.util import strtobool
@@ -64,44 +65,33 @@ def main():
     FMT = '%Y-%m-%dT%H:%M:%SGMT'
 
     # instantiate elasticsearch instance and check connection
-    es = {}
-    if "es" in os.environ:
-        if os.environ["es"] != "":
-            es['server'] = os.environ["es"]
-            logger.info("Using elasticsearch server with host:" + es['server'])
-        if os.environ["es_port"] != "":
-            es['port'] = os.environ["es_port"]
-            logger.info("Using elasticsearch server with port:" + es['port'])
-    es_verify_cert = os.getenv("es_verify_cert", "true")
-    if len(es.keys()) == 2:
-        if os.environ["es_index"] != "":
-            index_args.prefix = os.environ["es_index"]
-            logger.info("Using index prefix for ES:" + index_args.prefix)
+    es_settings = {}
+    es_settings["server"] = os.getenv("es")
+    es_settings["verify_cert"] = os.getenv("es_verify_cert", "true")
+    if es_settings["server"]:
+        index_args.prefix = os.getenv("es_index", "")
+        logger.info("Using elasticsearch server with host: %s" % es_settings['server'])
+        logger.info("Using index prefix for ES: %s" % index_args.prefix)
         index_args.index_results = True
         try:
-            _es_connection_string = str(es['server']) + ':' + str(es['port'])
-            if es_verify_cert == "false":
+            if es_settings["verify_cert"] == "false":
                 logger.info("Turning off TLS certificate verification")
-                import urllib3
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
                 ssl_ctx = ssl.create_default_context()
                 ssl_ctx.check_hostname = False
                 ssl_ctx.verify_mode = ssl.CERT_NONE
-                es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST',
+                es = elasticsearch.Elasticsearch([es_settings["server"]], send_get_body_as='POST',
                                                  ssl_context=ssl_ctx, use_ssl=True)
             else:
-                es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST')
+                es = elasticsearch.Elasticsearch([es_settings["server"]], send_get_body_as='POST')
             logger.info("Connected to the elasticsearch cluster with info as follows:")
             logger.info(json.dumps(es.info(), indent=4))
-
         except Exception as e:
-            logger.warn("Elasticsearch connection caused an exception : %s" % e)
+            logger.warn("Elasticsearch connection caused an exception: %s" % e)
             index_args.index_results = False
 
     index_args.document_size_capacity_bytes = 0
     if index_args.index_results:
-        # call py es bulk using a process generator to feed it ES documents
-
         parallel_setting = strtobool(os.environ.get('parallel', "false"))
         res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(es,
                                                                                  process_generator(
@@ -143,7 +133,7 @@ def process_generator(index_args, parser):
             # drop cache after every sample
             drop_cache()
             for action, index in data_object.emit_actions():
-                if "get_prometheus_trigger" in index:
+                if "get_prometheus_trigger" in index and "prom_es" in os.environ:
                     # Action will contain the following
                     """
                     action: {
@@ -189,54 +179,41 @@ def get_valid_es_document(action, index, index_args):
     return es_valid_document
 
 def index_prom_data(index_args, action):
+    es_settings = {}
 
     # definition of prometheus data getter, will yield back prom doc
     def get_prometheus_generator(index_args, action):
         prometheus_doc_generator = get_prometheus_data(action)
         for prometheus_doc in prometheus_doc_generator.get_all_metrics():
-
-            es_valid_document = get_valid_es_document(prometheus_doc,
-                                                      "prometheus_data",
-                                                      index_args)
-
+            es_valid_document = get_valid_es_document(prometheus_doc, "prometheus_data", index_args)
             yield es_valid_document
 
-    es = {}
-    if "prom_es" in os.environ:
-        if os.environ["prom_es"] != "":
-            es['server'] = os.environ["prom_es"]
-            logger.info("Using Prometheus elasticsearch server with host: %s" % es['server'])
-        if os.environ["prom_port"] != "":
-            es['port'] = os.environ["prom_port"]
-            logger.info("Using Prometheus elasticsearch server with port: %s" % es['port'])
-    es_verify_cert = os.getenv("es_verify_cert", "true")
-    if len(es.keys()) == 2:
-        if os.environ["es_index"] != "":
-            index_args.prefix = os.environ["es_index"]
-            logger.info("Using index prefix for ES:" + index_args.prefix)
+    es_settings["server"] = os.getenv("prom_es")
+    es_settings["verify_cert"] = os.getenv("es_verify_cert", "true")
+    if es_settings["server"]:
+        index_args.prefix = os.getenv("es_index", "")
+        logger.info("Using Prometheus elasticsearch server with host: %s" % es_settings["server"])
+        logger.info("Using index prefix for prometheus ES: %s" % index_args.prefix)
         index_args.index_results = True
         try:
-            _es_connection_string = str(es['server']) + ':' + str(es['port'])
-            if es_verify_cert == "false":
-                logger.info("Turning off TLS certificate verification")
-                import urllib3
+            if es_settings["verify_cert"] == "false":
+                logger.info("Turning off TLS certificate verification for Prometheus ES indexer")
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
                 ssl_ctx = ssl.create_default_context()
                 ssl_ctx.check_hostname = False
                 ssl_ctx.verify_mode = ssl.CERT_NONE
-                es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST',
+                es = elasticsearch.Elasticsearch([es_settings["server"]], send_get_body_as='POST',
                                                  ssl_context=ssl_ctx, use_ssl=True)
             else:
-                es = elasticsearch.Elasticsearch([_es_connection_string], send_get_body_as='POST')
+                es = elasticsearch.Elasticsearch([es_settings["server"]], send_get_body_as='POST')
             logger.info("Connected to the elasticsearch cluster with info as follows:")
             logger.info(json.dumps(es.info(), indent=4))
-
         except Exception as e:
-            logger.warn("Elasticsearch connection caused an exception : %s" % e)
+            logger.warn("Elasticsearch connection caused an exception: %s" % e)
             index_args.index_results = False
 
     # check that we want to index and that the prom_es exist.
-    if index_args.index_results and "prom_es" in os.environ:
+    if index_args.index_results:
         logger.info("initializing prometheus indexing")
         parallel_setting = strtobool(os.environ.get('parallel', "false"))
         res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(es,

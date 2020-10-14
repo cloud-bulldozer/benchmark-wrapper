@@ -26,7 +26,7 @@ Additional environment variables:
 Please read more about how you'll need to build your custom configuration file at
 [openshift docs](https://docs.openshift.com/container-platform/4.2/scalability_and_performance/using-cluster-loader.html)
 
-Note: To index data into elasticsearch you'll also need to set the environment vars *es*,*es_port* and *es_index*
+Note: To index data into elasticsearch you'll also need to set the environment vars *es*, and *es_index*
 as well as additional identifers such as *uuid*, *clustername* and *test_user*
 
 ## Invoking cluster loader through snafu:

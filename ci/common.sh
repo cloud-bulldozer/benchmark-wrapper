@@ -1,7 +1,6 @@
 #!/bin/bash
 
-es_server=${ES_SERVER:-foo.esserver.com}
-es_port=${ES_PORT:-80}
+es_server=${ES_SERVER:-http://foo.esserver.com:9200}
 
 default_operator_image="quay.io/benchmark-operator/benchmark-operator:master"
 

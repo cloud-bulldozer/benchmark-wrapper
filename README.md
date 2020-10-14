@@ -53,8 +53,8 @@ Note: snafu is a python library, so please add the new python libraries you impo
 to the setup.txt
 
 Your benchmark-operator benchmark will define several environment variables relevant to Elasticsearch:
-* es - hostname of elasticsearch server
-* es_port - port number of elasticsearch server (default 9020)
+* es - URL of elasticsearch instance. i.e. https://elastic.instance.domain.com:9200
+* es_verify_cert - Verify ElasticSearch TLS certificate, by default `true`
 * es_index - OPTIONAL - default is "snafu-tool" - define the prefix of the ES index name
 
 It will then invoke your wrapper via the command:
@@ -82,7 +82,7 @@ it:
 In order for run_snafu.py to know about your wrapper, you must add an import statement and a key-value pair for your
 benchmark to utils/wrapper_factory.py.
 
-The Dockerfile should *not* git clone snafu - this makes it harder to develop wrappers.   Instead, assume that the image
+The Dockerfile should *not* git clone snafu - this makes it harder to develop wrappers. Instead, assume that the image
 will be built like this:
 
 ```
@@ -101,7 +101,7 @@ server that is viewable with Kibana and Grafana!
 
 Look at some of the other benchmarks for examples of how this works.
 
-## how do I post results to Elasticsearch from my wrapper?
+## How do I post results to Elasticsearch from my wrapper?
 
 Every snafu benchmark will use Elasticsearch index name of the form **orchestrator-benchmark-doctype**, consisting of the 3
 components:
@@ -150,8 +150,6 @@ run_snafu.py for access to Elasticsearch:
 {% if elasticsearch.server is defined %}
           - name: es
             value: "{{ elasticsearch.server }}"
-          - name: es_port
-            value: "{{ elasticsearch.port }}"
 {% endif %}
 ```
 

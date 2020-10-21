@@ -94,10 +94,10 @@ class Trigger_upgrade():
         c_version = "0.0.0"
         before = int(time.time())
         while self.timeout*60 >= int(time.time()) - before and \
-            (c_state != "Completed" and c_version != self.version):
+            (c_state != "Completed" or c_version != self.version):
             for i in range(10):
                 try:
-                    c_state = clusterversion.get().attributes.items[0].status.history[0].state
+                    cluster_state = clusterversion.get().attributes.items[0].status.history[0]
                 except Exception as err:
                     if i == 10:
                         logger.error(err)
@@ -106,18 +106,8 @@ class Trigger_upgrade():
                         logger.warn(err)
                         continue
                 else:
-                    break
-            for i in range(10):
-                try:
-                    c_version = clusterversion.get().attributes.items[0].status.history[0].version
-                except Exception as err:
-                    if i == 10:
-                        logger.error(err)
-                        exit(1)
-                    else:
-                        logger.warn(err)
-                        continue
-                else:
+                    c_state = cluster_state.state
+                    c_version = cluster_state.version
                     break
 
             if c_state == "Completed" \

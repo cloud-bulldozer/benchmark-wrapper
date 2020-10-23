@@ -6,5 +6,6 @@ RUN dnf -y install https://www.rpmfind.net/linux/centos/8-stream/AppStream/x86_6
 RUN dnf -y --enablerepo=extras install --nodocs wget tmux stress-ng \
     https://cbs.centos.org/kojifiles/packages/dumb-init/1.2.2/6.el8/x86_64/dumb-init-1.2.2-6.el8.x86_64.rpm \
     && dnf clean all && rm -rf /var/cache/yum
-
-
+COPY . /opt/snafu
+RUN pip3 install -e /opt/snafu/
+RUN ln -s /usr/bin/python3 /usr/bin/python

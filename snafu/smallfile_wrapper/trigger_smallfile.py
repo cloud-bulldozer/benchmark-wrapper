@@ -3,7 +3,6 @@ from datetime import datetime
 import os
 import json
 import subprocess
-import shutil
 import socket
 from snafu.vfs_stat import get_vfs_stat_dict
 import redis
@@ -54,7 +53,7 @@ class _trigger_smallfile:
                 if c.endswith('.csv'):
                     os.unlink(os.path.join(rsptime_dir, c))
 
-        # only do 1 operation at a time in emit_actions 
+        # only do 1 operation at a time in emit_actions
         # so that cache dropping works right
 
         before = datetime.now()
@@ -78,7 +77,7 @@ class _trigger_smallfile:
         self.logger.info("completed sample {} for operation {} , results in {}".format(
             self.sample, self.operation, json_output_file))
         if self.operation == 'cleanup':
-            return # skip reporting data
+            return  # skip reporting data
 
         fsdict = get_vfs_stat_dict(self.working_dir)
 

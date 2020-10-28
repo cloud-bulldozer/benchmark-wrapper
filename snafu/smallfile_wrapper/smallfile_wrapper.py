@@ -76,15 +76,14 @@ class smallfile_wrapper():
                 os.mkdir(sample_dir)
             for o in self.operations.split(','):
                 trigger_generator = trigger_smallfile._trigger_smallfile(logger, o,
-                                                                     self.yaml_input_file,
-                                                                     self.cluster_name,
-                                                                     self.working_dir, sample_dir,
-                                                                     self.user,
-                                                                     self.uuid,
-                                                                     self.redis_host,
-                                                                     self.redis_timeout,
-                                                                     self.redis_timeout_th,
-                                                                     self.clients,
-                                                                     s)
+                                                                         self.yaml_input_file,
+                                                                         self.cluster_name,
+                                                                         self.working_dir, sample_dir,
+                                                                         self.user,
+                                                                         self.uuid,
+                                                                         self.redis_host,
+                                                                         self.redis_timeout,
+                                                                         self.redis_timeout_th,
+                                                                         self.clients,
+                                                                         s)
                 yield trigger_generator
-

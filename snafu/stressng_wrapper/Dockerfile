@@ -12,3 +12,7 @@ COPY . /opt/snafu
 RUN pip3 install -e /opt/snafu/
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
+RUN mkdir /opt/stressng &&  \
+    chgrp 0 /opt/stressng && \
+    chmod g+w /opt/stressng
+WORKDIR /opt/stressng

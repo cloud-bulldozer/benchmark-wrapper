@@ -1,4 +1,4 @@
-# SNAFU - Situation Normal: All F'ed Up
+# Benchmark-Wrapper aka SNAFU - Situation Normal: All F'ed Up
 
 Most Performance workload tools were written to tell you the performance at a given time under given circumstances.
 
@@ -6,7 +6,7 @@ These scripts are to help enable these legacy tools store their data for long te
 
 Note: SNAFU does not depend upon Kubernetes, so you can use run_snafu.py on a bare-metal or VM cluster without relying
 on Kubernetes to start/stop pods.  So if you need your benchmark to collect data for both Kubernetes and non-Kubernetes
-environments, develop in SNAFU and then write ripsaw benchmark to integrate with Kubernetes.
+environments, develop in SNAFU and then write benchmark-operator benchmark to integrate with Kubernetes.
 
 ## What workloads do we support?
 
@@ -18,6 +18,7 @@ environments, develop in SNAFU and then write ripsaw benchmark to integrate with
 | Pgbench                        | Postgres Performance   | Working            |
 | smallfile                      | metadata-intensive ops | Working            |
 | fs-drift                       | metadata-intensive mix | Working            |
+| cyclictest                     | Real-Time Latency      | Working            |
 
 ## What backend storage do we support?
 
@@ -50,7 +51,7 @@ You must supply a "wrapper", which provides these functions:
 Note: snafu is a python library, so please add the new python libraries you import
 to the setup.txt
 
-Your ripsaw benchmark will define several environment variables relevant to Elasticsearch:
+Your benchmark-operator benchmark will define several environment variables relevant to Elasticsearch:
 * es - hostname of elasticsearch server
 * es_port - port number of elasticsearch server (default 9020)
 * es_index - OPTIONAL - default is "snafu-tool" - define the prefix of the ES index name
@@ -72,7 +73,7 @@ common parameters:
 Create a subdirectory for your wrapper with the name Your_Benchmark_wrapper.   The following files must be present in
 it:
 
-* Dockerfile - builds the container image in quay.io/cloud-bulldozer which ripsaw will run
+* Dockerfile - builds the container image in quay.io/cloud-bulldozer which benchmark-operator will run
 * \_\_init\_\_.py - required so you can import the python module
 * Your_Benchmark_wrapper.py - run_snafu.py will run this (more later on how)
 * trigger_Your_Benchmark.py - run a single sample of the benchmark and generate ES documents from that
@@ -94,7 +95,7 @@ RUN mkdir -pv /opt/snafu
 COPY . /opt/snafu/
 ```
 
-The end result is that your ripsaw benchmark becomes much simpler while you get to save data to a central Elasticsearch
+The end result is that your benchmark-operator benchmark becomes much simpler while you get to save data to a central Elasticsearch
 server that is viewable with Kibana and Grafana!
 
 Look at some of the other benchmarks for examples of how this works.
@@ -104,16 +105,16 @@ Look at some of the other benchmarks for examples of how this works.
 Every snafu benchmark will use Elasticsearch index name of the form **orchestrator-benchmark-doctype**, consisting of the 3
 components:
 
-* orchestrator - software running the benchmark - usually "ripsaw" at this point
+* orchestrator - software running the benchmark - usually "benchmark-operator" at this point
 * benchmark - typically the tool name, something like "iperf" or "fio"
 * doctype - type of documents being placed in this index.
 
-If you are using run_snafu.py, construct an elastic search document in the usual way, and then use the python "yield" statement (do not return!) a **document** and **doctype**, where **document** is a python dictionary representing an Elasticsearch document, and **doctype** is the end of the index name.  For example, any ripsaw benchmark will be defining an index name that begins with ripsaw, but your wrapper can create whatever indexes it wants with that prefix.  For example, to create an index named ripsaw-iperf-results, you just do something like this:
+If you are using run_snafu.py, construct an elastic search document in the usual way, and then use the python "yield" statement (do not return!) a **document** and **doctype**, where **document** is a python dictionary representing an Elasticsearch document, and **doctype** is the end of the index name.  For example, any benchmark-operator benchmark will be defining an index name that begins with benchmark-operator, but your wrapper can create whatever indexes it wants with that prefix.  For example, to create an index named benchmark-operator-iperf-results, you just do something like this:
 
 - optionally, in roles/your-benchmark/defaults/main.yml, you can override the default if you need to:
 
 ```
-es_index: ripsaw-iperf
+es_index: benchmark-operator-iperf
 ```
 
 - in your snafu wrapper, to post a document to Elasticsearch, you **MUST**:
@@ -125,9 +126,9 @@ es_index: ripsaw-iperf
 run_snafu.py concatenates the doctype with the es_index component associated with the benchmark to generate the
 full index name, and posts document **my__doc** to it.
 
-## how do I integrate snafu wrapper into my ripsaw benchmark?
+## how do I integrate snafu wrapper into my benchmark-operator benchmark?
 
-You just replace the commands to run the workload in your ripsaw benchmark
+You just replace the commands to run the workload in your benchmark-operator benchmark
 (often in roles/Your_Workload/templates/workload.yml.j2) with the command below.
 
 First, you have to define environment variables used to pass information to
@@ -153,7 +154,7 @@ run_snafu.py for access to Elasticsearch:
 {% endif %}
 ```
 
-Note that you do not have to use elasticsearch with ripsaw, but this is recommended
+Note that you do not have to use elasticsearch with benchmark-operator, but this is recommended
 so that your results will be accessible outside of the openshift cluster in which
 they were created.
 
@@ -181,7 +182,7 @@ The remaining parameters are defined and parsed by the workload-specific wrapper
 ## how do I run my snafu wrapper in CI?
 
 add the ci_test.sh script to your wrapper directory - the SNAFU CI (Continuous Integration) test harness
-will automatically find it and run it.   This assumes that your wrapper supports ripsaw, for now.
+will automatically find it and run it.   This assumes that your wrapper supports benchmark-operator, for now.
 At present, the CI does not test SNAFU on baremetal but this may be added in the future.
 
 every ci_test.sh script makes use of environment variables defined in ci/common.sh :
@@ -192,7 +193,7 @@ every ci_test.sh script makes use of environment variables defined in ci/common.
 * SNAFU_IMAGE_BUILDER (defaults to podman, can be set to docker)
 
 You, the wrapper developer, can override these variables to use any container image repository
-supported by ripsaw (quay.io is at present the only location tested).  
+supported by benchmark-operator (quay.io is at present the only location tested).
 
 NOTE: at present, you need to force these images to be public images so that minikube can
 load them. A better method is needed.
@@ -211,27 +212,27 @@ default_image_spec="quay.io/cloud-bulldozer/your_wrapper:master"
 image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/your_wrapper:$SNAFU_IMAGE_TAG
 build_and_push snafu/your_wrapper/Dockerfile $image_spec
 
-cd ripsaw
-sed -i "s#$default_image_spec#$image_spec#" roles/your_wrapper_in_ripsaw/templates/*
+cd benchmark-operator
+sed -i "s#$default_image_spec#$image_spec#" roles/your_wrapper_in_benchmark-operator/templates/*
 
-# Build new ripsaw image
+# Build new benchmark-operator image
 update_operator_image
 
-# run the ripsaw CI for your wrapper in tests/ and get resulting UUID
+# run the benchmark-operator CI for your wrapper in tests/ and get resulting UUID
 get_uuid test_your_wrapper.sh
 uuid=`cat uuid`
 
 cd ..
 
 # Define index (there can be more than 1 separated by whitespaces)
-index="ripsaw-your-wrapper-results"
+index="benchmark-operator-your-wrapper-results"
 
 check_es "${uuid}" "${index}"
 exit $?
 ```
 
-Note: If your PR requires a PR in ripsaw to be merged, you can ask CI to
-checkout that PR by adding a `Depends-On: <ripsaw_pr_number>` to the end of
+Note: If your PR requires a PR in benchmark-operator to be merged, you can ask CI to
+checkout that PR by adding a `Depends-On: <benchmark-operator_pr_number>` to the end of
 your snafu commit message.
 
 

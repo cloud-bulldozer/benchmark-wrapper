@@ -74,15 +74,16 @@ class smallfile_wrapper():
             sample_dir = self.result_dir + '/' + str(s)
             if not os.path.exists(sample_dir):
                 os.mkdir(sample_dir)
-            trigger_generator = trigger_smallfile._trigger_smallfile(logger, self.operations,
-                                                                     self.yaml_input_file,
-                                                                     self.cluster_name,
-                                                                     self.working_dir, sample_dir,
-                                                                     self.user,
-                                                                     self.uuid,
-                                                                     self.redis_host,
-                                                                     self.redis_timeout,
-                                                                     self.redis_timeout_th,
-                                                                     self.clients,
-                                                                     s)
-            yield trigger_generator
+            for o in self.operations.split(','):
+                trigger_generator = trigger_smallfile._trigger_smallfile(logger, o,
+                                                                         self.yaml_input_file,
+                                                                         self.cluster_name,
+                                                                         self.working_dir, sample_dir,
+                                                                         self.user,
+                                                                         self.uuid,
+                                                                         self.redis_host,
+                                                                         self.redis_timeout,
+                                                                         self.redis_timeout_th,
+                                                                         self.clients,
+                                                                         s)
+                yield trigger_generator

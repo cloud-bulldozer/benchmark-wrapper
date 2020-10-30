@@ -19,6 +19,7 @@ environments, develop in SNAFU and then write benchmark-operator benchmark to in
 | smallfile                      | metadata-intensive ops | Working            |
 | fs-drift                       | metadata-intensive mix | Working            |
 | cyclictest                     | Real-Time Latency      | Working            |
+| oslat                          | Real-Time Latency      | Working            |
 
 ## What backend storage do we support?
 

@@ -48,6 +48,9 @@ def main():
         default=logging.INFO, help='enables verbose wrapper debugging info')
     parser.add_argument(
         '-t', '--tool', help='Provide tool name', required=True)
+    parser.add_argument(
+        '-r', '--run-id', help='Run ID to unify benchmark results in ES'
+    )
     index_args, unknown = parser.parse_known_args()
     index_args.index_results = False
     index_args.prefix = "snafu-%s" % index_args.tool

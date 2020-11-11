@@ -72,7 +72,20 @@ class Trigger_scale():
         init_workers = worker_count
 
         infra = dyn_client.resources.get(kind='Infrastructure')
-        platform = infra.get().attributes.items[0].spec.platformSpec.type or "Unknown"
+
+        try:
+            platform = infra.get().attributes.items[0].spec.platformSpec.type
+        except Exception as err:
+            logger.info('Platform type not obtained through spec.platformSpec.type')
+            logger.info('Trying to query status.platform')
+            logger.info(err)
+
+            try:
+                platform = infra.get().attributes.items[0].status.platform
+            except Exception as err:
+                logger.warning('Could not identify platform. Marking as Unknown')
+                logger.warning(err)
+                platform = "Unknown"
 
         # Machine set name list
         machineset_worker_list = \

@@ -49,7 +49,7 @@ def main():
     parser.add_argument(
         '-t', '--tool', help='Provide tool name', required=True)
     parser.add_argument(
-        '-r', '--run-id', help='Run ID to unify benchmark results in ES'
+        '--run-id', help='Run ID to unify benchmark results in ES'
     )
     index_args, unknown = parser.parse_known_args()
     index_args.index_results = False
@@ -173,10 +173,13 @@ def get_valid_es_document(action, index, index_args):
         es_index = index_args.prefix + '-' + index
     else:
         es_index = index_args.prefix
+    
     es_valid_document = {"_index": es_index,
                          "_op_type": "create",
                          "_source": action,
                          "_id": ""}
+    if index_args.run_id:
+        es_valid_document['run_id'] = index_args.run_id
     es_valid_document["_id"] = hashlib.sha256(str(action).encode()).hexdigest()
     document_size_bytes = sys.getsizeof(es_valid_document)
     index_args.document_size_capacity_bytes += document_size_bytes

@@ -62,7 +62,7 @@ diff_list=`git diff origin/master --name-only | grep -Ev "*\.(md|png)"`
 if [[ ${test_choice} != '' ]]; then
   echo "Running chosen test: "${test_choice}
   test_list=${test_choice}
-elif [[ `echo "${diff_list}" | grep -cv /` -gt 0 || `echo ${diff_list} | grep -E "(ci|utils|image_resources)/|requirements\.txt"` ]]; then
+elif [[ `echo "${diff_list}" | grep -cv /` -gt 0 || `echo ${diff_list} | grep -E "(ci|utils|image_resources)/|snafu/run_snafu\.py|requirements\.txt"` ]]; then
   echo "Running full test"
   test_list=`find * -maxdepth 2 -name ci_test.sh -type f -exec dirname {} \;`
 else

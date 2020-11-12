@@ -173,7 +173,6 @@ def get_valid_es_document(action, index, index_args):
         es_index = index_args.prefix + '-' + index
     else:
         es_index = index_args.prefix
-    
     es_valid_document = {"_index": es_index,
                          "_op_type": "create",
                          "_source": action,

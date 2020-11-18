@@ -53,7 +53,7 @@ class get_prometheus_data():
             start_time = time.time()
 
             # resolve directory  the tool include file
-            dirname = os.path.dirname(__file__)
+            dirname = os.path.dirname(os.path.realpath(__file__))
             include_file_dir = os.path.join(dirname, '/utils/prometheus_labels/')
             tool_include_file = include_file_dir + self.sample_info_dict["tool"] + "_included_labels.json"
 

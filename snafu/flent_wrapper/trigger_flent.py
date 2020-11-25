@@ -91,7 +91,7 @@ class Trigger_flent():
         return raw, summary
 
     def emit_actions(self):
-        logger.info("Strating flent benchmark")
+        logger.info("Starting flent benchmark")
         stdout, stderr, rc = self._run_flent()
         if rc != 0 or stderr.find("ERROR") != -1:
             logger.critical("Failed to execute flent. Error in output.")

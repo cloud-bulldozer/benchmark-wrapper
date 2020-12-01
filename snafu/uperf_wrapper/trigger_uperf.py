@@ -37,6 +37,7 @@ class Trigger_uperf():
         self.resourcetype = args.resourcetype
         self.num_pairs = args.num_pairs
         self.multus_client = args.multus_client
+        self.networkpolicy = args.networkpolicy
 
     def _json_payload(self, data, sample):
         processed = []
@@ -74,7 +75,8 @@ class Trigger_uperf():
                 "client_node": self.client_node,
                 "server_node": self.server_node,
                 "num_pairs": self.num_pairs,
-                "multus_client": self.multus_client
+                "multus_client": self.multus_client,
+                "networkpolicy": self.networkpolicy
             })
             prev_timestamp = float(result[0])
             prev_bytes = int(result[1])

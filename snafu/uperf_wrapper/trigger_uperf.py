@@ -24,7 +24,6 @@ class Trigger_uperf():
     def __init__(self, args):
         self.uuid = args.uuid
         self.user = args.user
-
         self.clientips = args.clientips
         self.remoteip = args.remoteip
         self.hostnetwork = args.hostnetwork
@@ -50,7 +49,7 @@ class Trigger_uperf():
                 norm_ltcy = 0.0
             else:
                 norm_ltcy = ((float(result[0]) - prev_timestamp) / (norm_ops)) * 1000
-            processed.append({
+            datapoint = {
                 "workload": "uperf",
                 "uuid": self.uuid,
                 "user": self.user,
@@ -60,12 +59,7 @@ class Trigger_uperf():
                 "remote_ip": self.remoteip,
                 "client_ips": self.clientips,
                 "uperf_ts": datetime.fromtimestamp(int(result[0].split('.')[0]) / 1000),
-                "test_type": data['test'],
-                "protocol": data['protocol'],
                 "service_ip": self.serviceip,
-                "message_size": int(data['message_size']),
-                "num_threads": int(data['num_threads']),
-                "duration": len(data['results']),
                 "bytes": int(result[1]),
                 "norm_byte": int(result[1]) - prev_bytes,
                 "ops": int(result[2]),
@@ -77,7 +71,9 @@ class Trigger_uperf():
                 "num_pairs": self.num_pairs,
                 "multus_client": self.multus_client,
                 "networkpolicy": self.networkpolicy
-            })
+            }
+            datapoint.update(data)
+            processed.append(datapoint)
             prev_timestamp = float(result[0])
             prev_bytes = int(result[1])
             prev_ops = int(result[2])
@@ -91,18 +87,15 @@ class Trigger_uperf():
 
     def _parse_stdout(self, stdout):
         # This will effectivly give us:
-        # ripsaw-test-stream-udp-16384
-        config = re.findall(r"running profile:(.*) \.\.\.", stdout)
-        test = re.split("-", config[0])[0]
-        protocol = re.split("-", config[0])[1]
-        size = re.split("-", config[0])[2]
-        nthr = re.split("-", config[0])[3]
+        # <profile name="{{test}}-{{proto}}-{{wsize}}-{{rsize}}-{{nthr}}">
+        config = re.findall(r"running profile:(.*) \.\.\.", stdout)[0]
+        test, protocol, wsize, rsize, nthr = config.split("-")
         # This will yeild us this structure :
         #     timestamp, number of bytes, number of operations
         # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
         results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)", stdout)
-        return {"test": test, "protocol": protocol, "message_size": size, "num_threads": nthr,
-                "results": results}
+        return {"test": test, "protocol": protocol, "write_message_size": int(wsize), "read_message_size":
+                int(rsize), "num_threads": int(nthr), "duration": len(results)}
 
     def emit_actions(self):
         if not os.path.exists(self.workload):

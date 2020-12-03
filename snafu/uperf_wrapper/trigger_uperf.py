@@ -38,12 +38,12 @@ class Trigger_uperf():
         self.multus_client = args.multus_client
         self.networkpolicy = args.networkpolicy
 
-    def _json_payload(self, data, sample):
+    def _json_payload(self, results, data, sample):
         processed = []
         prev_bytes = 0
         prev_ops = 0
         prev_timestamp = 0.0
-        for result in data['results']:
+        for result in results:
             norm_ops = int(result[2]) - prev_ops
             if norm_ops == 0:
                 norm_ltcy = 0.0
@@ -89,13 +89,13 @@ class Trigger_uperf():
         # This will effectivly give us:
         # <profile name="{{test}}-{{proto}}-{{wsize}}-{{rsize}}-{{nthr}}">
         config = re.findall(r"running profile:(.*) \.\.\.", stdout)[0]
-        test, protocol, wsize, rsize, nthr = config.split("-")
+        test_type, protocol, wsize, rsize, nthr = config.split("-")
         # This will yeild us this structure :
         #     timestamp, number of bytes, number of operations
         # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
         results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)", stdout)
-        return {"test": test, "protocol": protocol, "write_message_size": int(wsize), "read_message_size":
-                int(rsize), "num_threads": int(nthr), "duration": len(results)}
+        return results, {"test_type": test_type, "protocol": protocol, "write_message_size": int(wsize),
+                         "read_message_size": int(rsize), "num_threads": int(nthr), "duration": len(results)}
 
     def emit_actions(self):
         if not os.path.exists(self.workload):
@@ -114,8 +114,8 @@ class Trigger_uperf():
                     logger.critical("stdout: %s" % stdout)
                     logger.critical("stderr: %s" % stderr)
                     exit(1)
-            data = self._parse_stdout(stdout)
-            documents = self._json_payload(data, s)
+            results, data = self._parse_stdout(stdout)
+            documents = self._json_payload(results, data, s)
             if len(documents) > 0:
                 for document in documents:
                     yield document, 'results'

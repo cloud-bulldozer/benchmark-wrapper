@@ -47,7 +47,7 @@ class Trigger_flent():
         keys = list(results.keys())
 
         quantity = len(results[keys[0]])
-        logger.info("Number of results:", quantity)
+        logger.info("Number of results: %s", quantity)
 
         for i in range(0, quantity):
             new_results_item = {}
@@ -84,7 +84,7 @@ class Trigger_flent():
         search_results = re.search("Data file written to (\\./.+.gz)(.+)", stdout)
         file_name = search_results[1]
         raw = {}
-        logger.info("Opening results file", file_name)
+        logger.info("Opening results file %s", file_name)
         with gzip.open(file_name, 'rb') as f:
             raw = json.load(f)
         summary = search_results[2]
@@ -95,8 +95,8 @@ class Trigger_flent():
         stdout, stderr, rc = self._run_flent()
         if rc != 0 or stderr.find("ERROR") != -1:
             logger.critical("Failed to execute flent. Error in output.")
-            logger.critical("stdout: %s" % stdout)
-            logger.critical("stderr: %s" % stderr)
+            logger.critical("stdout: %s", stdout)
+            logger.critical("stderr: %s", stderr)
             exit(1)
 
         raw, summary = self._parse_stdout(stdout)

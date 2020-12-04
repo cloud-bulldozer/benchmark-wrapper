@@ -20,11 +20,9 @@ RUN cd iperf2-code && git checkout bf687b4aac023b303cea08bd1a7248d62ad70f47 && .
 # The main container
 FROM registry.access.redhat.com/ubi8-minimal:latest
 
-RUN microdnf install -y --nodocs git python3-pip && microdnf clean all
 COPY /snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
-RUN microdnf install -y --nodocs redis --enablerepo=centos8-appstream && microdnf clean all
+RUN microdnf install -y --nodocs git python3-pip iputils redis --enablerepo=centos8-appstream && microdnf clean all
 
-RUN microdnf -y install iputils --nodocs
 RUN pip3 install flent
 
 # Install built libs

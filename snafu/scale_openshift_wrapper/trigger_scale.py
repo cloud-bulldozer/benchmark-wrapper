@@ -88,10 +88,15 @@ class Trigger_scale():
                 platform = "Unknown"
 
         # Machine set name list
-        machineset_worker_list = \
-            machinesets.get(namespace='openshift-machine-api',
-                            label_selector='machine.openshift.io/cluster-api-machine-role!=infra,\
-                            machine.openshift.io/cluster-api-machine-role!=workload').attributes.items
+        machineset_all_list = \
+            machinesets.get(namespace='openshift-machine-api').attributes.items
+
+        machineset_worker_list = []
+
+        for i in range(len(machineset_all_list)):
+            if machineset_all_list[i].spec.template.metadata.labels[
+                'machine.openshift.io/cluster-api-machine-role'] == "worker":
+                machineset_worker_list.append(machineset_all_list[i])
 
         # If we are already at the requested scale exit
         # Determine if we are scaling down or up

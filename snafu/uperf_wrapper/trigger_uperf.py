@@ -94,7 +94,8 @@ class Trigger_uperf():
         #     timestamp, number of bytes, number of operations
         # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
         results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)", stdout)
-        return results, {"test_type": test_type, "protocol": protocol, "write_message_size": int(wsize),
+        # We assume message_size=write_message_size to prevent breaking dependant implementations
+        return results, {"test_type": test_type, "protocol": protocol, "message_size": int(wsize),
                          "read_message_size": int(rsize), "num_threads": int(nthr), "duration": len(results)}
 
     def emit_actions(self):

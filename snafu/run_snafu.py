@@ -90,6 +90,7 @@ def main():
             index_args.index_results = False
 
     index_args.document_size_capacity_bytes = 0
+    # call py es bulk using a process generator to feed it ES documents
     if index_args.index_results:
         parallel_setting = strtobool(os.environ.get('parallel', "false"))
         res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(es,

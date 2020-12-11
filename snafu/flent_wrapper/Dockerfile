@@ -18,10 +18,10 @@ RUN git clone -n https://git.code.sf.net/p/iperf2/code iperf2-code
 RUN cd iperf2-code && git checkout bf687b4aac023b303cea08bd1a7248d62ad70f47 && ./configure --prefix=/tmp/install && make && make install
 
 # The main container
-FROM registry.access.redhat.com/ubi8-minimal:latest
+FROM registry.access.redhat.com/ubi8:latest
 
 COPY /snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
-RUN microdnf install -y --nodocs git python3-pip iputils redis --enablerepo=centos8-appstream && microdnf clean all
+RUN dnf install -y --nodocs git python3-pip iputils redis --enablerepo=centos8-appstream && dnf clean all
 
 RUN pip3 install flent
 

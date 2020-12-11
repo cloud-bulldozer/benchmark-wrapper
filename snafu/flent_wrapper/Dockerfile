@@ -26,11 +26,9 @@ RUN dnf install -y --nodocs git python3-pip iputils redis --enablerepo=centos8-a
 RUN pip3 install flent
 
 # Install built libs
-COPY --from=builder /tmp/install /
+COPY --from=builder /tmp/install/bin/* /bin/
 
 # Add snafu
 RUN mkdir -p /opt/snafu/
 COPY . /opt/snafu/
 RUN pip3 install -e /opt/snafu/
-
-WORKDIR /

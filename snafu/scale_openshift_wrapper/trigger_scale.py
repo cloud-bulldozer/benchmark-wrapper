@@ -138,18 +138,16 @@ class Trigger_scale():
                               content_type='application/merge-patch+json')
 
         # Wait for worker machine sets to show the appropriate ready replicas
-        for i in range(len(machineset_workers)):
+        for i in range(len(machineset_worker_list)):
             new_machine_sets = \
                 machinesets.get(namespace='openshift-machine-api',
-                                label_selector='machine.openshift.io/cluster-api-machine-role!=infra,\
-                                machine.openshift.io/cluster-api-machine-role!=workload').attributes.items
-            while new_machine_sets[i].status.readyReplicas != machine_spread[i]:
-                if new_machine_sets[i].status.readyReplicas is None and machine_spread[i] == 0:
+                                name=machineset_worker_list[i].metadata.name)
+            while new_machine_sets.status.readyReplicas != machine_spread[i]:
+                if new_machine_sets.status.readyReplicas is None and machine_spread[i] == 0:
                     break
                 new_machine_sets = \
                     machinesets.get(namespace='openshift-machine-api',
-                                    label_selector='machine.openshift.io/cluster-api-machine-role!=infra,\
-                                    machine.openshift.io/cluster-api-machine-role!=workload').attributes.items
+                                    name=machineset_worker_list[i].metadata.name)
                 time.sleep(self.poll_interval)
 
         logger.info("Patching of machine sets complete")

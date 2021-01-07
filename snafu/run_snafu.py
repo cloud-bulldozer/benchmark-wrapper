@@ -73,6 +73,9 @@ def main():
             es['port'] = os.environ["es_port"]
             logger.info("Using elasticsearch server with port:" + es['port'])
     es_verify_cert = os.getenv("es_verify_cert", "true")
+    if 'port' in es:
+        if es['port'] == "443":
+            es_verify_cert = "false"
     if len(es.keys()) == 2:
         if os.environ["es_index"] != "":
             index_args.prefix = os.environ["es_index"]
@@ -210,6 +213,9 @@ def index_prom_data(index_args, action):
             es['port'] = os.environ["prom_port"]
             logger.info("Using Prometheus elasticsearch server with port: %s" % es['port'])
     es_verify_cert = os.getenv("es_verify_cert", "true")
+    if 'port' in es:
+        if es['port'] == "443":
+            es_verify_cert = "false"
     if len(es.keys()) == 2:
         if os.environ["es_index"] != "":
             index_args.prefix = os.environ["es_index"]

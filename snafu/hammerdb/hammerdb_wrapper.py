@@ -11,8 +11,6 @@ class hammerdb_wrapper():
             '-u', '--uuid', nargs=1,
             help='Provide the uuid')
         self.args = parser.parse_args()
-        self.args.es_server = ""
-        self.args.es_port = ""
         # generic benchmark parameters
         self.args.db_type = ""
         self.args.db_server = ""
@@ -58,10 +56,6 @@ class hammerdb_wrapper():
         self.args.db_postgresql_storedprocs = ""
 
         # exporting the generic settings
-        if "es_server" in os.environ:
-            self.args.es_server = os.environ["es_server"]
-        if "es_port" in os.environ:
-            self.args.es_port = os.environ["es_port"]
         if "db_type" in os.environ:
             self.args.db_type = os.environ["db_type"]
         if "db_server" in os.environ:

@@ -68,6 +68,8 @@ def main():
     es_settings = {}
     es_settings["server"] = os.getenv("es")
     es_settings["verify_cert"] = os.getenv("es_verify_cert", "true")
+    if ":443" in es_settings["server"] :
+        es_settings["verify_cert"] = "false"
     if es_settings["server"]:
         index_args.prefix = os.getenv("es_index", "")
         logger.info("Using elasticsearch server with host: %s" % es_settings['server'])
@@ -191,6 +193,8 @@ def index_prom_data(index_args, action):
 
     es_settings["server"] = os.getenv("prom_es")
     es_settings["verify_cert"] = os.getenv("es_verify_cert", "true")
+    if ":443" in es_settings["server"] :
+        es_settings["verify_cert"] = "false"
     if es_settings["server"]:
         index_args.prefix = os.getenv("es_index", "")
         logger.info("Using Prometheus elasticsearch server with host: %s" % es_settings["server"])

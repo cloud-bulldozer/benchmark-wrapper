@@ -68,7 +68,7 @@ def main():
     es_settings = {}
     es_settings["server"] = os.getenv("es")
     es_settings["verify_cert"] = os.getenv("es_verify_cert", "true")
-    if ":443" in es_settings["server"] :
+    if es_settings["server"] and ":443" in es_settings["server"]:
         es_settings["verify_cert"] = "false"
     if es_settings["server"]:
         index_args.prefix = os.getenv("es_index", "")

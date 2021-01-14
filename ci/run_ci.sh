@@ -2,6 +2,7 @@
 
 set -x
 
+
 source ci/common.sh
 
 # Presetting test_choice to be blank.

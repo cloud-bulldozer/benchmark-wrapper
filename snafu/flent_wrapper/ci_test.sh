@@ -5,23 +5,7 @@ set -x
 source ci/common.sh
 
 # Build image for ci
-default_ripsaw_image_spec="quay.io/cloud-bulldozer/flent:latest"
 image_spec=$SNAFU_WRAPPER_IMAGE_PREFIX/flent:$SNAFU_IMAGE_TAG
-build_and_push src/flent_wrapper/Dockerfile $image_spec
-
-cd ripsaw
-
-sed -si "s#$default_ripsaw_image_spec#$image_spec#g" roles/flent/templates/*
-
-# Build new ripsaw image
-update_operator_image
-
-get_uuid test_flent.sh
-uuid=`cat uuid`
-
-cd ..
-
-index="ripsaw-flent-results"
-
-check_es "${uuid}" "${index}"
-exit $?
+build_and_push snafu/flent_wrapper/Dockerfile $image_spec
+pushd ripsaw
+source tests/test_flent.sh

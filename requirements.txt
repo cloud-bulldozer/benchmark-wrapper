@@ -1,9 +1,0 @@
-configparser
-elasticsearch>=6.0.0,<=7.0.2
-statistics
-numpy
-pyyaml
-requests
-redis
-python-dateutil
-flent

@@ -43,7 +43,8 @@ class uperf_wrapper():
             default="snafu",
             help='Enter the user')
         self.args = parser_object.parse_args()
-
+        
+        self.args.node_name = os.getenv("NODE_NAME", "")
         self.args.clientips = os.getenv("ips", "")
         self.args.remoteip = os.getenv("h", "")
         self.args.hostnetwork = os.getenv("hostnet", "False")

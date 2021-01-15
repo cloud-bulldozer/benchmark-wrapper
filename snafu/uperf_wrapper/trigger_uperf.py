@@ -37,6 +37,7 @@ class Trigger_uperf():
         self.num_pairs = args.num_pairs
         self.multus_client = args.multus_client
         self.networkpolicy = args.networkpolicy
+        self.node_name = args.node_name
 
     def _json_payload(self, results, data, sample):
         processed = []
@@ -70,7 +71,8 @@ class Trigger_uperf():
                 "server_node": self.server_node,
                 "num_pairs": self.num_pairs,
                 "multus_client": self.multus_client,
-                "networkpolicy": self.networkpolicy
+                "networkpolicy": self.networkpolicy,
+                "node_name": self.node_name
             }
             datapoint.update(data)
             processed.append(datapoint)

@@ -54,6 +54,9 @@ class uperf_wrapper():
         self.args.num_pairs = os.getenv("num_pairs", "")
         self.args.multus_client = os.getenv("multus_client", "")
         self.args.networkpolicy = os.getenv("networkpolicy", "")
+        self.args.nodes_in_iter = os.getenv("node_count", "0")
+        self.args.pod_density = os.getenv("pod_count", "0")
+        self.args.node_id = os.getenv("my_node_idx", "default-hostname")
 
     def run(self):
         uperf_wrapper_obj = Trigger_uperf(self.args)

@@ -55,7 +55,7 @@ class Trigger_uperf():
                 "user": self.user,
                 "cluster_name": self.cluster_name,
                 "hostnetwork": self.hostnetwork,
-                "iteration": sample,
+                "teration": sample,
                 "remote_ip": self.remoteip,
                 "client_ips": self.clientips,
                 "uperf_ts": datetime.fromtimestamp(int(result[0].split('.')[0]) / 1000),
@@ -96,7 +96,9 @@ class Trigger_uperf():
         results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)", stdout)
         # We assume message_size=write_message_size to prevent breaking dependant implementations
         return results, {"test_type": test_type, "protocol": protocol, "message_size": int(wsize),
-                         "read_message_size": int(rsize), "num_threads": int(nthr), "duration": len(results)}
+                         "read_message_size": int(rsize), "num_threads": int(nthr), "duration": len(results),
+                         "density": int(self.args.pod_density), "nodes_in_iter":int(self.args.nodes_in_iter),
+                         "node_name": self.args.node_id}
 
     def emit_actions(self):
         if not os.path.exists(self.workload):

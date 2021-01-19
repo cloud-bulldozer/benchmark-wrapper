@@ -37,6 +37,9 @@ class Trigger_uperf():
         self.num_pairs = args.num_pairs
         self.multus_client = args.multus_client
         self.networkpolicy = args.networkpolicy
+        self.nodes_in_iter = args.nodes_in_iter
+        self.pod_density = args.pod_density
+        self.node_id = args.node_id
 
     def _json_payload(self, results, data, sample):
         processed = []
@@ -97,8 +100,8 @@ class Trigger_uperf():
         # We assume message_size=write_message_size to prevent breaking dependant implementations
         return results, {"test_type": test_type, "protocol": protocol, "message_size": int(wsize),
                          "read_message_size": int(rsize), "num_threads": int(nthr), "duration": len(results),
-                         "density": int(self.args.pod_density), "nodes_in_iter":int(self.args.nodes_in_iter),
-                         "node_name": self.args.node_id}
+                         "density": int(self.pod_density), "nodes_in_iter":int(self.nodes_in_iter),
+                         "node_name": self.node_id}
 
     def emit_actions(self):
         if not os.path.exists(self.workload):

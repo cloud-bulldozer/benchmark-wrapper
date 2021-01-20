@@ -73,7 +73,10 @@ class Trigger_uperf():
                 "server_node": self.server_node,
                 "num_pairs": self.num_pairs,
                 "multus_client": self.multus_client,
-                "networkpolicy": self.networkpolicy
+                "networkpolicy": self.networkpolicy,
+                "density": int(self.pod_density),
+                "nodes_in_iter":int(self.nodes_in_iter),
+                "node_name": self.node_id
             }
             datapoint.update(data)
             processed.append(datapoint)
@@ -99,9 +102,7 @@ class Trigger_uperf():
         results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)", stdout)
         # We assume message_size=write_message_size to prevent breaking dependant implementations
         return results, {"test_type": test_type, "protocol": protocol, "message_size": int(wsize),
-                         "read_message_size": int(rsize), "num_threads": int(nthr), "duration": len(results),
-                         "density": int(self.pod_density), "nodes_in_iter":int(self.nodes_in_iter),
-                         "node_name": self.node_id}
+                         "read_message_size": int(rsize), "num_threads": int(nthr), "duration": len(results)}
 
     def emit_actions(self):
         if not os.path.exists(self.workload):

@@ -56,7 +56,9 @@ class uperf_wrapper():
         self.args.networkpolicy = os.getenv("networkpolicy", "")
         self.args.nodes_in_iter = os.getenv("node_count", "0")
         self.args.pod_density = os.getenv("pod_count", "0")
-        self.args.node_id = os.getenv("my_node_idx", "default-hostname")
+        self.args.network_policy = os.getenv("networkpolicy","")
+        self.args.colocate = os.getenv("colocate","false")
+        self.args.step_size = os.getenv("stepsize","")
 
     def run(self):
         uperf_wrapper_obj = Trigger_uperf(self.args)

@@ -39,7 +39,9 @@ class Trigger_uperf():
         self.networkpolicy = args.networkpolicy
         self.nodes_in_iter = args.nodes_in_iter
         self.pod_density = args.pod_density
-        self.node_id = args.node_id
+        self.network_policy = args.network_policy
+        self.colocate = args.colocate
+        self.step_size = args.step_size
 
     def _json_payload(self, results, data, sample):
         processed = []
@@ -76,6 +78,10 @@ class Trigger_uperf():
                 "networkpolicy": self.networkpolicy,
                 "density": int(self.pod_density),
                 "nodes_in_iter":int(self.nodes_in_iter),
+                "step_size" : self.step_size,
+                "colocate" : self.colocate,
+                "network_policy" : self.network_policy
+
             }
             datapoint.update(data)
             processed.append(datapoint)

@@ -58,7 +58,7 @@ class Trigger_uperf():
                 "user": self.user,
                 "cluster_name": self.cluster_name,
                 "hostnetwork": self.hostnetwork,
-                "teration": sample,
+                "iteration": sample,
                 "remote_ip": self.remoteip,
                 "client_ips": self.clientips,
                 "uperf_ts": datetime.fromtimestamp(int(result[0].split('.')[0]) / 1000),
@@ -76,7 +76,6 @@ class Trigger_uperf():
                 "networkpolicy": self.networkpolicy,
                 "density": int(self.pod_density),
                 "nodes_in_iter":int(self.nodes_in_iter),
-                "node_name": self.node_id
             }
             datapoint.update(data)
             processed.append(datapoint)

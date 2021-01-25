@@ -39,7 +39,6 @@ class Trigger_uperf():
         self.networkpolicy = args.networkpolicy
         self.nodes_in_iter = args.nodes_in_iter
         self.pod_density = args.pod_density
-        self.network_policy = args.network_policy
         self.colocate = args.colocate
         self.step_size = args.step_size
 
@@ -80,7 +79,6 @@ class Trigger_uperf():
                 "nodes_in_iter":int(self.nodes_in_iter),
                 "step_size" : self.step_size,
                 "colocate" : self.colocate,
-                "network_policy" : self.network_policy
 
             }
             datapoint.update(data)

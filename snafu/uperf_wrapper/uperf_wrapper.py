@@ -56,8 +56,7 @@ class uperf_wrapper():
         self.args.networkpolicy = os.getenv("networkpolicy", "")
         self.args.nodes_in_iter = os.getenv("node_count", "0")
         self.args.pod_density = os.getenv("pod_count", "0")
-        self.args.network_policy = os.getenv("networkpolicy","")
-        self.args.colocate = os.getenv("colocate","false")
+        self.args.colocate = os.getenv("colocate","False")
         self.args.step_size = os.getenv("stepsize","")
 
     def run(self):

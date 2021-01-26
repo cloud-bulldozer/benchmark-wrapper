@@ -96,7 +96,6 @@ class Trigger_vegeta():
             ltcy = int(data["latencies"]["mean"] / 1000)
             max_ltcy = int(data["latencies"]["max"] / 1000)
             min_ltcy = int(data["latencies"]["min"] / 1000)
-            self.duration = int(data["duration"] / 1000)
             ts = dateutil.parser.parse(data["end"])
             yield {
                 "rps": rps,

@@ -58,6 +58,8 @@ class uperf_wrapper():
         self.args.pod_density = os.getenv("pod_count", "0")
         self.args.colocate = os.getenv("colocate","False")
         self.args.step_size = os.getenv("stepsize","")
+        self.args.density_range = os.getenv("density_range","0-0")
+        self.args.node_range = os.getenv("node_range","0-0")
 
     def run(self):
         uperf_wrapper_obj = Trigger_uperf(self.args)

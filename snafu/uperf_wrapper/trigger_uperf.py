@@ -41,6 +41,8 @@ class Trigger_uperf():
         self.pod_density = args.pod_density
         self.colocate = args.colocate
         self.step_size = args.step_size
+        self.density_range = args.density_range
+        self.node_range = args.node_range
 
     def _json_payload(self, results, data, sample):
         processed = []
@@ -79,6 +81,8 @@ class Trigger_uperf():
                 "nodes_in_iter":int(self.nodes_in_iter),
                 "step_size" : self.step_size,
                 "colocate" : self.colocate,
+                "density_range" : self.density_range,
+                "node_range" : self.node_range,
 
             }
             datapoint.update(data)

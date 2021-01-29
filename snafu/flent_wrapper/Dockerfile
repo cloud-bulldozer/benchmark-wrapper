@@ -25,6 +25,8 @@ RUN dnf install -y --nodocs git python3-pip iputils redis --enablerepo=centos8-a
 
 RUN pip3 install flent
 
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
 # Install built libs
 COPY --from=builder /tmp/install/bin/* /bin/
 

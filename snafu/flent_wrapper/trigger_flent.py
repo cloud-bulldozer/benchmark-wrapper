@@ -81,7 +81,8 @@ class Trigger_flent():
     def _parse_stdout(self, stdout):
         # This is set to summary output, so process that.
         # And open the raw file for the data.
-        search_results = re.search("Data file written to (\\./.+.gz)(.+)", stdout)
+        print("Stdout:", stdout)
+        search_results = re.search("Data file written to (\\./.+.gz)(.+)", stdout, re.DOTALL)
         file_name = search_results[1]
         raw = {}
         logger.info("Opening results file %s", file_name)

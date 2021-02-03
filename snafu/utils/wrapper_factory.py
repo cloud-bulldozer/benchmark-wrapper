@@ -14,6 +14,7 @@ from snafu.stressng_wrapper.stressng_wrapper import stressng_wrapper
 from snafu.upgrade_openshift_wrapper.upgrade_openshift_wrapper import upgrade_openshift_wrapper
 from snafu.cyclictest_wrapper.cyclictest_wrapper import cyclictest_wrapper
 from snafu.oslat_wrapper.oslat_wrapper import oslat_wrapper
+from snafu.trex_wrapper.trex_wrapper import trex_wrapper
 
 import logging
 logger = logging.getLogger("snafu")
@@ -32,7 +33,8 @@ wrapper_dict = {
     "stressng": stressng_wrapper,
     "upgrade": upgrade_openshift_wrapper,
     "cyclictest": cyclictest_wrapper,
-    "oslat": oslat_wrapper
+    "oslat": oslat_wrapper,
+    "trex": trex_wrapper
 
 }
 #    "backpack": pgbench_wrapper,

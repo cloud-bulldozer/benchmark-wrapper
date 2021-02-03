@@ -1,0 +1,221 @@
+#!/usr/bin/env python3
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+# Leveraged from https://github.com/cisco-system-traffic-generator/trex-core/blob/master/scripts/automation/trex_control_plane/interactive/trex/examples/stl/stl_bi_dir_flows.py
+
+
+from trex.stl.api import *
+from trex.common.trex_logger import Logger
+
+import subprocess
+import signal
+import time
+import json
+import sys
+import logging
+import re
+import os
+import string
+
+log = logging.getLogger('run-simple-burst')
+log.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+fhd = logging.FileHandler('/var/log/trex.log')
+fhd.setLevel(logging.DEBUG)
+fhd.setFormatter(formatter)
+
+st = logging.StreamHandler()
+st.setLevel(logging.INFO)
+
+log.addHandler(fhd)
+log.addHandler(st)
+
+
+class CustomLogger(Logger):
+    def __init__ (self, verbose="error"):
+        super(CustomLogger, self).__init__(verbose)
+        self.msg = ''
+        self.force_exit = False
+
+    def _write (self, msg, newline):
+        if not self.force_exit:
+            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+            if isinstance(msg, (str, bytes)):
+                msg = ansi_escape.sub('', msg)
+                self.msg += msg
+            if newline:
+                log.debug(self.msg)
+                self.msg = ''
+
+    def _flush (self):
+        pass
+
+clog = CustomLogger("debug")
+
+
+class STLS1(object):
+    def __init__ (self, num_port, size, rate, duration, stream, verbose="debug"):
+        self.client = STLClient(verbose_level=verbose, logger=clog)
+        self.size = size
+        self.pg_id = 0
+        self.num_streams = stream
+        self.force_exit = False
+        self.num_ports = num_port
+        self.ports = [i for i in range(num_port)]
+        self.rate = rate
+        self.duration = duration
+        signal.signal(signal.SIGINT, self.signal_handler)
+
+    def create_vm(self, direction=0):
+        ip_range = {'src': {'start': "10.0.0.1", 'end': "10.0.0.254"},
+                    'dst': {'start': "8.0.0.1",  'end': "8.0.0.254"}}
+
+        if (direction == 0):
+            src = ip_range['src']
+            dst = ip_range['dst']
+        else:
+            src = ip_range['dst']
+            dst = ip_range['src']
+
+        vm = [
+            # src  
+            STLVmFlowVar(name="src",min_value=src['start'],max_value=src['end'],size=4,op="inc"),
+            STLVmWrFlowVar(fv_name="src",pkt_offset= "IP.src"),
+
+            # dst
+            STLVmFlowVar(name="dst",min_value=dst['start'],max_value=dst['end'],size=4,op="inc"),
+            STLVmWrFlowVar(fv_name="dst",pkt_offset= "IP.dst"),
+
+            # checksum
+            STLVmFixIpv4(offset = "IP")
+            ]
+        return vm
+
+
+    def create_stream (self, dest_mac=None, port=0):
+        size = self.size - 4; # HW will add 4 bytes ethernet CRC
+
+        ethr_base = Ether(dst=dest_mac) / IP() / UDP()
+
+        pad = max(0, size - len('ether')) * 'x'
+        vm = self.create_vm(port)
+        pkt = STLPktBuilder(pkt=ethr_base/pad, vm=vm)
+
+        streams = []
+        for pg_id_add in range(0, self.num_streams):
+            streams.append(STLStream(packet = pkt, mode = STLTXCont(pps=1), flow_stats = STLFlowStats(pg_id = self.pg_id + pg_id_add)))
+        return streams
+
+    def add_streams(self, port, dest_mac):
+        if dest_mac:
+            log.info("create stream for port %s with dest mac %s" % (port, dest_mac))
+        new_stream = self.create_stream(dest_mac, port)
+        self.client.add_streams(new_stream, [port])
+
+    def init_streams(self):
+        macs = os.getenv("DEST_MAC_LIST").split(',') or os.getenv("dest_mac_list").split(',')
+        log.info("destination macs available")
+        for idx in range(0, self.num_ports):
+            self.add_streams(idx, macs[idx])
+
+    def collect_stats(self, duration):
+        output = []
+        current_ts = time.time()
+
+        for i in range(0,duration):
+            time.sleep(1)
+            # read the stats after the test
+            stats = self.client.get_stats()
+
+            output.append({"packet_size": self.size,
+                      "packet_rate": self.rate,
+                      "duration": self.duration,
+                      "num_stream": self.num_streams,
+                      "rx_pps": stats["global"]["rx_pps"],
+                      "tx_pps": stats["global"]["tx_pps"],
+                      "rx_bps": stats["global"]["rx_bps"],
+                      "tx_bps": stats["global"]["tx_bps"],
+                      "rx_drop_bps": stats["global"]["rx_drop_bps"],
+                      "cpu_util": stats["global"]["cpu_util"],
+                      "ts_epoch": current_ts + i
+                      })
+
+        # wait_on_traffic was not good for 2MPPS or higher, instead doing reset
+        # self.client.wait_on_traffic(ports=self.ports)
+         
+        self.client.reset(ports = self.ports)
+        return output
+
+    def simple_burst(self):
+        passed = True
+        try:
+            self.client.connect()
+            self.client.reset(ports = self.ports)
+            self.init_streams()
+            self.client.clear_stats()
+            log.info("Running {:} on ports {:} for {:} seconds...".format(self.rate, self.ports, self.duration))
+
+            # Start the stream
+            self.client.start(ports = self.ports,
+                mult = self.rate,
+                duration = self.duration + 10, # 10s extra buffer 
+                core_mask = STLClient.CORE_MASK_PIN
+            )
+
+            std_output =  self.collect_stats(self.duration)
+
+            log.info(json.dumps(std_output, indent=2, sort_keys=True))
+            print(json.dumps(std_output, indent=2, sort_keys=True))
+
+        except STLError as e:
+            log.error(e)
+
+        finally:
+            self.force_exit = True
+            self.client.disconnect()
+
+    def signal_handler(self, sig, frame):
+        log.info('You pressed Ctrl+C!')
+        time.sleep(6)
+        self.force_exit = True
+        clog.force_exit = True
+        sys.exit(0)
+
+def main():
+    # Read environment input values
+    packet_size = os.getenv("PACKET_SIZE") or os.getenv("packet_size")
+    packet_rate = os.getenv("PACKET_RATE") or os.getenv("packet_rate")
+    duration = os.getenv("DURATION") or os.getenv("duration") 
+    stream  = os.getenv("NUM_STREAM") or os.getenv("num_stream") 
+    num_port  = os.getenv("NUM_PORT") or os.getenv("num_port") 
+
+    duration = int(duration)
+    packet_size = int(packet_size)
+    stream = int(stream)
+    num_port = int(num_port)
+
+    log.info("Starting burst...")
+    log.info("Packet Size - %s" % packet_size)
+    log.info("Packet Rate - %s" % packet_rate)
+    log.info("Duration - %s" % duration)
+    try:
+        # Initiate 
+        obj = STLS1(num_port=num_port, size=packet_size, rate=packet_rate, duration=duration, stream=stream)
+        # Run simple burst
+        obj.simple_burst()
+    except Exception as e:
+        log.exception("failed to start burst: %s" % e)
+
+if __name__ == "__main__":
+    main()

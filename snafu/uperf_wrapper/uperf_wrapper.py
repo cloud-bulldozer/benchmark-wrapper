@@ -63,6 +63,8 @@ class uperf_wrapper():
         # 5-10, for a run that began with 5 nodes involved and ended with 10
         self.args.density_range = os.getenv("density_range","")
         self.args.node_range = os.getenv("node_range","")
+        # each node will run with density number of pods, this is the 0 based
+        # number of that pod, useful for displaying throughput of each density
         self.args.pod_id = os.getenv("my_pod_idx","")
 
     def run(self):

@@ -58,6 +58,9 @@ class uperf_wrapper():
         self.args.pod_density = os.getenv("pod_count", "")
         self.args.colocate = os.getenv("colocate","False")
         self.args.step_size = os.getenv("stepsize","")
+        # density_range and node_range are defined and exported in the cr file
+        # it will appear in ES as startvalue-endvalue, for example
+        # 5-10, for a run that began with 5 nodes involved and ended with 10
         self.args.density_range = os.getenv("density_range","")
         self.args.node_range = os.getenv("node_range","")
         self.args.pod_id = os.getenv("my_pod_idx","")

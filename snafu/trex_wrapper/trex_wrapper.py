@@ -39,7 +39,6 @@ class trex_wrapper():
             default="snafu",
             help='Enter the user')
         self.args = parser_object.parse_args()
-
         self.args.duration = os.getenv("duration") or os.getenv("DURATION")
         self.args.cluster_name = os.getenv("clustername") or os.getenv("CLUSTERNAME")
         self.args.testpmd_node = os.getenv("testpmd_node") or os.getenv("TESTPMD_NODE")
@@ -54,7 +53,6 @@ class trex_wrapper():
         core_list = list(map(int, c_list))
         pci_list, socket = self._get_pci()
         port_list = self._get_ports()
-
         config = [{
             "version": 2,
             "interfaces": [],
@@ -71,7 +69,6 @@ class trex_wrapper():
             }
         }]
         config_file = "/etc/trex_cfg.yaml"
-
         config[0]['interfaces'] = pci_list
         config[0]['port_info'] = port_list
         config[0]['c'] = len(core_list) - 2
@@ -80,17 +77,16 @@ class trex_wrapper():
         config[0]['platform']['latency_thread_id'] = core_list[1]
         config[0]['platform']['dual_if'][0]['socket'] = int(socket)
         config[0]['platform']['dual_if'][0]['threads'] = core_list[2:]
-        
         with open(config_file, "w") as f:
-            yaml.safe_dump(config, f)        
-                
+            yaml.safe_dump(config, f)
+
     def _get_pci(self):
         pci_address = []
         networks = os.getenv("NETWORK_NAME_LIST") or os.getenv("network_name_list")
         for net in networks.split(','):
             resource = net.split('/')
             pci_device = os.getenv("PCIDEVICE_OPENSHIFT_IO_" + resource[1].upper(), "")
-            for pci in pci_device.split(','): 
+            for pci in pci_device.split(','):
                 pci_address.extend([pci.replace('0000:','')])
                 node_file = "/sys/bus/pci/devices/" + pci + "/numa_node"
                 with open(node_file) as f:
@@ -105,7 +101,7 @@ class trex_wrapper():
             mac = {}
             mac['src_mac'] = src.split(',')[count]
             mac['dest_mac'] = dest.split(',')[count]
-            port_list.append(mac)            
+            port_list.append(mac)
         return port_list
 
     def run(self):

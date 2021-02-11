@@ -82,8 +82,8 @@ class Trigger_uperf():
                 "nodes_in_iter":int(self.nodes_in_iter),
                 "step_size" : self.step_size,
                 "colocate" : self.colocate,
-                "density_range" : self.density_range,
-                "node_range" : self.node_range,
+                "density_range" : [int(x) for x in self.density_range.split('-')],
+                "node_range" : [int(x) for x in self.node_range.split('-')],
                 "pod_id" : int(self.pod_id)
 
             }

@@ -54,6 +54,18 @@ class uperf_wrapper():
         self.args.num_pairs = os.getenv("num_pairs", "")
         self.args.multus_client = os.getenv("multus_client", "")
         self.args.networkpolicy = os.getenv("networkpolicy", "")
+        self.args.nodes_in_iter = os.getenv("node_count", "")
+        self.args.pod_density = os.getenv("pod_count", "")
+        self.args.colocate = os.getenv("colocate","False")
+        self.args.step_size = os.getenv("stepsize","")
+        # density_range and node_range are defined and exported in the cr file
+        # it will appear in ES as startvalue-endvalue, for example
+        # 5-10, for a run that began with 5 nodes involved and ended with 10
+        self.args.density_range = os.getenv("density_range","")
+        self.args.node_range = os.getenv("node_range","")
+        # each node will run with density number of pods, this is the 0 based
+        # number of that pod, useful for displaying throughput of each density
+        self.args.pod_id = os.getenv("my_pod_idx","")
 
     def run(self):
         uperf_wrapper_obj = Trigger_uperf(self.args)

@@ -37,6 +37,13 @@ class Trigger_uperf():
         self.num_pairs = args.num_pairs
         self.multus_client = args.multus_client
         self.networkpolicy = args.networkpolicy
+        self.nodes_in_iter = args.nodes_in_iter
+        self.pod_density = args.pod_density
+        self.colocate = args.colocate
+        self.step_size = args.step_size
+        self.density_range = args.density_range
+        self.node_range = args.node_range
+        self.pod_id = args.pod_id
 
     def _json_payload(self, results, data, sample):
         processed = []
@@ -70,7 +77,15 @@ class Trigger_uperf():
                 "server_node": self.server_node,
                 "num_pairs": self.num_pairs,
                 "multus_client": self.multus_client,
-                "networkpolicy": self.networkpolicy
+                "networkpolicy": self.networkpolicy,
+                "density": int(self.pod_density),
+                "nodes_in_iter":int(self.nodes_in_iter),
+                "step_size" : self.step_size,
+                "colocate" : self.colocate,
+                "density_range" : [int(x) for x in self.density_range.split('-')],
+                "node_range" : [int(x) for x in self.node_range.split('-')],
+                "pod_id" : int(self.pod_id)
+
             }
             datapoint.update(data)
             processed.append(datapoint)
@@ -80,6 +95,8 @@ class Trigger_uperf():
         return processed
 
     def _run_uperf(self):
+        # short to long cli option for uperf:
+        # verbose, all stats, raw output in ms, throughput collection interval is 1 second
         cmd = "uperf -v -a -R -i 1 -m {}".format(self.workload)
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()

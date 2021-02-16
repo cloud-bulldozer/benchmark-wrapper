@@ -78,13 +78,13 @@ class Trigger_uperf():
                 "num_pairs": self.num_pairs,
                 "multus_client": self.multus_client,
                 "networkpolicy": self.networkpolicy,
-                "density": int(self.pod_density),
-                "nodes_in_iter":int(self.nodes_in_iter),
+                "density": int(self.pod_density or 0),
+                "nodes_in_iter":int(self.nodes_in_iter or 0),
                 "step_size" : self.step_size,
                 "colocate" : self.colocate,
-                "density_range" : [int(x) for x in self.density_range.split('-')],
-                "node_range" : [int(x) for x in self.node_range.split('-')],
-                "pod_id" : int(self.pod_id)
+                "density_range" : [int(x) for x in self.density_range.split('-')] if self.density_range else None,
+                "node_range" : [int(x) for x in self.node_range.split('-')] if self.density_range else None,
+                "pod_id" : int(self.pod_id or 0)
 
             }
             datapoint.update(data)

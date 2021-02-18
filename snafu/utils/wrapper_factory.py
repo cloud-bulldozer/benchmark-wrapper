@@ -1,5 +1,4 @@
 
-# from backpack_wrapper.backpack_wrapperimport backpack_wrapper
 from snafu.vegeta_wrapper.vegeta_wrapper import vegeta_wrapper
 from snafu.fio_wrapper.fio_wrapper import fio_wrapper
 from snafu.smallfile_wrapper.smallfile_wrapper import smallfile_wrapper
@@ -16,6 +15,7 @@ from snafu.cyclictest_wrapper.cyclictest_wrapper import cyclictest_wrapper
 from snafu.oslat_wrapper.oslat_wrapper import oslat_wrapper
 from snafu.trex_wrapper.trex_wrapper import trex_wrapper
 from snafu.flent_wrapper.flent_wrapper import flent_wrapper
+from snafu.log_generator_wrapper.log_generator_wrapper import log_generator_wrapper
 
 import logging
 logger = logging.getLogger("snafu")
@@ -36,12 +36,10 @@ wrapper_dict = {
     "cyclictest": cyclictest_wrapper,
     "oslat": oslat_wrapper,
     "trex": trex_wrapper,
-    "flent": flent_wrapper
+    "flent": flent_wrapper,
+    "log_generator": log_generator_wrapper
+
 }
-#    "backpack": pgbench_wrapper,
-#    "fio": fio_wrapper,
-#    "uperf": uperf_wrapper
-#    }
 
 def wrapper_factory(tool_name, parser):
     try:

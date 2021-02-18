@@ -34,6 +34,10 @@ class upgrade_openshift_wrapper():
             '--toimage',
             help='Provide the target image location')
         parser.add_argument(
+            '--latest',
+            default="false",
+            help='Upgrades to the latest version available in the path when set')
+        parser.add_argument(
             '--user',
             default="snafu",
             help='Enter the user')

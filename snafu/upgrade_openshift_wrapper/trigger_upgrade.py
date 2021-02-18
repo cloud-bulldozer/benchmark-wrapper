@@ -32,6 +32,7 @@ class Trigger_upgrade():
         self.timeout = args.timeout
         self.kubeconfig = args.kubeconfig
         self.toimage = args.toimage
+        self.latest = args.latest
         if self.incluster == "true":
             config.load_incluster_config()
             k8s_config = client.Configuration()
@@ -73,10 +74,19 @@ class Trigger_upgrade():
                 clusterversion.get().attributes.items[0].status.history[0].completionTime,time_format)
             return init_version, self.version, platform, the_time, the_time, (the_time - the_time)
 
+        # Fail if both toimage and to_latest parameters are set
+        if self.toimage and self.latest:
+            logging.error("Looks like both toimage and to_latest parameters are set, please set one of them")
+            exit(1)
+
         # If an image location was passed
         if self.toimage:
             cmd = (
                 "oc adm upgrade --to-image={0} --allow-explicit-upgrade=true --force").format(self.toimage)
+        # Upgrade to the latest build available in the channel if set
+        elif self.latest:
+            cmd = (
+                "oc adm upgrade --to-latest=true")
         else:
             cmd = (
                 "oc adm upgrade --to={0}").format(self.version)

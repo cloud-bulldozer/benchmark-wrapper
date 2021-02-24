@@ -65,18 +65,16 @@ class Trigger_upgrade():
         clusterversion = self.dyn_client.resources.get(kind='ClusterVersion')
         init_version = clusterversion.get().items[0].status.desired.version
         logger.info("Current cluster version is: %s" % init_version)
-        logger.info("Desired cluster version is: %s" % self.version)
 
-        # Exit if the current version is already at the desired version
-        if init_version == self.version:
-            logger.info("Cluster version is already at desired version")
-            the_time = datetime.datetime.strptime(
-                clusterversion.get().attributes.items[0].status.history[0].completionTime,time_format)
-            return init_version, self.version, platform, the_time, the_time, (the_time - the_time)
+        # Fail if the upgrade version parameters are not defined
+        if not self.toimage and not self.latest and not self.version:
+            logging.error("Looks like the version to upgrade to is not set, "
+                          "please set either toimage or latest or version")
+            exit(1)
 
-        # Fail if both toimage and to_latest parameters are set
+        # Fail if both toimage and latest parameters are set
         if self.toimage and self.latest:
-            logging.error("Looks like both toimage and to_latest parameters are set, please set one of them")
+            logging.error("Looks like both toimage and latest parameters are set, please set one of them")
             exit(1)
 
         # If an image location was passed
@@ -87,7 +85,7 @@ class Trigger_upgrade():
         elif self.latest:
             cmd = (
                 "oc adm upgrade --to-latest=true")
-        else:
+        elif self.version:
             cmd = (
                 "oc adm upgrade --to={0}").format(self.version)
         logger.info(cmd)
@@ -100,11 +98,22 @@ class Trigger_upgrade():
 
         logger.info(p)
 
+        # Get the desired version after the upgrade has been triggered
+        desired_version = clusterversion.get().items[0].status.desired.version
+        logger.info("Desired cluster version is: %s" % desired_version)
+
+        # Exit if the current version is already at the desired version
+        if init_version == desired_version:
+            logger.info("Cluster version is already at desired version")
+            the_time = datetime.datetime.strptime(
+                clusterversion.get().attributes.items[0].status.history[0].completionTime,time_format)
+            return init_version, desired_version, platform, the_time, the_time, (the_time - the_time)
+
         c_state = "incomplete"
         c_version = "0.0.0"
         before = int(time.time())
         while self.timeout*60 >= int(time.time()) - before and \
-            (c_state != "Completed" or c_version != self.version):
+            (c_state != "Completed" or c_version != desired_version):
             for i in range(10):
                 try:
                     cluster_state = clusterversion.get().attributes.items[0].status.history[0]
@@ -121,7 +130,7 @@ class Trigger_upgrade():
                     break
 
             if c_state == "Completed" \
-                and c_version == self.version:
+                and c_version == desired_version:
 
                 logger.info("Cluster upgrade complete")
                 logger.info(clusterversion.get().attributes.items[0].status.history[0])
@@ -165,8 +174,11 @@ class Trigger_upgrade():
         return new_docs
 
     def emit_actions(self):
+        # Get the desired upgrade version
+        clusterversion = self.dyn_client.resources.get(kind='ClusterVersion')
+        desired_version = clusterversion.get().items[0].status.desired.version
         logger.info("Upgrading cluster %s to version %s with uuid %s" %
-                    (self.cluster_name, self.version, self.uuid))
+                    (self.cluster_name, desired_version, self.uuid))
         self.timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
         self.init_version, self.end_version, self.platform, self.start_time, end_time, total_time = \
             self._run_upgrade()
@@ -181,10 +193,10 @@ class Trigger_upgrade():
         docs.append(self._json_payload(data))
         for item in docs:
             yield item, ''
-        if self.end_version != self.version:
+        if self.end_version != desired_version:
             logger.error("Cluster did not upgrade to desired version")
             logger.error("Cluster version is %s and desired version is %s" %
-                         (self.end_version,self.version))
+                         (self.end_version,desired_version))
             exit(1)
         logger.info("Finished upgrading the cluster to version %s" %
-                    (self.version))
+                    (desired_version))

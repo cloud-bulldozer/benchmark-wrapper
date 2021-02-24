@@ -28,15 +28,13 @@ class upgrade_openshift_wrapper():
             help='Provide the uuid')
         parser.add_argument(
             '--version',
-            required=True,
             help='Provide the target version')
         parser.add_argument(
             '--toimage',
             help='Provide the target image location')
         parser.add_argument(
             '--latest',
-            default="false",
-            help='Upgrades to the latest version available in the path when set')
+            help='Upgrades to the latest version available in the path when set to true')
         parser.add_argument(
             '--user',
             default="snafu",

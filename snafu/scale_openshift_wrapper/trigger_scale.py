@@ -46,7 +46,7 @@ class Trigger_scale():
 
         if self.incluster == "true":
             config.load_incluster_config()
-            k8s_config = client.Configuration()
+            k8s_config = client.Configuration().get_default_copy()
             k8s_client = client.api_client.ApiClient(configuration=k8s_config)
         elif self.kubeconfig:
             k8s_client = config.new_client_from_config(self.kubeconfig)

@@ -53,10 +53,20 @@ class Trigger_scale():
         else:
             k8s_client = config.new_client_from_config()
 
-        dyn_client = DynamicClient(k8s_client)
+        try:
+            dyn_client = DynamicClient(k8s_client)
+        except Exception as err:
+            logger.info("ERROR: Could not configure client, failing the run")
+            logger.info(err)
+            exit(1)
 
-        nodes = dyn_client.resources.get(api_version='v1', kind='Node')
-        machinesets = dyn_client.resources.get(kind='MachineSet')
+        try:
+            nodes = dyn_client.resources.get(api_version='v1', kind='Node')
+            machinesets = dyn_client.resources.get(kind='MachineSet')
+        except Exception as err:
+            logger.info("ERROR: Could not get information on nodes/machinesets, failing the run")
+            logger.info(err)
+            exit(1)
 
         worker_count = \
             len(nodes.get(

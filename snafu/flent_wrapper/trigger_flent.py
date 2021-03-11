@@ -31,6 +31,7 @@ class Trigger_flent():
         self.server_node = args.server_node
         self.client_node = args.client_node
         self.cluster_name = args.cluster_name
+        self.uuid = args.uuid
 
     def _json_payload(self, raw):
         processed = []
@@ -67,6 +68,7 @@ class Trigger_flent():
             "client_node": self.client_node,
             "server_node": self.server_node,
             "timestamp": time,
+            "uuid": self.uuid,
             name: value
         }
         return new_item

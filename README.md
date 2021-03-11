@@ -13,6 +13,7 @@ environments, develop in SNAFU and then write benchmark-operator benchmark to in
 | Workload                       | Use                    | Status             |
 | ------------------------------ | ---------------------- | ------------------ |
 | UPerf                          | Network Performance    | Working            |
+| flent                          | Network Performance    | Working            |
 | fio                            | Storage IO             | Working            |
 | YCSB                           | Database Performance   | Working            |
 | Pgbench                        | Postgres Performance   | Working            |
@@ -249,3 +250,4 @@ Run ``` flake8 ``` command.
 This will show the code quality errors. Fix them before making a PR.
 
 To ignore an error, use  ``` # noqa ```  at the end of that code line.
+

@@ -84,7 +84,7 @@ class Trigger_upgrade():
         # Upgrade to the latest build available in the channel if set
         elif self.latest:
             cmd = (
-                "oc adm upgrade --to-latest=true")
+                "oc adm upgrade --to-latest=true --allow-upgrade-with-warnings=true --force=true")
         elif self.version:
             cmd = (
                 "oc adm upgrade --to={0}").format(self.version)
@@ -99,7 +99,14 @@ class Trigger_upgrade():
         logger.info(p)
 
         # Get the desired version after the upgrade has been triggered
+        # Desired version field might take few seconds to get updated, wait for it before running the checks
+        retries = 0
         desired_version = clusterversion.get().items[0].status.desired.version
+        while init_version == desired_version and int(retries) < 10:
+            logger.info("Waiting for the configuration to get updated with the desired version")
+            time.sleep(3)
+            desired_version = clusterversion.get().items[0].status.desired.version
+            retries += 1
         logger.info("Desired cluster version is: %s" % desired_version)
 
         # Exit if the current version is already at the desired version

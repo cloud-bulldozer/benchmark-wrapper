@@ -67,7 +67,7 @@ def main():
     # instantiate elasticsearch instance and check connection
     es_settings = {}
     es_settings["server"] = os.getenv("es")
-    es_settings["verify_cert"] = os.getenv("es_verify_cert", "true")
+    es_settings["verify_cert"] = os.getenv("es_verify_cert", "true").lower()
     if es_settings["server"] and ":443" in es_settings["server"]:
         es_settings["verify_cert"] = "false"
     if es_settings["server"]:

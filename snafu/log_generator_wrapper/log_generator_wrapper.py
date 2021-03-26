@@ -55,14 +55,6 @@ class log_generator_wrapper():
             default=1,
             help='Total number of log generator pods to run')
         parser.add_argument(
-            '--redisip',
-            help='IP address for redis server')
-        parser.add_argument(
-            '--redisport',
-            type=int,
-            default=6379,
-            help='Port for the redis server')
-        parser.add_argument(
             '--pod-name',
             default=None,
             help='Pod Name of log generator')
@@ -102,13 +94,6 @@ class log_generator_wrapper():
             type=str,
             default="app*",
             help='The ES index to search for the messages')
-        parser.add_argument(
-            '--incluster',
-            default="false",
-            help='Is this running from a pod within the cluster [true|false]')
-        parser.add_argument(
-            '--kubeconfig',
-            help='Optional kubeconfig location. Incluster cannot be true')
 
         self.args = parser_object.parse_args()
 

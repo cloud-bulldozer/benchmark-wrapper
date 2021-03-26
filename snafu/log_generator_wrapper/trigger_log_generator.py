@@ -18,7 +18,6 @@ from time import sleep
 import random
 import string
 import logging
-import redis
 import boto3
 import json
 import subprocess
@@ -36,10 +35,7 @@ class Trigger_log_generator():
         self.messages_per_second = args.messages_per_second
         self.duration = args.duration
         self.pod_count = args.pod_count
-        self.redisip = args.redisip
-        self.redisport = args.redisport
         self.pod_name = args.pod_name
-        self.namespace = args.namespace
         self.timeout = args.timeout
         self.cloudwatch_log_group = args.cloudwatch_log_group
         self.aws_access_key = args.aws_access_key
@@ -118,17 +114,6 @@ class Trigger_log_generator():
                 count += self.messages_per_second
         return count
 
-    def _wait_for_pods(self,my_redis,channel):
-        subchannel = my_redis.pubsub()
-        subchannel.subscribe(channel)
-        subscribers = dict(my_redis.pubsub_numsub(channel))[channel]
-        while subscribers < self.pod_count:
-            sleep(1)
-            subscribers = dict(my_redis.pubsub_numsub(channel))[channel]
-        # Sleep 10 to ensure all pods are ready and allow any lingering messages to clear
-        sleep(10)
-        subchannel.unsubscribe(channel)
-
     def _check_cloudwatch(self,start_time,end_time):
         logger.info("Checking CloudWatch for expected messages")
         if self.aws_access_key is not None and self.aws_secret_key is not None:
@@ -166,7 +151,8 @@ class Trigger_log_generator():
     def _check_es(self,start_time,end_time):
         logger.info("Checking ElasticSearch for expected messages")
         header_json = 'Content-Type: application/json'
-        header_auth = "Authorization: Bearer " + self.es_token
+        if self.es_token:
+            header_auth = "Authorization: Bearer " + self.es_token
         s_time = datetime.datetime.fromtimestamp(start_time - 60).strftime("%Y-%m-%dT%H:%M:%S")
         e_time = datetime.datetime.fromtimestamp(end_time + 60).strftime("%Y-%m-%dT%H:%M:%S")
         data = {
@@ -196,9 +182,14 @@ class Trigger_log_generator():
         es_url = self.es_url + "/" + self.es_index + "/_count"
 
         try:
-            response = subprocess.check_output(['curl','--insecure','--header',header_auth,
-                                                '--header',header_json,es_url,'-d',json.dumps(data),
-                                                '-s']).decode("utf-8")
+            if self.es_token:
+                response = subprocess.check_output(['curl','--insecure','--header',header_auth,
+                                                    '--header',header_json,es_url,'-d',json.dumps(data),
+                                                    '-s']).decode("utf-8")
+            else:
+                response = subprocess.check_output(['curl','--insecure','--header',
+                                                    header_json,es_url,'-d',json.dumps(data),
+                                                    '-s']).decode("utf-8")
         except Exception as err:
             logging.info("ElasticSearch query failed")
             logging.info(err)
@@ -214,21 +205,6 @@ class Trigger_log_generator():
         logger.info("Running log test with %d byte size for %d minutes at a rate of %d messages per second" %
                     (self.size, self.duration, self.messages_per_second))
         logger.info("Test UUID is %s on cluster %s" % (self.uuid, self.cluster_name))
-
-        logger.info("Waiting for all pods to be ready")
-        # Check redis for all running pods
-        if self.redisip is not None\
-            and self.redisport is not None\
-            and self.pod_name is not None\
-            and self.uuid is not None\
-            and self.pod_count != 1:
-            my_redis = redis.StrictRedis(
-                host=self.redisip,
-                port=self.redisport,
-                charset="utf-8",
-                decode_responses=True)
-            channel = "log-generator-" + self.uuid
-            self._wait_for_pods(my_redis,channel)
 
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
         start_time = time.time()

@@ -51,10 +51,10 @@ class Trigger_trex():
         # command to run burst script with a 10 sec buffer to trex service
         burst_cmd = "sleep 10 && run_simple_burst"
         # TRex server process
-        subprocess.Popen(trex_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+        subprocess.Popen(trex_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          close_fds=True)
         # Burst script execution process
-        burst_process = subprocess.Popen(burst_cmd, shell=True, stdout=subprocess.PIPE, 
+        burst_process = subprocess.Popen(burst_cmd, shell=True, stdout=subprocess.PIPE,
                                          stderr=subprocess.PIPE)
         stdout, stderr = burst_process.communicate()
         return stdout.strip().decode("utf-8"), stderr.strip().decode("utf-8"), burst_process.returncode

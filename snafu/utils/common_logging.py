@@ -20,11 +20,11 @@ class ColoredFormatter(logging.Formatter):
     BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
     colors = {
-        'WARNING': color_me(YELLOW),
-        'DEBUG': color_me(BLUE),
-        'CRITICAL': color_me(RED),
-        'ERROR': color_me(RED),
-        'INFO': color_me(GREEN)
+        "WARNING": color_me(YELLOW),
+        "DEBUG": color_me(BLUE),
+        "CRITICAL": color_me(RED),
+        "ERROR": color_me(RED),
+        "INFO": color_me(GREEN),
     }
 
     def __init__(self, msg, use_color=True, datefmt=None):
@@ -36,7 +36,7 @@ class ColoredFormatter(logging.Formatter):
         record.__dict__ = record.__dict__.copy()
         levelname = record.levelname
 
-        prn_name = levelname + ' ' * (8 - len(levelname))
+        prn_name = levelname + " " * (8 - len(levelname))
         if (levelname in self.colors) and has_a_tty:
             record.levelname = self.colors[levelname](prn_name)
         else:
@@ -59,7 +59,7 @@ def setup_loggers(logger_name, def_level=logging.DEBUG, log_fname=None):
 
     FMT = "%Y-%m-%dT%H:%M:%SZ"
 
-    log_format = '%(asctime)s - %(levelname)s - %(processName)s - %(module)s: %(message)s'
+    log_format = "%(asctime)s - %(levelname)s - %(processName)s - %(module)s: %(message)s"
     colored_formatter = ColoredFormatter(log_format, datefmt=FMT)
 
     sh.setFormatter(colored_formatter)

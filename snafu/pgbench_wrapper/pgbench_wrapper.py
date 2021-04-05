@@ -18,11 +18,9 @@ from datetime import datetime
 from .trigger_pgbench import Trigger_pgbench
 
 
-class pgbench_wrapper():
+class pgbench_wrapper:
     def __init__(self, parser):
-        parser.add_argument(
-            '-r', '--run', nargs=1,
-            help='Provide the iteration for the run')
+        parser.add_argument("-r", "--run", nargs=1, help="Provide the iteration for the run")
         self.args = parser.parse_args()
 
         self.args.port = ""
@@ -33,8 +31,7 @@ class pgbench_wrapper():
         self.args.cluster_name = "mycluster"
         if "clustername" in os.environ:
             self.args.cluster_name = os.environ["clustername"]
-        self.args.pgb_vers = subprocess.check_output("pgbench --version",
-                                                     shell=True).strip().decode("utf-8")
+        self.args.pgb_vers = subprocess.check_output("pgbench --version", shell=True).strip().decode("utf-8")
         self.args.run_start_timestamp = datetime.now()
         self.args.sample_start_timestamp = datetime.now()
         self.args.index = "ripsaw-pgbench"
@@ -48,11 +45,11 @@ class pgbench_wrapper():
         if "description" in os.environ:
             self.args.description = os.environ["description"]
         if "run_start_timestamp" in os.environ:
-            self.args.run_start_timestamp = datetime.fromtimestamp(
-                float(os.environ["run_start_timestamp"]))
+            self.args.run_start_timestamp = datetime.fromtimestamp(float(os.environ["run_start_timestamp"]))
         if "sample_start_timestamp" in os.environ:
             self.args.sample_start_timestamp = datetime.fromtimestamp(
-                float(os.environ["sample_start_timestamp"]))
+                float(os.environ["sample_start_timestamp"])
+            )
 
     def run(self):
         pgbench_wrapper_obj = Trigger_pgbench(self.args)

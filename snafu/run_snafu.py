@@ -45,24 +45,26 @@ def main():
     # collect arguments
     parser = argparse.ArgumentParser(description="run script", add_help=False)
     parser.add_argument(
-        '-v', '--verbose', action='store_const', dest='loglevel', const=logging.DEBUG,
-        default=logging.INFO, help='enables verbose wrapper debugging info')
-    parser.add_argument(
-        '-t', '--tool', help='Provide tool name', required=True)
-    parser.add_argument(
-        '--run-id', help='Run ID to unify benchmark results in ES',
-        nargs='?', default="NA"
+        "-v",
+        "--verbose",
+        action="store_const",
+        dest="loglevel",
+        const=logging.DEBUG,
+        default=logging.INFO,
+        help="enables verbose wrapper debugging info",
     )
+    parser.add_argument("-t", "--tool", help="Provide tool name", required=True)
+    parser.add_argument("--run-id", help="Run ID to unify benchmark results in ES", nargs="?", default="NA")
     index_args, unknown = parser.parse_known_args()
     index_args.index_results = False
     index_args.prefix = "snafu-%s" % index_args.tool
 
     setup_loggers("snafu", index_args.loglevel)
-    log_level_str = 'DEBUG' if index_args.loglevel == logging.DEBUG else 'INFO'
+    log_level_str = "DEBUG" if index_args.loglevel == logging.DEBUG else "INFO"
     logger.info("logging level is %s" % log_level_str)
 
     # set up a standard format for time
-    FMT = '%Y-%m-%dT%H:%M:%SGMT'
+    FMT = "%Y-%m-%dT%H:%M:%SGMT"
 
     # instantiate elasticsearch instance and check connection
     es_settings = {}
@@ -72,7 +74,7 @@ def main():
         es_settings["verify_cert"] = "false"
     if es_settings["server"]:
         index_args.prefix = os.getenv("es_index", "")
-        logger.info("Using elasticsearch server with host: %s" % es_settings['server'])
+        logger.info("Using elasticsearch server with host: %s" % es_settings["server"])
         logger.info("Using index prefix for ES: %s" % index_args.prefix)
         index_args.index_results = True
         try:
@@ -82,10 +84,11 @@ def main():
                 ssl_ctx = ssl.create_default_context()
                 ssl_ctx.check_hostname = False
                 ssl_ctx.verify_mode = ssl.CERT_NONE
-                es = elasticsearch.Elasticsearch([es_settings["server"]], send_get_body_as='POST',
-                                                 ssl_context=ssl_ctx, use_ssl=True)
+                es = elasticsearch.Elasticsearch(
+                    [es_settings["server"]], send_get_body_as="POST", ssl_context=ssl_ctx, use_ssl=True
+                )
             else:
-                es = elasticsearch.Elasticsearch([es_settings["server"]], send_get_body_as='POST')
+                es = elasticsearch.Elasticsearch([es_settings["server"]], send_get_body_as="POST")
             logger.info("Connected to the elasticsearch cluster with info as follows:")
             logger.info(json.dumps(es.info(), indent=4))
         except Exception as e:
@@ -95,30 +98,26 @@ def main():
     index_args.document_size_capacity_bytes = 0
     # call py es bulk using a process generator to feed it ES documents
     if index_args.index_results:
-        parallel_setting = strtobool(os.environ.get('parallel', "false"))
-        res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(es,
-                                                                                 process_generator(
-                                                                                     index_args,
-                                                                                     parser),
-                                                                                 parallel_setting)
+        parallel_setting = strtobool(os.environ.get("parallel", "false"))
+        res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(
+            es, process_generator(index_args, parser), parallel_setting
+        )
 
         logger.info(
-            "Indexed results - %s success, %s duplicates, %s failures, with %s retries." % (
-                res_suc,
-                res_dup,
-                res_fail,
-                res_retry))
+            "Indexed results - %s success, %s duplicates, %s failures, with %s retries."
+            % (res_suc, res_dup, res_fail, res_retry)
+        )
 
-        start_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_beg))
-        end_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_end))
+        start_t = time.strftime("%Y-%m-%dT%H:%M:%SGMT", time.gmtime(res_beg))
+        end_t = time.strftime("%Y-%m-%dT%H:%M:%SGMT", time.gmtime(res_end))
 
     else:
-        start_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime())
+        start_t = time.strftime("%Y-%m-%dT%H:%M:%SGMT", time.gmtime())
         # need to loop through generator and pass on all yields
         # this will execute all jobs without elasticsearch
         for i in process_generator(index_args, parser):
             pass
-        end_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime())
+        end_t = time.strftime("%Y-%m-%dT%H:%M:%SGMT", time.gmtime())
 
     start_t = datetime.datetime.strptime(start_t, FMT)
     end_t = datetime.datetime.strptime(end_t, FMT)
@@ -127,6 +126,7 @@ def main():
     tdelta = end_t - start_t
     total_capacity_bytes = index_args.document_size_capacity_bytes
     logger.info("Duration of execution - %s, with total size of %s bytes" % (tdelta, total_capacity_bytes))
+
 
 def process_generator(index_args, parser):
     benchmark_wrapper_object_generator = generate_wrapper_object(index_args, parser)
@@ -152,27 +152,24 @@ def process_generator(index_args, parser):
 
                     index_prom_data(index_args, action)
                 else:
-                    es_valid_document = get_valid_es_document(action,
-                                                              index,
-                                                              index_args)
+                    es_valid_document = get_valid_es_document(action, index, index_args)
                     yield es_valid_document
+
 
 def generate_wrapper_object(index_args, parser):
     benchmark_wrapper_object = wrapper_factory(index_args.tool, parser)
 
     yield benchmark_wrapper_object
 
+
 def get_valid_es_document(action, index, index_args):
-    if index != '':
-        es_index = index_args.prefix + '-' + index
+    if index != "":
+        es_index = index_args.prefix + "-" + index
     else:
         es_index = index_args.prefix
-    es_valid_document = {"_index": es_index,
-                         "_op_type": "create",
-                         "_source": action,
-                         "_id": ""}
+    es_valid_document = {"_index": es_index, "_op_type": "create", "_source": action, "_id": ""}
     logger.debug("Run ID is {index_args.run_id}")
-    es_valid_document['run_id'] = action['run_id'] = index_args.run_id
+    es_valid_document["run_id"] = action["run_id"] = index_args.run_id
     es_valid_document["_id"] = hashlib.sha256(str(action).encode()).hexdigest()
     document_size_bytes = sys.getsizeof(es_valid_document)
     index_args.document_size_capacity_bytes += document_size_bytes
@@ -180,6 +177,7 @@ def get_valid_es_document(action, index, index_args):
     logger.debug(json.dumps(es_valid_document, indent=4, default=str))
 
     return es_valid_document
+
 
 def index_prom_data(index_args, action):
     es_settings = {}
@@ -193,7 +191,7 @@ def index_prom_data(index_args, action):
 
     es_settings["server"] = os.getenv("prom_es")
     es_settings["verify_cert"] = os.getenv("es_verify_cert", "true")
-    if ":443" in es_settings["server"] :
+    if ":443" in es_settings["server"]:
         es_settings["verify_cert"] = "false"
     if es_settings["server"]:
         index_args.prefix = os.getenv("es_index", "")
@@ -207,10 +205,11 @@ def index_prom_data(index_args, action):
                 ssl_ctx = ssl.create_default_context()
                 ssl_ctx.check_hostname = False
                 ssl_ctx.verify_mode = ssl.CERT_NONE
-                es = elasticsearch.Elasticsearch([es_settings["server"]], send_get_body_as='POST',
-                                                 ssl_context=ssl_ctx, use_ssl=True)
+                es = elasticsearch.Elasticsearch(
+                    [es_settings["server"]], send_get_body_as="POST", ssl_context=ssl_ctx, use_ssl=True
+                )
             else:
-                es = elasticsearch.Elasticsearch([es_settings["server"]], send_get_body_as='POST')
+                es = elasticsearch.Elasticsearch([es_settings["server"]], send_get_body_as="POST")
             logger.info("Connected to the elasticsearch cluster with info as follows:")
             logger.info(json.dumps(es.info(), indent=4))
         except Exception as e:
@@ -220,23 +219,19 @@ def index_prom_data(index_args, action):
     # check that we want to index and that the prom_es exist.
     if index_args.index_results:
         logger.info("initializing prometheus indexing")
-        parallel_setting = strtobool(os.environ.get('parallel', "false"))
-        res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(es,
-                                                                                 get_prometheus_generator(
-                                                                                     index_args,
-                                                                                     action),
-                                                                                 parallel_setting)
+        parallel_setting = strtobool(os.environ.get("parallel", "false"))
+        res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(
+            es, get_prometheus_generator(index_args, action), parallel_setting
+        )
 
         logger.info(
-            "Prometheus indexed results - %s success, %s duplicates, %s failures, with %s retries." % (
-                res_suc,
-                res_dup,
-                res_fail,
-                res_retry))
-        start_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_beg))
-        end_t = time.strftime('%Y-%m-%dT%H:%M:%SGMT', time.gmtime(res_end))
+            "Prometheus indexed results - %s success, %s duplicates, %s failures, with %s retries."
+            % (res_suc, res_dup, res_fail, res_retry)
+        )
+        start_t = time.strftime("%Y-%m-%dT%H:%M:%SGMT", time.gmtime(res_beg))
+        end_t = time.strftime("%Y-%m-%dT%H:%M:%SGMT", time.gmtime(res_end))
         # set up a standard format for time
-        FMT = '%Y-%m-%dT%H:%M:%SGMT'
+        FMT = "%Y-%m-%dT%H:%M:%SGMT"
         start_t = datetime.datetime.strptime(start_t, FMT)
         end_t = datetime.datetime.strptime(end_t, FMT)
 

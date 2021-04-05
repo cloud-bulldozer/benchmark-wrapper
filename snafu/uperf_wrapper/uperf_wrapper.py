@@ -17,31 +17,25 @@ import argparse
 from .trigger_uperf import Trigger_uperf
 
 
-class uperf_wrapper():
-
+class uperf_wrapper:
     def __init__(self, parent_parser):
-        parser_object = argparse.ArgumentParser(description="Uperf Wrapper script", parents=[parent_parser],
-                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser_object = argparse.ArgumentParser(
+            description="Uperf Wrapper script",
+            parents=[parent_parser],
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        )
         parser = parser_object.add_argument_group("Uperf benchmark")
+        parser.add_argument("-w", "--workload", help="Provide XML workload location", required=True)
         parser.add_argument(
-            '-w', '--workload',
-            help='Provide XML workload location', required=True)
+            "-s", "--sample", type=int, required=True, default=1, help="Number of times to run the benchmark"
+        )
         parser.add_argument(
-            '-s', '--sample', type=int, required=True, default=1,
-            help='Number of times to run the benchmark')
-        parser.add_argument(
-            '--resourcetype',
+            "--resourcetype",
             required=True,
-            help='Provide the resource type for this uperf run - pod/vm/baremetal')
-        parser.add_argument(
-            '-u', '--uuid',
-            required=True,
-            help='Provide the uuid')
-        parser.add_argument(
-            '--user',
-            required=True,
-            default="snafu",
-            help='Enter the user')
+            help="Provide the resource type for this uperf run - pod/vm/baremetal",
+        )
+        parser.add_argument("-u", "--uuid", required=True, help="Provide the uuid")
+        parser.add_argument("--user", required=True, default="snafu", help="Enter the user")
         self.args = parser_object.parse_args()
 
         self.args.clientips = os.getenv("ips", "")
@@ -56,16 +50,16 @@ class uperf_wrapper():
         self.args.networkpolicy = os.getenv("networkpolicy", "")
         self.args.nodes_in_iter = os.getenv("node_count", "")
         self.args.pod_density = os.getenv("pod_count", "")
-        self.args.colocate = os.getenv("colocate","False")
-        self.args.step_size = os.getenv("stepsize","")
+        self.args.colocate = os.getenv("colocate", "False")
+        self.args.step_size = os.getenv("stepsize", "")
         # density_range and node_range are defined and exported in the cr file
         # it will appear in ES as startvalue-endvalue, for example
         # 5-10, for a run that began with 5 nodes involved and ended with 10
-        self.args.density_range = os.getenv("density_range","")
-        self.args.node_range = os.getenv("node_range","")
+        self.args.density_range = os.getenv("density_range", "")
+        self.args.node_range = os.getenv("node_range", "")
         # each node will run with density number of pods, this is the 0 based
         # number of that pod, useful for displaying throughput of each density
-        self.args.pod_id = os.getenv("my_pod_idx","")
+        self.args.pod_id = os.getenv("my_pod_idx", "")
 
     def run(self):
         uperf_wrapper_obj = Trigger_uperf(self.args)

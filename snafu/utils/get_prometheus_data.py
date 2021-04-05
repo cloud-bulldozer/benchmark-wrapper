@@ -5,11 +5,13 @@ import urllib3
 from datetime import datetime
 import time
 from prometheus_api_client import PrometheusConnect
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = logging.getLogger("snafu")
 
-class get_prometheus_data():
+
+class get_prometheus_data:
     def __init__(self, action):
 
         self.sample_info_dict = action
@@ -40,11 +42,13 @@ class get_prometheus_data():
             token = os.environ["prom_token"]
             self.url = os.environ["prom_url"]
             bearer = "Bearer " + token
-            self.headers = {'Authorization': bearer}
+            self.headers = {"Authorization": bearer}
             self.pc = PrometheusConnect(url=self.url, headers=self.headers, disable_ssl=True)
         else:
-            logger.warn("""snafu service account token and prometheus url not set \n
-                        No Prometheus data will be indexed""")
+            logger.warn(
+                """snafu service account token and prometheus url not set \n
+                        No Prometheus data will be indexed"""
+            )
 
     def get_all_metrics(self):
 
@@ -54,7 +58,7 @@ class get_prometheus_data():
 
             # resolve directory  the tool include file
             dirname = os.path.dirname(os.path.realpath(__file__))
-            include_file_dir = os.path.join(dirname, 'prometheus_labels/')
+            include_file_dir = os.path.join(dirname, "prometheus_labels/")
             tool_include_file = include_file_dir + self.sample_info_dict["tool"] + "_included_labels.json"
 
             # check if tools include file is there
@@ -62,10 +66,10 @@ class get_prometheus_data():
             if os.path.isfile(tool_include_file):
                 filename = tool_include_file
             else:
-                filename = os.path.join(include_file_dir, 'included_labels.json')
+                filename = os.path.join(include_file_dir, "included_labels.json")
 
             # open tools include file and loop through all
-            with open(filename, 'r') as f:
+            with open(filename, "r") as f:
                 datastore = json.load(f)
 
             for metric_name in datastore["data"]:
@@ -77,11 +81,7 @@ class get_prometheus_data():
                 step = str(self.T_Delta) + "s"
                 try:
                     # Execute custom query to pull the desired labels between X and Y time.
-                    response = self.pc.custom_query_range(query,
-                                                          self.start,
-                                                          self.end,
-                                                          step,
-                                                          None)
+                    response = self.pc.custom_query_range(query, self.start, self.end, step, None)
 
                 except Exception as e:
                     logger.info(query)
@@ -98,7 +98,7 @@ class get_prometheus_data():
                     # each result has a list, we must flatten it out in order to send to ES
                     for value in result["values"]:
                         # fist index is time stamp
-                        timestamp = datetime.utcfromtimestamp(value[0]).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                        timestamp = datetime.utcfromtimestamp(value[0]).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                         # second index is value of metric
                         if "NaN" in value[1]:  # need to handle values that are NaN, Inf, or -Inf
                             metric_value = 0
@@ -109,8 +109,8 @@ class get_prometheus_data():
                             "metric": result["metric"],
                             "Date": timestamp,
                             "value": metric_value,
-                            "metric_name": metric_name
-                            }
+                            "metric_name": metric_name,
+                        }
 
                         flat_doc.update(self.sample_info_dict)
                         yield flat_doc

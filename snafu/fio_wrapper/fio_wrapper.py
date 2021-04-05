@@ -24,26 +24,27 @@ from .fio_analyzer import Fio_Analyzer
 logger = logging.getLogger("snafu")
 
 
-class fio_wrapper():
-
+class fio_wrapper:
     def __init__(self, parent_parser):
         # collect arguments
 
-        parser_object = argparse.ArgumentParser(description="fio-d Wrapper script", parents=[parent_parser],
-                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser_object = argparse.ArgumentParser(
+            description="fio-d Wrapper script",
+            parents=[parent_parser],
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        )
         parser = parser_object.add_argument_group("Fio benchmark")
+        parser.add_argument("-H", "--hosts", help="Provide host file location", required=True)
+        parser.add_argument("-j", "--job", help="path to job file", required=True)
         parser.add_argument(
-            '-H', '--hosts', help='Provide host file location', required=True)
+            "-s", "--sample", type=int, default=1, help="number of times to run benchmark, defaults to 1"
+        )
         parser.add_argument(
-            '-j', '--job', help='path to job file', required=True)
+            "-d", "--dir", help="output parent directory", default=os.path.dirname(os.getcwd())
+        )
         parser.add_argument(
-            '-s', '--sample', type=int, default=1,
-            help='number of times to run benchmark, defaults to 1')
-        parser.add_argument(
-            '-d', '--dir', help='output parent directory', default=os.path.dirname(os.getcwd()))
-        parser.add_argument(
-            '-hp', '--histogramprocess', help='Process and index histogram results',
-            default=False)
+            "-hp", "--histogramprocess", help="Process and index histogram results", default=False
+        )
         self.args = parser_object.parse_args()
 
         self.args.cluster_name = "mycluster"
@@ -58,8 +59,8 @@ class fio_wrapper():
         self.host_file_path = self.args.hosts
         self._fio_job_dict = self._parse_jobfile(self.args.job)
         self.fio_job_names = self._fio_job_dict.sections()
-        if 'global' in self.fio_job_names:
-            self.fio_job_names.remove('global')
+        if "global" in self.fio_job_names:
+            self.fio_job_names.remove("global")
         self.fio_jobs_dict = self._parse_jobs()
 
     def run(self):
@@ -70,33 +71,35 @@ class fio_wrapper():
             os.makedirs(sample_dir, exist_ok=True)
             if self.cache_drop_ip:
                 try:
-                    drop = requests.get(
-                        "http://{}:9432/drop_osd_caches".format(self.cache_drop_ip)).text
+                    drop = requests.get("http://{}:9432/drop_osd_caches".format(self.cache_drop_ip)).text
                 except:  # noqa
-                    logger.error("Failed HTTP request to Ceph OSD cache drop pod {}".format(
-                        self.cache_drop_ip))
+                    logger.error(
+                        "Failed HTTP request to Ceph OSD cache drop pod {}".format(self.cache_drop_ip)
+                    )
                 if "SUCCESS" in drop:
                     logger.info("Ceph OSD cache successfully dropped")
                 else:
                     logger.error("Request to drop Ceph OSD cache failed")
-            trigger_fio_generator = trigger_fio._trigger_fio(self.fio_job_names,
-                                                             self.args.cluster_name,
-                                                             sample_dir,
-                                                             self.fio_jobs_dict,
-                                                             self.host_file_path,
-                                                             self.user,
-                                                             self.uuid,
-                                                             i,
-                                                             fio_analyzer_obj,
-                                                             self.args.histogramprocess)
+            trigger_fio_generator = trigger_fio._trigger_fio(
+                self.fio_job_names,
+                self.args.cluster_name,
+                sample_dir,
+                self.fio_jobs_dict,
+                self.host_file_path,
+                self.user,
+                self.uuid,
+                i,
+                fio_analyzer_obj,
+                self.args.histogramprocess,
+            )
             yield trigger_fio_generator
 
         yield fio_analyzer_obj
 
     def _parse_jobs(self):
         job_dicts = {}
-        if 'global' in self._fio_job_dict.keys():
-            job_dicts['global'] = dict(self._fio_job_dict['global'])
+        if "global" in self._fio_job_dict.keys():
+            job_dicts["global"] = dict(self._fio_job_dict["global"])
         for job in self.fio_job_names:
             job_dicts[job] = dict(self._fio_job_dict[job])
         return job_dicts

@@ -16,30 +16,15 @@ import os
 from .trigger_ycsb import Trigger_ycsb
 
 
-class ycsb_wrapper():
-
+class ycsb_wrapper:
     def __init__(self, parser):
-        parser.add_argument(
-            '-r', '--run', nargs=1,
-            help='Provide the iteration for the run')
-        parser.add_argument(
-            '-l', '--load', action='store_true', default=False,
-            help='Run the load phase?')
-        parser.add_argument(
-            '-d', '--driver', nargs=1,
-            help='Which YCSB Driver, eg mongodb')
-        parser.add_argument(
-            '-w', '--workload', nargs=1,
-            help='Which YCSB workload, eg workloada')
-        parser.add_argument(
-            '-x', '--extra', nargs=1,
-            help='Extra params to pass')
-        parser.add_argument(
-            '-u', '--uuid', nargs=1,
-            help='Enter the uuid')
-        parser.add_argument(
-            '--user', nargs=1,
-            help='Enter the user')
+        parser.add_argument("-r", "--run", nargs=1, help="Provide the iteration for the run")
+        parser.add_argument("-l", "--load", action="store_true", default=False, help="Run the load phase?")
+        parser.add_argument("-d", "--driver", nargs=1, help="Which YCSB Driver, eg mongodb")
+        parser.add_argument("-w", "--workload", nargs=1, help="Which YCSB workload, eg workloada")
+        parser.add_argument("-x", "--extra", nargs=1, help="Extra params to pass")
+        parser.add_argument("-u", "--uuid", nargs=1, help="Enter the uuid")
+        parser.add_argument("--user", nargs=1, help="Enter the user")
 
         self.args = parser.parse_args()
         if self.args.driver is None:

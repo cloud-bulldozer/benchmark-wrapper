@@ -13,28 +13,20 @@ from . import trigger_fs_drift
 logger = logging.getLogger("snafu")
 
 
-class fs_drift_wrapper():
-
+class fs_drift_wrapper:
     def __init__(self, parser):
         # collect arguments
 
         # it is assumed that the parser was created using argparse and already knows
         # about the --tool option
         parser.add_argument(
-            '-s', '--samples',
-            type=int,
-            help='number of times to run benchmark, defaults to 1',
-            default=1)
+            "-s", "--samples", type=int, help="number of times to run benchmark, defaults to 1", default=1
+        )
+        parser.add_argument("-T", "--top", help="directory to access files in")
         parser.add_argument(
-            '-T', '--top',
-            help='directory to access files in')
-        parser.add_argument(
-            '-d', '--dir',
-            help='output parent directory',
-            default=os.path.dirname(os.getcwd()))
-        parser.add_argument(
-            '-y', '--yaml-input-file',
-            help='fs-drift parameters passed via YAML input file')
+            "-d", "--dir", help="output parent directory", default=os.path.dirname(os.getcwd())
+        )
+        parser.add_argument("-y", "--yaml-input-file", help="fs-drift parameters passed via YAML input file")
         self.args = parser.parse_args()
 
         self.server = ""
@@ -52,7 +44,7 @@ class fs_drift_wrapper():
             self.user = os.environ["test_user"]
 
         if not self.args.top:
-            raise SnafuSmfException('must supply directory where you access flies')  # noqa
+            raise SnafuSmfException("must supply directory where you access flies")  # noqa
         self.samples = self.args.samples
         self.working_dir = self.args.top
         self.result_dir = self.args.dir
@@ -62,10 +54,17 @@ class fs_drift_wrapper():
         if not os.path.exists(self.result_dir):
             os.mkdir(self.result_dir)
         for s in range(1, self.samples + 1):
-            sample_dir = self.result_dir + '/' + str(s)
+            sample_dir = self.result_dir + "/" + str(s)
             if not os.path.exists(sample_dir):
                 os.mkdir(sample_dir)
             trigger_generator = trigger_fs_drift._trigger_fs_drift(
-                logger, self.yaml_input_file, self.cluster_name, self.working_dir, sample_dir,
-                self.user, self.uuid, s)
+                logger,
+                self.yaml_input_file,
+                self.cluster_name,
+                self.working_dir,
+                sample_dir,
+                self.user,
+                self.uuid,
+                s,
+            )
             yield trigger_generator

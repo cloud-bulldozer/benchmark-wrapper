@@ -20,7 +20,7 @@ import logging
 logger = logging.getLogger("snafu")
 
 
-class Trigger_cyclictest():
+class Trigger_cyclictest:
     def __init__(self, args):
         self.uuid = args.uuid
         self.user = args.user
@@ -32,18 +32,18 @@ class Trigger_cyclictest():
         self.disable_cpu_balance = args.disable_cpu_balance
         self.cluster_name = args.cluster_name
 
-    def _parse_stdout(self,stdout):
-        allowed_cpus_list = re.search(r'allowed.+', stdout).group().split(':')[1].strip()
-        command = re.search(r'running.+', stdout).group().split(':')[1].strip()
-        avg_latencies = [int(i) for i in re.search(r'Avg.+', stdout).group().split(':')[1].strip().split()]
-        max_latencies = [int(i) for i in re.search(r'Max.+', stdout).group().split(':')[1].strip().split()]
-        min_latencies = [int(i) for i in re.search(r'Min.+', stdout).group().split(':')[1].strip().split()]
+    def _parse_stdout(self, stdout):
+        allowed_cpus_list = re.search(r"allowed.+", stdout).group().split(":")[1].strip()
+        command = re.search(r"running.+", stdout).group().split(":")[1].strip()
+        avg_latencies = [int(i) for i in re.search(r"Avg.+", stdout).group().split(":")[1].strip().split()]
+        max_latencies = [int(i) for i in re.search(r"Max.+", stdout).group().split(":")[1].strip().split()]
+        min_latencies = [int(i) for i in re.search(r"Min.+", stdout).group().split(":")[1].strip().split()]
         result = {
             "allowed_cpus_list": allowed_cpus_list,
             "command": command,
             "avg_latencies": avg_latencies,
             "max_latencies": max_latencies,
-            "min_latencies": min_latencies
+            "min_latencies": min_latencies,
         }
         return result
 
@@ -61,7 +61,7 @@ class Trigger_cyclictest():
             "command": data["command"],
             "avg_latencies": data["avg_latencies"],
             "max_latencies": data["max_latencies"],
-            "min_latencies": data["min_latencies"]
+            "min_latencies": data["min_latencies"],
         }
         return payload
 
@@ -85,7 +85,7 @@ class Trigger_cyclictest():
                 logger.info("Starting output parsing")
                 data = self._parse_stdout(stdout)
                 document = self._json_payload(data, s, timestamp)
-                yield document, 'results'
+                yield document, "results"
             else:
-                raise Exception('Failed to produce cyclictest results document')
+                raise Exception("Failed to produce cyclictest results document")
                 exit(1)

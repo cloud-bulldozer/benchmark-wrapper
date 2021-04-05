@@ -17,32 +17,27 @@ import argparse
 from .trigger_flent import Trigger_flent
 
 
-class flent_wrapper():
-
+class flent_wrapper:
     def __init__(self, parent_parser):
-        parser_object = argparse.ArgumentParser(description="flent Wrapper script", parents=[parent_parser],
-                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser_object = argparse.ArgumentParser(
+            description="flent Wrapper script",
+            parents=[parent_parser],
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        )
         parser = parser_object.add_argument_group("flent benchmark")
         parser.add_argument(
-            '-f', '--ftest', type=str, required=True, default='tcp_download',
-            help='The test to run in Flent')
+            "-f", "--ftest", type=str, required=True, default="tcp_download", help="The test to run in Flent"
+        )
         parser.add_argument(
-            '-l', '--length',
-            required=False, default='60',
-            help='The duration of the test in seconds. Default 60 seconds')
-        parser.add_argument(
-            '-r', '--remoteip',
-            required=True,
-            help='The address of the netserver')
-        parser.add_argument(
-            '-u', '--uuid',
-            required=True,
-            help='Provide the uuid')
-        parser.add_argument(
-            '--user',
-            required=True,
-            default="snafu",
-            help='Enter the user')
+            "-l",
+            "--length",
+            required=False,
+            default="60",
+            help="The duration of the test in seconds. Default 60 seconds",
+        )
+        parser.add_argument("-r", "--remoteip", required=True, help="The address of the netserver")
+        parser.add_argument("-u", "--uuid", required=True, help="Provide the uuid")
+        parser.add_argument("--user", required=True, default="snafu", help="Enter the user")
 
         self.args = parser_object.parse_args()
 

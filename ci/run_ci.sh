@@ -4,7 +4,7 @@ set -x
 
 source ci/common.sh
 
-# Presetting test_choice to be blank. 
+# Presetting test_choice to be blank.
 test_choice=''
 
 while getopts t: flag
@@ -40,7 +40,7 @@ update_operator_image
 cd ..
 
 # Podman image prune
-podman image prune -a -f 
+podman image prune -a -f
 
 # Prep results.markdown file
 cat > results.markdown << EOF
@@ -50,7 +50,7 @@ Test | Result | Runtime
 -----|--------|--------
 EOF
 
-diff_list=`git diff origin/master --name-only | grep -Ev "*\.(md|png)"` 
+diff_list=`git diff origin/master --name-only | grep -Ev "*\.(md|png)"`
 
 # Run a full test if:
 # - anything in . has been changed (ie run_snafu.py)

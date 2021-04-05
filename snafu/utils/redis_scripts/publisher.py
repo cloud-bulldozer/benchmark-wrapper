@@ -27,13 +27,13 @@ def run_publisher(redis_host, redis_port, benchmark, pod_count):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='Redis Publisher')
-    parser.add_argument("--redis-host", help="input the redis server address. DEFAULT: localhost",
-                        default="localhost")
-    parser.add_argument("--redis-port", help="input the redis port. DEFAULT: 6379",
-                        default=6379, type=int)
+    parser = argparse.ArgumentParser(prog="Redis Publisher")
+    parser.add_argument(
+        "--redis-host", help="input the redis server address. DEFAULT: localhost", default="localhost"
+    )
+    parser.add_argument("--redis-port", help="input the redis port. DEFAULT: 6379", default=6379, type=int)
     parser.add_argument("benchmark", help="input the benchmark to be executed", type=str)
-    parser.add_argument("pod_count", help="input the number of subscriber pods",type=int)
+    parser.add_argument("pod_count", help="input the number of subscriber pods", type=int)
     # parser.add_argument("--help")
     args = parser.parse_args()
     redis_host = args.redis_host
@@ -43,5 +43,5 @@ def main():
     run_publisher(redis_host, redis_port, benchmark, pod_count)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

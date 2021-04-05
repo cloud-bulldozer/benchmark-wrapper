@@ -17,28 +17,20 @@ import argparse
 from .trigger_cyclictest import Trigger_cyclictest
 
 
-class cyclictest_wrapper():
-
+class cyclictest_wrapper:
     def __init__(self, parent_parser):
-        parser_object = argparse.ArgumentParser(description="Cyclic Test Wrapper script",
-                                                parents=[parent_parser],
-                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser_object = argparse.ArgumentParser(
+            description="Cyclic Test Wrapper script",
+            parents=[parent_parser],
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        )
         parser = parser_object.add_argument_group("Cyclictest benchmark")
+        parser.add_argument("-p", "--path", required=True, help="Path to cyclictest script")
         parser.add_argument(
-            '-p', '--path',
-            required=True,
-            help='Path to cyclictest script')
-        parser.add_argument(
-            '-s', '--samples', type=int, default=1,
-            help='Number of times to run the benchmark')
-        parser.add_argument(
-            '-u', '--uuid',
-            required=True,
-            help='Provide the uuid')
-        parser.add_argument(
-            '--user',
-            default="snafu",
-            help='Enter the user')
+            "-s", "--samples", type=int, default=1, help="Number of times to run the benchmark"
+        )
+        parser.add_argument("-u", "--uuid", required=True, help="Provide the uuid")
+        parser.add_argument("--user", default="snafu", help="Enter the user")
         self.args = parser_object.parse_args()
 
         self.args.duration = os.getenv("DURATION", "5m")

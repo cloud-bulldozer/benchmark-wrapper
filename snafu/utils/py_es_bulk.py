@@ -11,11 +11,14 @@ import math
 
 from random import SystemRandom
 from collections import Counter, deque
+
 try:
     from elasticsearch1 import VERSION as es_VERSION, helpers, exceptions as es_excs
+
     _es_logger = "elasticsearch1"
 except ImportError:
     from elasticsearch import VERSION as es_VERSION, helpers, exceptions as es_excs
+
     _es_logger = "elasticsearch"
 
 logger = logging.getLogger("snafu")
@@ -36,13 +39,16 @@ _op_type = "create"
 
 _request_timeout = 100000 * 60.0
 
+
 def _tstos(ts=None):
     return time.strftime("%Y-%m-%dT%H:%M:%S-%Z", time.gmtime(ts))
+
 
 def _calc_backoff_sleep(backoff):
     global _r
     b = math.pow(2, backoff)
     return _r.uniform(0, min(b, _MAX_SLEEP_TIME))
+
 
 def quiet_loggers():
     """
@@ -50,6 +56,7 @@ def quiet_loggers():
     """
     logging.getLogger("urllib3").setLevel(logging.FATAL)
     logging.getLogger(_es_logger).setLevel(logging.FATAL)
+
 
 def put_template(es, name, body):
     """
@@ -88,6 +95,7 @@ def put_template(es, name, body):
     end = time.time()
     return beg, end, retry_count
 
+
 def streaming_bulk(es, actions, parallel=False):
     """
     streaming_bulk(es, actions)
@@ -112,9 +120,9 @@ def streaming_bulk(es, actions, parallel=False):
 
     def actions_tracking_closure(cl_actions):
         for cl_action in cl_actions:
-            assert '_id' in cl_action
-            assert '_index' in cl_action
-            assert _op_type == cl_action['_op_type']
+            assert "_id" in cl_action
+            assert "_index" in cl_action
+            assert _op_type == cl_action["_op_type"]
 
             actions_deque.append((0, cl_action))  # Append to the right side ...
             yield cl_action
@@ -123,7 +131,7 @@ def streaming_bulk(es, actions, parallel=False):
             backoff = 1
             while len(actions_retry_deque) > 0:
                 time.sleep(_calc_backoff_sleep(backoff))
-                retries_tracker['retries'] += 1
+                retries_tracker["retries"] += 1
                 retry_actions = []
                 # First drain, the retry deque entirely so that we know when we
                 # have cycled through the entire list to be retried.
@@ -148,28 +156,28 @@ def streaming_bulk(es, actions, parallel=False):
 
     if parallel:
         logger.info("Using parallel bulk indexer")
-        streaming_bulk_generator = helpers.parallel_bulk(es,
-                                                         generator,
-                                                         chunk_size=10000000,
-                                                         max_chunk_bytes=104857600,
-                                                         thread_count=8,
-                                                         queue_size=4,
-                                                         raise_on_error=False,
-                                                         raise_on_exception=False,
-                                                         request_timeout=_request_timeout)
+        streaming_bulk_generator = helpers.parallel_bulk(
+            es,
+            generator,
+            chunk_size=10000000,
+            max_chunk_bytes=104857600,
+            thread_count=8,
+            queue_size=4,
+            raise_on_error=False,
+            raise_on_exception=False,
+            request_timeout=_request_timeout,
+        )
     else:
         logger.info("Using streaming bulk indexer")
-        streaming_bulk_generator = helpers.streaming_bulk(es,
-                                                          generator,
-                                                          raise_on_error=False,
-                                                          raise_on_exception=False,
-                                                          request_timeout=_request_timeout)
+        streaming_bulk_generator = helpers.streaming_bulk(
+            es, generator, raise_on_error=False, raise_on_exception=False, request_timeout=_request_timeout
+        )
 
     for ok, resp_payload in streaming_bulk_generator:
         retry_count, action = actions_deque.popleft()
         try:
             resp = resp_payload[_op_type]
-            status = resp['status']
+            status = resp["status"]
         except KeyError as e:
             logger.error(e)
             assert not ok
@@ -178,7 +186,7 @@ def streaming_bulk(es, actions, parallel=False):
 
             status = 999
         else:
-            assert action['_id'] == resp['_id']
+            assert action["_id"] == resp["_id"]
         if ok:
             successes += 1
         else:
@@ -195,9 +203,9 @@ def streaming_bulk(es, actions, parallel=False):
                     "ok": ok,
                     "resp": resp,
                     "retry_count": retry_count,
-                    "timestamp": _tstos(time.time())
+                    "timestamp": _tstos(time.time()),
                 }
-                jsonstr = json.dumps(doc, indent=4, sort_keys=True,default=str)
+                jsonstr = json.dumps(doc, indent=4, sort_keys=True, default=str)
                 print(jsonstr)
                 # errorsfp.flush()
                 failures += 1
@@ -211,4 +219,4 @@ def streaming_bulk(es, actions, parallel=False):
     assert len(actions_deque) == 0
     assert len(actions_retry_deque) == 0
 
-    return (beg, end, successes, duplicates, failures, retries_tracker['retries'])
+    return (beg, end, successes, duplicates, failures, retries_tracker["retries"])

@@ -89,7 +89,7 @@ class STLS1(object):
             dst = ip_range['src']
 
         vm = [
-            # src  
+            # src
             STLVmFlowVar(name="src",min_value=src['start'],max_value=src['end'],size=4,op="inc"),
             STLVmWrFlowVar(fv_name="src",pkt_offset= "IP.src"),
 
@@ -152,7 +152,7 @@ class STLS1(object):
                       "ts_epoch": current_ts + i
                       })
             time.sleep(stats_interval)
-         
+
         self.client.reset(ports = self.ports)
         return output
 
@@ -168,7 +168,7 @@ class STLS1(object):
             # Start the stream
             self.client.start(ports = self.ports,
                 mult = self.rate,
-                duration = self.duration + 10, # 10s extra buffer 
+                duration = self.duration + 10, # 10s extra buffer
                 core_mask = STLClient.CORE_MASK_PIN
             )
 
@@ -195,9 +195,9 @@ def main():
     # Read environment input values
     packet_size = os.getenv("PACKET_SIZE") or os.getenv("packet_size")
     packet_rate = os.getenv("PACKET_RATE") or os.getenv("packet_rate")
-    duration = os.getenv("DURATION") or os.getenv("duration") 
-    stream  = os.getenv("NUM_STREAM") or os.getenv("num_stream") 
-    num_port  = os.getenv("NUM_PORT") or os.getenv("num_port") 
+    duration = os.getenv("DURATION") or os.getenv("duration")
+    stream  = os.getenv("NUM_STREAM") or os.getenv("num_stream")
+    num_port  = os.getenv("NUM_PORT") or os.getenv("num_port")
 
     duration = int(duration)
     packet_size = int(packet_size)
@@ -209,7 +209,7 @@ def main():
     log.info("Packet Rate - %s" % packet_rate)
     log.info("Duration - %s" % duration)
     try:
-        # Initiate 
+        # Initiate
         obj = STLS1(num_port=num_port, size=packet_size, rate=packet_rate, duration=duration, stream=stream)
         # Run simple burst
         obj.simple_burst()

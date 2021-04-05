@@ -19,7 +19,7 @@ from openshift.dynamic import DynamicClient
 logger = logging.getLogger("snafu")
 
 
-class Trigger_scale():
+class Trigger_scale:
     def __init__(self, args):
         self.uuid = args.uuid
         self.user = args.user
@@ -61,51 +61,56 @@ class Trigger_scale():
             exit(1)
 
         try:
-            nodes = dyn_client.resources.get(api_version='v1', kind='Node')
-            machinesets = dyn_client.resources.get(kind='MachineSet')
+            nodes = dyn_client.resources.get(api_version="v1", kind="Node")
+            machinesets = dyn_client.resources.get(kind="MachineSet")
         except Exception as err:
             logger.info("ERROR: Could not get information on nodes/machinesets, failing the run")
             logger.info(err)
             exit(1)
 
-        worker_count = \
-            len(nodes.get(
-                label_selector='node-role.kubernetes.io/worker,!node-role.kubernetes.io/master')
-                .attributes.items)\
+        worker_count = (
+            len(
+                nodes.get(
+                    label_selector="node-role.kubernetes.io/worker,!node-role.kubernetes.io/master"
+                ).attributes.items
+            )
             or 0
-        workload_count = len(nodes.get(label_selector='node-role.kubernetes.io/workload').attributes.items)\
-            or 0
-        master_count = len(nodes.get(label_selector='node-role.kubernetes.io/master').attributes.items)\
-            or 0
-        infra_count = len(nodes.get(label_selector='node-role.kubernetes.io/infra').attributes.items)\
-            or 0
+        )
+        workload_count = (
+            len(nodes.get(label_selector="node-role.kubernetes.io/workload").attributes.items) or 0
+        )
+        master_count = len(nodes.get(label_selector="node-role.kubernetes.io/master").attributes.items) or 0
+        infra_count = len(nodes.get(label_selector="node-role.kubernetes.io/infra").attributes.items) or 0
         init_workers = worker_count
 
-        infra = dyn_client.resources.get(kind='Infrastructure')
+        infra = dyn_client.resources.get(kind="Infrastructure")
 
         try:
             platform = infra.get().attributes.items[0].spec.platformSpec.type
         except Exception as err:
-            logger.info('Platform type not obtained through spec.platformSpec.type')
-            logger.info('Trying to query status.platform')
+            logger.info("Platform type not obtained through spec.platformSpec.type")
+            logger.info("Trying to query status.platform")
             logger.info(err)
 
             try:
                 platform = infra.get().attributes.items[0].status.platform
             except Exception as err:
-                logger.warning('Could not identify platform. Marking as Unknown')
+                logger.warning("Could not identify platform. Marking as Unknown")
                 logger.warning(err)
                 platform = "Unknown"
 
         # Machine set name list
-        machineset_all_list = \
-            machinesets.get(namespace='openshift-machine-api').attributes.items
+        machineset_all_list = machinesets.get(namespace="openshift-machine-api").attributes.items
 
         machineset_worker_list = []
 
         for i in range(len(machineset_all_list)):
-            if machineset_all_list[i].spec.template.metadata.labels[
-                'machine.openshift.io/cluster-api-machine-role'] == "worker":
+            if (
+                machineset_all_list[i].spec.template.metadata.labels[
+                    "machine.openshift.io/cluster-api-machine-role"
+                ]
+                == "worker"
+            ):
                 machineset_worker_list.append(machineset_all_list[i])
 
         # If we are already at the requested scale exit
@@ -122,7 +127,7 @@ class Trigger_scale():
         logger.info("Current Worker count %s" % (worker_count))
 
         # Number of workers to add per machine set
-        add_per = int(self.scale/len(machineset_worker_list))
+        add_per = int(self.scale / len(machineset_worker_list))
 
         # Additional number of workers to add b/c math
         extra = self.scale % len(machineset_worker_list)
@@ -142,22 +147,24 @@ class Trigger_scale():
         # Patch the machinesets
         for i in range(len(machineset_workers)):
             body = {"spec": {"replicas": machine_spread[i]}}
-            machinesets.patch(body=body,
-                              namespace='openshift-machine-api',
-                              name=machineset_workers[i],
-                              content_type='application/merge-patch+json')
+            machinesets.patch(
+                body=body,
+                namespace="openshift-machine-api",
+                name=machineset_workers[i],
+                content_type="application/merge-patch+json",
+            )
 
         # Wait for worker machine sets to show the appropriate ready replicas
         for i in range(len(machineset_worker_list)):
-            new_machine_sets = \
-                machinesets.get(namespace='openshift-machine-api',
-                                name=machineset_worker_list[i].metadata.name)
+            new_machine_sets = machinesets.get(
+                namespace="openshift-machine-api", name=machineset_worker_list[i].metadata.name
+            )
             while new_machine_sets.status.readyReplicas != machine_spread[i]:
                 if new_machine_sets.status.readyReplicas is None and machine_spread[i] == 0:
                     break
-                new_machine_sets = \
-                    machinesets.get(namespace='openshift-machine-api',
-                                    name=machineset_worker_list[i].metadata.name)
+                new_machine_sets = machinesets.get(
+                    namespace="openshift-machine-api", name=machineset_worker_list[i].metadata.name
+                )
                 time.sleep(self.poll_interval)
 
         logger.info("Patching of machine sets complete")
@@ -165,47 +172,61 @@ class Trigger_scale():
         # Ensure all workers are not listed as unschedulable
         # If we don't do this it will auto-complete a scale-down even though the workers
         # have not been eliminated yet
-        new_worker_list = nodes.get(label_selector='node-role.kubernetes.io/worker').attributes.items
+        new_worker_list = nodes.get(label_selector="node-role.kubernetes.io/worker").attributes.items
         for i in range(len(new_worker_list)):
             while i < len(new_worker_list) and new_worker_list[i].spec.unschedulable:
-                new_worker_list = nodes.get(label_selector='node-role.kubernetes.io/worker').attributes.items
+                new_worker_list = nodes.get(label_selector="node-role.kubernetes.io/worker").attributes.items
                 time.sleep(self.poll_interval)
         logger.info("All workers schedulable")
 
-        worker_count = \
-            len(nodes.get(
-                label_selector='node-role.kubernetes.io/worker,!node-role.kubernetes.io/master')
-                .attributes.items)\
+        worker_count = (
+            len(
+                nodes.get(
+                    label_selector="node-role.kubernetes.io/worker,!node-role.kubernetes.io/master"
+                ).attributes.items
+            )
             or 0
-        workload_count = len(nodes.get(label_selector='node-role.kubernetes.io/workload').attributes.items)\
-            or 0
-        master_count = len(nodes.get(label_selector='node-role.kubernetes.io/master').attributes.items)\
-            or 0
-        infra_count = len(nodes.get(label_selector='node-role.kubernetes.io/infra').attributes.items)\
-            or 0
+        )
+        workload_count = (
+            len(nodes.get(label_selector="node-role.kubernetes.io/workload").attributes.items) or 0
+        )
+        master_count = len(nodes.get(label_selector="node-role.kubernetes.io/master").attributes.items) or 0
+        infra_count = len(nodes.get(label_selector="node-role.kubernetes.io/infra").attributes.items) or 0
 
         return init_workers, worker_count, master_count, infra_count, workload_count, platform, action
 
     def emit_actions(self):
-        logger.info("Scaling cluster %s to %d workers with uuid %s and polling interval %d" %
-                    (self.cluster_name, self.scale, self.uuid, self.poll_interval))
+        logger.info(
+            "Scaling cluster %s to %d workers with uuid %s and polling interval %d"
+            % (self.cluster_name, self.scale, self.uuid, self.poll_interval)
+        )
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
         start_time = time.time()
-        init_workers, worker_count, master_count, infra_count, workload_count, platform, action = \
-            self._run_scale()
+        (
+            init_workers,
+            worker_count,
+            master_count,
+            infra_count,
+            workload_count,
+            platform,
+            action,
+        ) = self._run_scale()
         end_time = time.time()
         elaspsed_time = end_time - start_time
-        data = {"timestamp": timestamp,
-                "duration": int(elaspsed_time),
-                "worker_count": worker_count,
-                "master_count": master_count,
-                "infra_count": infra_count,
-                "workload_count": workload_count,
-                "init_worker_count": init_workers,
-                "action": action,
-                "total_count": worker_count+master_count+infra_count+workload_count,
-                "platform": platform}
+        data = {
+            "timestamp": timestamp,
+            "duration": int(elaspsed_time),
+            "worker_count": worker_count,
+            "master_count": master_count,
+            "infra_count": infra_count,
+            "workload_count": workload_count,
+            "init_worker_count": init_workers,
+            "action": action,
+            "total_count": worker_count + master_count + infra_count + workload_count,
+            "platform": platform,
+        }
         es_data = self._json_payload(data)
-        yield es_data, ''
-        logger.info("Finished executing scaling of cluster %s to %d workers" %
-                    (self.cluster_name, self.scale))
+        yield es_data, ""
+        logger.info(
+            "Finished executing scaling of cluster %s to %d workers" % (self.cluster_name, self.scale)
+        )

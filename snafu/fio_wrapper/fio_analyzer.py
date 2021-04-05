@@ -37,15 +37,15 @@ class Fio_Analyzer:
         """
 
         for fio_result in self.fio_processed_results_list:
-            if fio_result['document']['fio']['jobname'] != 'All clients':
-                sample = fio_result['document']['sample']
+            if fio_result["document"]["fio"]["jobname"] != "All clients":
+                sample = fio_result["document"]["sample"]
 
-                if fio_result['document']['global_options'].get('bs'):
-                    bs_value = fio_result['document']['global_options']['bs']
-                elif fio_result['document']['global_options'].get('bsrange'):
-                    bs_value = fio_result['document']['global_options']['bsrange']
+                if fio_result["document"]["global_options"].get("bs"):
+                    bs_value = fio_result["document"]["global_options"]["bs"]
+                elif fio_result["document"]["global_options"].get("bsrange"):
+                    bs_value = fio_result["document"]["global_options"]["bsrange"]
 
-                rw = fio_result['document']['fio']['job options']['rw']
+                rw = fio_result["document"]["fio"]["job options"]["rw"]
 
                 if sample not in self.sample_list:
                     self.sample_list.append(sample)
@@ -64,27 +64,30 @@ class Fio_Analyzer:
             # get measurements
 
         for fio_result in self.fio_processed_results_list:
-            if fio_result['document']['fio']['jobname'] != 'All clients':
-                sample = fio_result['document']['sample']
+            if fio_result["document"]["fio"]["jobname"] != "All clients":
+                sample = fio_result["document"]["sample"]
 
-                if fio_result['document']['global_options'].get('bs'):
-                    bs_value = fio_result['document']['global_options']['bs']
-                elif fio_result['document']['global_options'].get('bsrange'):
-                    bs_value = fio_result['document']['global_options']['bsrange']
+                if fio_result["document"]["global_options"].get("bs"):
+                    bs_value = fio_result["document"]["global_options"]["bs"]
+                elif fio_result["document"]["global_options"].get("bsrange"):
+                    bs_value = fio_result["document"]["global_options"]["bsrange"]
 
-                rw = fio_result['document']['fio']['job options']['rw']
+                rw = fio_result["document"]["fio"]["job options"]["rw"]
 
                 if not self.sumdoc[sample][rw][bs_value]:
-                    time_s = fio_result['starttime'] / 1000.0
-                    self.sumdoc[sample][rw][bs_value]['date'] = time.strftime('%Y-%m-%dT%H:%M:%S.000Z',
-                                                                              time.gmtime(time_s))
-                    self.sumdoc[sample][rw][bs_value]['write'] = 0
-                    self.sumdoc[sample][rw][bs_value]['read'] = 0
+                    time_s = fio_result["starttime"] / 1000.0
+                    self.sumdoc[sample][rw][bs_value]["date"] = time.strftime(
+                        "%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(time_s)
+                    )
+                    self.sumdoc[sample][rw][bs_value]["write"] = 0
+                    self.sumdoc[sample][rw][bs_value]["read"] = 0
 
-                self.sumdoc[sample][rw][bs_value]['write'] += \
-                    int(fio_result['document']['fio']["write"]["iops"])
-                self.sumdoc[sample][rw][bs_value]['read'] += \
-                    int(fio_result['document']['fio']["read"]["iops"])
+                self.sumdoc[sample][rw][bs_value]["write"] += int(
+                    fio_result["document"]["fio"]["write"]["iops"]
+                )
+                self.sumdoc[sample][rw][bs_value]["read"] += int(
+                    fio_result["document"]["fio"]["read"]["iops"]
+                )
 
     def emit_actions(self):
         """
@@ -92,10 +95,7 @@ class Fio_Analyzer:
         for each result based on operation/io size
         """
 
-        importdoc = {"ceph_benchmark_test": {"test_data": {}},
-                     "uuid": self.uuid,
-                     "user": self.user
-                     }
+        importdoc = {"ceph_benchmark_test": {"test_data": {}}, "uuid": self.uuid, "user": self.user}
 
         self.calculate_iops_sum()
 
@@ -104,53 +104,63 @@ class Fio_Analyzer:
                 average_write_result_list = []
                 average_read_result_list = []
                 tmp_doc = {}
-                tmp_doc['object_size'] = io_size  # set document's object size
-                tmp_doc['operation'] = oper  # set documents operation
+                tmp_doc["object_size"] = io_size  # set document's object size
+                tmp_doc["operation"] = oper  # set documents operation
                 firstrecord = True
                 calcuate_percent_std_dev = False
 
                 for itera in self.sample_list:  #
-                    average_write_result_list.append(self.sumdoc[itera][oper][io_size]['write'])
-                    average_read_result_list.append(self.sumdoc[itera][oper][io_size]['read'])
+                    average_write_result_list.append(self.sumdoc[itera][oper][io_size]["write"])
+                    average_read_result_list.append(self.sumdoc[itera][oper][io_size]["read"])
 
                     if firstrecord:
-                        importdoc['date'] = self.sumdoc[itera][oper][io_size]['date']
+                        importdoc["date"] = self.sumdoc[itera][oper][io_size]["date"]
                         firstrecord = True
 
-                read_average = (sum(average_read_result_list) / len(average_read_result_list))
+                read_average = sum(average_read_result_list) / len(average_read_result_list)
                 if read_average > 0.0:
-                    tmp_doc['read-iops'] = read_average
+                    tmp_doc["read-iops"] = read_average
                     if len(average_read_result_list) > 1:
                         calcuate_percent_std_dev = True
                 else:
-                    tmp_doc['read-iops'] = 0
+                    tmp_doc["read-iops"] = 0
 
-                write_average = (sum(average_write_result_list) / len(average_write_result_list))
+                write_average = sum(average_write_result_list) / len(average_write_result_list)
                 if write_average > 0.0:
-                    tmp_doc['write-iops'] = write_average
+                    tmp_doc["write-iops"] = write_average
                     if len(average_write_result_list) > 1:
                         calcuate_percent_std_dev = True
                 else:
-                    tmp_doc['write-iops'] = 0
+                    tmp_doc["write-iops"] = 0
 
-                tmp_doc['total-iops'] = (tmp_doc['write-iops'] + tmp_doc['read-iops'])
+                tmp_doc["total-iops"] = tmp_doc["write-iops"] + tmp_doc["read-iops"]
 
                 if calcuate_percent_std_dev:
                     if "read" in oper:
-                        tmp_doc['std-dev-%s' % io_size] = \
-                            round(((statistics.stdev(
-                                average_read_result_list) / read_average) * 100), 3)
+                        tmp_doc["std-dev-%s" % io_size] = round(
+                            ((statistics.stdev(average_read_result_list) / read_average) * 100), 3
+                        )
                     elif "write" in oper:
-                        tmp_doc['std-dev-%s' % io_size] = round(((statistics.stdev
-                                                                  (average_write_result_list) /
-                                                                  write_average) * 100), 3)
+                        tmp_doc["std-dev-%s" % io_size] = round(
+                            ((statistics.stdev(average_write_result_list) / write_average) * 100), 3
+                        )
                     elif "randrw" in oper:
-                        tmp_doc['std-dev-%s' % io_size] = round((((statistics.stdev(
-                            average_read_result_list) + statistics.stdev(
-                            average_write_result_list)) / tmp_doc['total-iops']) * 100), 3)
+                        tmp_doc["std-dev-%s" % io_size] = round(
+                            (
+                                (
+                                    (
+                                        statistics.stdev(average_read_result_list)
+                                        + statistics.stdev(average_write_result_list)
+                                    )
+                                    / tmp_doc["total-iops"]
+                                )
+                                * 100
+                            ),
+                            3,
+                        )
 
-                importdoc['ceph_benchmark_test']['test_data'] = tmp_doc
-                importdoc['cluster_name'] = self.cluster_name
+                importdoc["ceph_benchmark_test"]["test_data"] = tmp_doc
+                importdoc["cluster_name"] = self.cluster_name
                 # TODO add ID to document
                 index = "analyzed-result"
                 yield importdoc, index

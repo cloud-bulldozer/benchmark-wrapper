@@ -19,7 +19,7 @@ import json
 logger = logging.getLogger("snafu")
 
 
-class Trigger_trex():
+class Trigger_trex:
     def __init__(self, args):
         self.uuid = args.uuid
         self.user = args.user
@@ -32,16 +32,18 @@ class Trigger_trex():
     def _json_payload(self, data):
         payload = json.loads(data)
         for item in payload:
-            item.update({
-                "workload": "testpmd",
-                "uuid": self.uuid,
-                "user": self.user,
-                "cluster_name": self.cluster_name,
-                "kind": self.resourcetype,
-                "testpmd_node": self.testpmd_node,
-                "trex_node": self.trex_node,
-                "timestamp": datetime.fromtimestamp(float(item["ts_epoch"]))
-            })
+            item.update(
+                {
+                    "workload": "testpmd",
+                    "uuid": self.uuid,
+                    "user": self.user,
+                    "cluster_name": self.cluster_name,
+                    "kind": self.resourcetype,
+                    "testpmd_node": self.testpmd_node,
+                    "trex_node": self.trex_node,
+                    "timestamp": datetime.fromtimestamp(float(item["ts_epoch"])),
+                }
+            )
         return payload
 
     def _run_trex(self):
@@ -51,11 +53,11 @@ class Trigger_trex():
         # command to run burst script with a 10 sec buffer to trex service
         burst_cmd = "sleep 10 && run_simple_burst"
         # TRex server process
-        subprocess.Popen(trex_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         close_fds=True)
+        subprocess.Popen(trex_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
         # Burst script execution process
-        burst_process = subprocess.Popen(burst_cmd, shell=True, stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE)
+        burst_process = subprocess.Popen(
+            burst_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         stdout, stderr = burst_process.communicate()
         return stdout.strip().decode("utf-8"), stderr.strip().decode("utf-8"), burst_process.returncode
 
@@ -65,7 +67,7 @@ class Trigger_trex():
         if rc == 0:
             documents = self._json_payload(stdout)
             for document in documents:
-                yield document, 'results'
+                yield document, "results"
                 logger.info(document)
             logger.info("Finished Generating traffic..")
         else:

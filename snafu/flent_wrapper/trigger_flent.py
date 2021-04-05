@@ -23,7 +23,7 @@ import logging
 logger = logging.getLogger("snafu")
 
 
-class Trigger_flent():
+class Trigger_flent:
     def __init__(self, args):
         self.ftest = args.ftest
         self.remoteip = args.remoteip
@@ -54,8 +54,9 @@ class Trigger_flent():
             new_results_item = {}
             for key in keys:
                 new_results_item[key] = results[key][i]
-            new_item = self._json_result("results",
-                                         new_results_item, start_time + timedelta(seconds=times[i]))
+            new_item = self._json_result(
+                "results", new_results_item, start_time + timedelta(seconds=times[i])
+            )
             processed.append(new_item)
 
         return processed
@@ -69,13 +70,14 @@ class Trigger_flent():
             "server_node": self.server_node,
             "timestamp": time,
             "uuid": self.uuid,
-            name: value
+            name: value,
         }
         return new_item
 
     def _run_flent(self):
-        cmd = "flent {} -p totals -l {} -f summary -H {} --absolute-time" \
-              .format(self.ftest, self.length, self.remoteip)
+        cmd = "flent {} -p totals -l {} -f summary -H {} --absolute-time".format(
+            self.ftest, self.length, self.remoteip
+        )
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         return stdout.strip().decode("utf-8"), stderr.strip().decode("utf-8"), process.returncode
@@ -88,7 +90,7 @@ class Trigger_flent():
         file_name = search_results[1]
         raw = {}
         logger.info("Opening results file %s", file_name)
-        with gzip.open(file_name, 'rb') as f:
+        with gzip.open(file_name, "rb") as f:
             raw = json.load(f)
         summary = search_results[2]
         return raw, summary
@@ -103,10 +105,10 @@ class Trigger_flent():
             exit(1)
 
         raw, summary = self._parse_stdout(stdout)
-        yield self._json_result("raw", raw, datetime.now()), 'raw'
+        yield self._json_result("raw", raw, datetime.now()), "raw"
         documents = self._json_payload(raw)
         if len(documents) > 0:
             for document in documents:
-                yield document, 'results'
+                yield document, "results"
         logger.info(stdout)
         logger.info("Finished executing flent")

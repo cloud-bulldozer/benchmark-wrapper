@@ -238,19 +238,16 @@ Note: If your PR requires a PR in benchmark-operator to be merged, you can ask C
 checkout that PR by adding a `Depends-On: <benchmark-operator_pr_number>` to the end of
 your snafu commit message.
 
+## CodeStyling and Linting
 
-## Style guide
-Max line length is 110 to avoid linting issues.
+Touchstone uses [pre-commit](https://pre-commit.com) framework to maintain the code linting and python code styling.
+The CI would run the pre-commit check on each pull request.
+We encourage our contributors to follow the same pattern, while contributing to the code.
 
-## Running linters on your code
+The pre-commit configuration file is present in the repository `.pre-commit-config.yaml`
+It contains the different code styling and linting guide which we use for the application.
 
-Before making a PR, make sure to run linters on your code.
+Following command can be used to run the pre-commit:
+`pre-commit run --all-files`
 
-Flake8 configurations are written in tox.ini file.
-
-Run ``` flake8 ``` command.
-
-This will show the code quality errors. Fix them before making a PR.
-
-To ignore an error, use  ``` # noqa ```  at the end of that code line.
-
+If pre-commit is not installed in your system, it can be install with : `pip install pre-commit`

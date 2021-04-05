@@ -21,7 +21,8 @@ from openshift.dynamic import DynamicClient
 logger = logging.getLogger("snafu")
 time_format = "%Y-%m-%dT%H:%M:%S%z"
 
-class Trigger_upgrade():
+
+class Trigger_upgrade:
     def __init__(self, args):
         self.uuid = args.uuid
         self.user = args.user
@@ -59,17 +60,19 @@ class Trigger_upgrade():
 
     def _run_upgrade(self):
         # Get platform
-        infra = self.dyn_client.resources.get(kind='Infrastructure')
+        infra = self.dyn_client.resources.get(kind="Infrastructure")
         platform = infra.get().attributes.items[0].spec.platformSpec.type or "Unknown"
 
-        clusterversion = self.dyn_client.resources.get(kind='ClusterVersion')
+        clusterversion = self.dyn_client.resources.get(kind="ClusterVersion")
         init_version = clusterversion.get().items[0].status.desired.version
         logger.info("Current cluster version is: %s" % init_version)
 
         # Fail if the upgrade version parameters are not defined
         if not self.toimage and not self.latest and not self.version:
-            logging.error("Looks like the version to upgrade to is not set, "
-                          "please set either toimage or latest or version")
+            logging.error(
+                "Looks like the version to upgrade to is not set, "
+                "please set either toimage or latest or version"
+            )
             exit(1)
 
         # Fail if both toimage and latest parameters are set
@@ -79,15 +82,12 @@ class Trigger_upgrade():
 
         # If an image location was passed
         if self.toimage:
-            cmd = (
-                "oc adm upgrade --to-image={0} --allow-explicit-upgrade=true --force").format(self.toimage)
+            cmd = ("oc adm upgrade --to-image={0} --allow-explicit-upgrade=true --force").format(self.toimage)
         # Upgrade to the latest build available in the channel if set
         elif self.latest:
-            cmd = (
-                "oc adm upgrade --to-latest=true --allow-upgrade-with-warnings=true --force=true")
+            cmd = "oc adm upgrade --to-latest=true --allow-upgrade-with-warnings=true --force=true"
         elif self.version:
-            cmd = (
-                "oc adm upgrade --to={0}").format(self.version)
+            cmd = ("oc adm upgrade --to={0}").format(self.version)
         logger.info(cmd)
         p = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -113,14 +113,16 @@ class Trigger_upgrade():
         if init_version == desired_version:
             logger.info("Cluster version is already at desired version")
             the_time = datetime.datetime.strptime(
-                clusterversion.get().attributes.items[0].status.history[0].completionTime,time_format)
+                clusterversion.get().attributes.items[0].status.history[0].completionTime, time_format
+            )
             return init_version, desired_version, platform, the_time, the_time, (the_time - the_time)
 
         c_state = "incomplete"
         c_version = "0.0.0"
         before = int(time.time())
-        while self.timeout*60 >= int(time.time()) - before and \
-            (c_state != "Completed" or c_version != desired_version):
+        while self.timeout * 60 >= int(time.time()) - before and (
+            c_state != "Completed" or c_version != desired_version
+        ):
             for i in range(10):
                 try:
                     cluster_state = clusterversion.get().attributes.items[0].status.history[0]
@@ -136,13 +138,12 @@ class Trigger_upgrade():
                     c_version = cluster_state.version
                     break
 
-            if c_state == "Completed" \
-                and c_version == desired_version:
+            if c_state == "Completed" and c_version == desired_version:
 
                 logger.info("Cluster upgrade complete")
                 logger.info(clusterversion.get().attributes.items[0].status.history[0])
                 break
-            status = ("oc adm upgrade | grep info")
+            status = "oc adm upgrade | grep info"
             s = subprocess.run(status, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             logger.info(s.stdout.strip().decode("utf-8"))
             time.sleep(self.poll_interval)
@@ -151,9 +152,11 @@ class Trigger_upgrade():
         logger.info("Cluster version post-upgrade is: %s" % new_version)
 
         start_time = datetime.datetime.strptime(
-            clusterversion.get().attributes.items[0].status.history[0].startedTime,time_format)
+            clusterversion.get().attributes.items[0].status.history[0].startedTime, time_format
+        )
         end_time = datetime.datetime.strptime(
-            clusterversion.get().attributes.items[0].status.history[0].completionTime,time_format)
+            clusterversion.get().attributes.items[0].status.history[0].completionTime, time_format
+        )
         total_time = end_time - start_time
         logger.info("Total upgrade time: %s" % total_time)
 
@@ -162,48 +165,60 @@ class Trigger_upgrade():
     def get_timings(self):
         logger.info("Getting timing stats from cluster Operators")
 
-        operator_infra = self.dyn_client.resources.get(kind='ClusterOperator')
+        operator_infra = self.dyn_client.resources.get(kind="ClusterOperator")
         operator = operator_infra.get()
 
         new_docs = [{}]
         for op in operator.attributes.items:
             field_len = len(op.metadata.managedFields)
-            op_name = op.metadata.managedFields[field_len-1].manager
-            op_time = datetime.datetime.strptime(op.metadata.managedFields[field_len-1].time,time_format)
+            op_name = op.metadata.managedFields[field_len - 1].manager
+            op_time = datetime.datetime.strptime(op.metadata.managedFields[field_len - 1].time, time_format)
             update_time = op_time - self.start_time
             op_time = op_time.strftime(time_format)
-            logger.info("Operator: %s finished update at %s and took %s" % (op_name,op_time,update_time))
-            op_data = {"operator": op_name,
-                       "end_time": op_time,
-                       "update_time": int(update_time.total_seconds())}
+            logger.info("Operator: %s finished update at %s and took %s" % (op_name, op_time, update_time))
+            op_data = {
+                "operator": op_name,
+                "end_time": op_time,
+                "update_time": int(update_time.total_seconds()),
+            }
             new_docs.append(self._json_payload(op_data))
 
         return new_docs
 
     def emit_actions(self):
         # Get the desired upgrade version
-        clusterversion = self.dyn_client.resources.get(kind='ClusterVersion')
+        clusterversion = self.dyn_client.resources.get(kind="ClusterVersion")
         desired_version = clusterversion.get().items[0].status.desired.version
-        logger.info("Upgrading cluster %s to version %s with uuid %s" %
-                    (self.cluster_name, desired_version, self.uuid))
+        logger.info(
+            "Upgrading cluster %s to version %s with uuid %s"
+            % (self.cluster_name, desired_version, self.uuid)
+        )
         self.timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
-        self.init_version, self.end_version, self.platform, self.start_time, end_time, total_time = \
-            self._run_upgrade()
+        (
+            self.init_version,
+            self.end_version,
+            self.platform,
+            self.start_time,
+            end_time,
+            total_time,
+        ) = self._run_upgrade()
         if int(total_time.total_seconds()) != 0:
             docs = self.get_timings()
         else:
             docs = []
-        data = {"operator": "total",
-                "end_time": end_time.strftime(time_format),
-                "update_time": int(total_time.total_seconds()),
-                "image": self.toimage}
+        data = {
+            "operator": "total",
+            "end_time": end_time.strftime(time_format),
+            "update_time": int(total_time.total_seconds()),
+            "image": self.toimage,
+        }
         docs.append(self._json_payload(data))
         for item in docs:
-            yield item, ''
+            yield item, ""
         if self.end_version != desired_version:
             logger.error("Cluster did not upgrade to desired version")
-            logger.error("Cluster version is %s and desired version is %s" %
-                         (self.end_version,desired_version))
+            logger.error(
+                "Cluster version is %s and desired version is %s" % (self.end_version, desired_version)
+            )
             exit(1)
-        logger.info("Finished upgrading the cluster to version %s" %
-                    (desired_version))
+        logger.info("Finished upgrading the cluster to version %s" % (desired_version))

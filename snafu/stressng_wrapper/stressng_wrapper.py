@@ -6,19 +6,16 @@ import argparse
 from .trigger_stressng import Trigger_stressng
 
 
-class stressng_wrapper():
-
+class stressng_wrapper:
     def __init__(self, parent_parser):
-        parser_object = argparse.ArgumentParser(description="StressNG Wrapper script",
-                                                parents=[parent_parser],
-                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser_object = argparse.ArgumentParser(
+            description="StressNG Wrapper script",
+            parents=[parent_parser],
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        )
         parser = parser_object.add_argument_group("StressNG benchmark")
-        parser.add_argument(
-            '-u', '--uuid', nargs=1,
-            help='Provide the uuid')
-        parser.add_argument(
-            '-j', '--jobfile',
-            help='Provide the jobfile for stressNG', required=True)
+        parser.add_argument("-u", "--uuid", nargs=1, help="Provide the uuid")
+        parser.add_argument("-j", "--jobfile", help="Provide the jobfile for stressNG", required=True)
         self.args = parser_object.parse_args()
 
         self.args.runtype = ""

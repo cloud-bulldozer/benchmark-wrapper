@@ -16,43 +16,34 @@ import argparse
 from .trigger_scale import Trigger_scale
 
 
-class scale_openshift_wrapper():
-
+class scale_openshift_wrapper:
     def __init__(self, parent_parser):
-        parser_object = argparse.ArgumentParser(description="Scale Wrapper script", parents=[parent_parser],
-                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser_object = argparse.ArgumentParser(
+            description="Scale Wrapper script",
+            parents=[parent_parser],
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        )
         parser = parser_object.add_argument_group("Scale benchmark")
+        parser.add_argument("-u", "--uuid", required=True, help="Provide the uuid")
+        parser.add_argument("--scale", default="25", type=int, help="Provide the desired nodes to scale to")
+        # Should we have a timeout here? currently unused
         parser.add_argument(
-            '-u', '--uuid',
-            required=True,
-            help='Provide the uuid')
-        parser.add_argument(
-            '--scale',
-            default="25",
-            type=int,
-            help='Provide the desired nodes to scale to')
-# Should we have a timeout here? currently unused
-        parser.add_argument(
-            '--timeout',
+            "--timeout",
             default="1000",
             type=int,
-            help='Provide the desired amount of time to wait for scale to complete')
+            help="Provide the desired amount of time to wait for scale to complete",
+        )
+        parser.add_argument("--user", default="snafu", help="Enter the user")
         parser.add_argument(
-            '--user',
-            default="snafu",
-            help='Enter the user')
+            "--incluster", default="false", help="Is this running from a pod within the cluster [true|false]"
+        )
         parser.add_argument(
-            '--incluster',
-            default="false",
-            help='Is this running from a pod within the cluster [true|false]')
-        parser.add_argument(
-            '--poll_interval',
+            "--poll_interval",
             default="5",
             type=int,
-            help='Polling interval for checks while waiting on the machine scaling')
-        parser.add_argument(
-            '--kubeconfig',
-            help='Optional kubeconfig location. Incluster cannot be true')
+            help="Polling interval for checks while waiting on the machine scaling",
+        )
+        parser.add_argument("--kubeconfig", help="Optional kubeconfig location. Incluster cannot be true")
         self.args = parser_object.parse_args()
 
         self.args.cluster_name = os.getenv("clustername", "mycluster")

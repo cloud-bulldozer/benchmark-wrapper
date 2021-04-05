@@ -21,7 +21,7 @@ import logging
 logger = logging.getLogger("snafu")
 
 
-class Trigger_vegeta():
+class Trigger_vegeta:
     def __init__(self, args):
         self.uuid = args.uuid
         self.user = args.user
@@ -31,16 +31,16 @@ class Trigger_vegeta():
         self.duration = args.duration
         self.cluster_name = args.cluster_name
         self.keepalive = args.keepalive
-        if args.results :
+        if args.results:
             self.target_name = args.target_name
             self.results = args.results
-        else :
+        else:
             self.results = None
 
     def _json_payload(self, data, sample):
         if self.results:
             targets = self.target_name
-        else :
+        else:
             targets = os.path.basename(self.targets)
 
         payload = {
@@ -53,7 +53,7 @@ class Trigger_vegeta():
             "workers": self.workers,
             "keepalive": self.keepalive,
             "targets": targets,
-            "hostname": socket.gethostname()
+            "hostname": socket.gethostname(),
         }
         payload.update(data)
         return payload
@@ -61,8 +61,8 @@ class Trigger_vegeta():
     def _run_vegeta(self):
         cmd = (
             "vegeta attack -keepalive={0} -insecure -workers={1} -duration={2}s -targets={3} -rate=0"
-            " -max-workers={1} | vegeta report --every=1s --type=json --output=vegeta.log").format(
-            self.keepalive, self.workers, self.duration, self.targets)
+            " -max-workers={1} | vegeta report --every=1s --type=json --output=vegeta.log"
+        ).format(self.keepalive, self.workers, self.duration, self.targets)
         logger.info(cmd)
         p = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return p.stdout.strip().decode("utf-8"), p.stderr.strip().decode("utf-8"), p.returncode
@@ -74,7 +74,7 @@ class Trigger_vegeta():
         bytes_out_bck = 0
         if self.results:
             vegeta_log = self.results
-        else :
+        else:
             vegeta_log = "vegeta.log"
         for l in open(vegeta_log).readlines():
             data = json.loads(l)
@@ -109,15 +109,15 @@ class Trigger_vegeta():
                 "req_latency": ltcy,
                 "timestamp": ts,
                 "bytes_in": bytes_in,
-                "bytes_out": bytes_out
+                "bytes_out": bytes_out,
             }
 
     def emit_actions(self):
         if self.results:
             for data in self._parse_stdout():
                 es_data = self._json_payload(data, 1)
-                yield es_data, 'results'
-        else :
+                yield es_data, "results"
+        else:
             if not os.path.exists(self.targets):
                 logger.critical("Targets file %s not found" % self.targets)
                 exit(1)
@@ -131,5 +131,5 @@ class Trigger_vegeta():
                     exit(1)
                 for data in self._parse_stdout():
                     es_data = self._json_payload(data, s)
-                    yield es_data, 'results'
+                    yield es_data, "results"
                 logger.info("Finished executing vegeta sample %d out of %d" % (s, self.sample))

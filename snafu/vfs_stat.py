@@ -7,6 +7,7 @@ import sys
 
 bytes_per_GiB = 1024.0 * 1024.0 * 1024.0
 
+
 def get_vfs_stat_dict(fspath):
     vfsinfo = os.statvfs(fspath)
     fsdict = {}
@@ -21,20 +22,20 @@ def get_vfs_stat_dict(fspath):
     #  note: bin only supported in python 3
     # fsdict['flag'] = bin(vfsinfo.f_flag)
     # fsdict['fsid'] = '0x%x' % vfsinfo.f_fsid
-    fsdict['vfs-stat-path'] = fspath
-    fsdict['GiB-blocks'] = vfsinfo.f_blocks * vfsinfo.f_bsize / bytes_per_GiB
+    fsdict["vfs-stat-path"] = fspath
+    fsdict["GiB-blocks"] = vfsinfo.f_blocks * vfsinfo.f_bsize / bytes_per_GiB
     # simulates "df" output
-    fsdict['pct-bytes-free'] = '%6.3f' % (100.0 * vfsinfo.f_bfree / vfsinfo.f_blocks)
+    fsdict["pct-bytes-free"] = "%6.3f" % (100.0 * vfsinfo.f_bfree / vfsinfo.f_blocks)
     # simulates "df -i" output
-    fsdict['pct-files-free'] = '%6.3f' % (100.0 * vfsinfo.f_ffree / vfsinfo.f_files)
+    fsdict["pct-files-free"] = "%6.3f" % (100.0 * vfsinfo.f_ffree / vfsinfo.f_files)
     return fsdict
 
 
 # unit test
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if len(sys.argv) > 1:
         dirpath = sys.argv[1]
     else:
-        dirpath = '.'
+        dirpath = "."
     print(json.dumps(get_vfs_stat_dict(dirpath), indent=4))

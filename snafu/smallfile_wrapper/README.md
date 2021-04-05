@@ -11,4 +11,3 @@ Smallfile wrapper uses redis to synchronize these operations. The schema below r
 ![sync-diagram](sync-diagram.png)
 
 As represented above. Smallfile's Snafu wrapper basically blocks execution waiting for a "continue" message in a Redis channel. This message is sent to the channel by the latest smallfile client to finish a workload or sample execution. This is handled by checking the number of channel subscribers is the same as the number of smallfile clients configured in the benchmark.
-

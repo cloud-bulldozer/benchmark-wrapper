@@ -20,7 +20,7 @@ import logging
 logger = logging.getLogger("snafu")
 
 
-class Trigger_oslat():
+class Trigger_oslat:
     def __init__(self, args):
         self.uuid = args.uuid
         self.user = args.user
@@ -32,17 +32,23 @@ class Trigger_oslat():
         self.use_taskset = args.use_taskset
         self.cluster_name = args.cluster_name
 
-    def _parse_stdout(self,stdout):
-        allowed_cpus_list = re.search(r'allowed.+', stdout).group().split(':')[1].strip()
-        cpus_list = re.search(r'CPU list.+', stdout).group().split(':')[1].strip()
-        cpu_main_thread = re.search(r'main thread.+', stdout).group().split(':')[1].strip()
-        command = re.search(r'cmd to.+', stdout).group().split(':')[1].strip()
-        avg_latencies = [float(i) for i in re.search(
-                         r'Average.+', stdout).group().split(':')[1].split('(')[0].strip().split()]
-        max_latencies = [int(i) for i in re.search(
-                         r'Maximum.+', stdout).group().split(':')[1].split('(')[0].strip().split()]
-        min_latencies = [int(i) for i in re.search(
-                         r'Minimum.+', stdout).group().split(':')[1].split('(')[0].strip().split()]
+    def _parse_stdout(self, stdout):
+        allowed_cpus_list = re.search(r"allowed.+", stdout).group().split(":")[1].strip()
+        cpus_list = re.search(r"CPU list.+", stdout).group().split(":")[1].strip()
+        cpu_main_thread = re.search(r"main thread.+", stdout).group().split(":")[1].strip()
+        command = re.search(r"cmd to.+", stdout).group().split(":")[1].strip()
+        avg_latencies = [
+            float(i)
+            for i in re.search(r"Average.+", stdout).group().split(":")[1].split("(")[0].strip().split()
+        ]
+        max_latencies = [
+            int(i)
+            for i in re.search(r"Maximum.+", stdout).group().split(":")[1].split("(")[0].strip().split()
+        ]
+        min_latencies = [
+            int(i)
+            for i in re.search(r"Minimum.+", stdout).group().split(":")[1].split("(")[0].strip().split()
+        ]
         result = {
             "allowed_cpus_list": allowed_cpus_list,
             "cpus_list": cpus_list,
@@ -50,7 +56,7 @@ class Trigger_oslat():
             "command": command,
             "avg_latencies": avg_latencies,
             "max_latencies": max_latencies,
-            "min_latencies": min_latencies
+            "min_latencies": min_latencies,
         }
         return result
 
@@ -70,7 +76,7 @@ class Trigger_oslat():
             "command": data["command"],
             "avg_latencies": data["avg_latencies"],
             "max_latencies": data["max_latencies"],
-            "min_latencies": data["min_latencies"]
+            "min_latencies": data["min_latencies"],
         }
         return payload
 
@@ -94,7 +100,7 @@ class Trigger_oslat():
                 logger.info("Starting output parsing")
                 data = self._parse_stdout(stdout)
                 document = self._json_payload(data, s, timestamp)
-                yield document, 'results'
+                yield document, "results"
             else:
-                raise Exception('Failed to produce oslat results document')
+                raise Exception("Failed to produce oslat results document")
                 exit(1)

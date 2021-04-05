@@ -20,7 +20,7 @@ import logging
 logger = logging.getLogger("snafu")
 
 
-class Trigger_uperf():
+class Trigger_uperf:
     def __init__(self, args):
         self.uuid = args.uuid
         self.user = args.user
@@ -65,7 +65,7 @@ class Trigger_uperf():
                 "iteration": sample,
                 "remote_ip": self.remoteip,
                 "client_ips": self.clientips,
-                "uperf_ts": datetime.fromtimestamp(int(result[0].split('.')[0]) / 1000),
+                "uperf_ts": datetime.fromtimestamp(int(result[0].split(".")[0]) / 1000),
                 "service_ip": self.serviceip,
                 "bytes": int(result[1]),
                 "norm_byte": int(result[1]) - prev_bytes,
@@ -80,11 +80,11 @@ class Trigger_uperf():
                 "networkpolicy": self.networkpolicy,
                 "density": self.pod_density,
                 "nodes_in_iter": self.nodes_in_iter,
-                "step_size" : self.step_size,
-                "colocate" : self.colocate,
-                "density_range" : [int(x) for x in self.density_range.split('-') if x != ""],
-                "node_range" : [int(x) for x in self.node_range.split('-') if x != ""],
-                "pod_id" : self.pod_id
+                "step_size": self.step_size,
+                "colocate": self.colocate,
+                "density_range": [int(x) for x in self.density_range.split("-") if x != ""],
+                "node_range": [int(x) for x in self.node_range.split("-") if x != ""],
+                "pod_id": self.pod_id,
             }
             datapoint.update(data)
             processed.append(datapoint)
@@ -111,8 +111,17 @@ class Trigger_uperf():
         # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
         results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)", stdout)
         # We assume message_size=write_message_size to prevent breaking dependant implementations
-        return results, {"test_type": test_type, "protocol": protocol, "message_size": int(wsize),
-                         "read_message_size": int(rsize), "num_threads": int(nthr), "duration": len(results)}
+        return (
+            results,
+            {
+                "test_type": test_type,
+                "protocol": protocol,
+                "message_size": int(wsize),
+                "read_message_size": int(rsize),
+                "num_threads": int(nthr),
+                "duration": len(results),
+            },
+        )
 
     def emit_actions(self):
         if not os.path.exists(self.workload):
@@ -135,7 +144,7 @@ class Trigger_uperf():
             documents = self._json_payload(results, data, s)
             if len(documents) > 0:
                 for document in documents:
-                    yield document, 'results'
+                    yield document, "results"
             logger.info(data)
             logger.info(stdout)
             logger.info("Finished executing sample %d out of %d" % (s, self.sample))

@@ -16,46 +16,37 @@ import argparse
 from .trigger_upgrade import Trigger_upgrade
 
 
-class upgrade_openshift_wrapper():
-
+class upgrade_openshift_wrapper:
     def __init__(self, parent_parser):
-        parser_object = argparse.ArgumentParser(description="Upgrade Wrapper script", parents=[parent_parser],
-                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser_object = argparse.ArgumentParser(
+            description="Upgrade Wrapper script",
+            parents=[parent_parser],
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        )
         parser = parser_object.add_argument_group("Upgrade benchmark")
+        parser.add_argument("-u", "--uuid", required=True, help="Provide the uuid")
+        parser.add_argument("--version", help="Provide the target version")
+        parser.add_argument("--toimage", help="Provide the target image location")
         parser.add_argument(
-            '-u', '--uuid',
-            required=True,
-            help='Provide the uuid')
+            "--latest", help="Upgrades to the latest version available in the path when set to true"
+        )
+        parser.add_argument("--user", default="snafu", help="Enter the user")
         parser.add_argument(
-            '--version',
-            help='Provide the target version')
+            "--incluster", default="false", help="Is this running from a pod within the cluster [true|false]"
+        )
         parser.add_argument(
-            '--toimage',
-            help='Provide the target image location')
-        parser.add_argument(
-            '--latest',
-            help='Upgrades to the latest version available in the path when set to true')
-        parser.add_argument(
-            '--user',
-            default="snafu",
-            help='Enter the user')
-        parser.add_argument(
-            '--incluster',
-            default="false",
-            help='Is this running from a pod within the cluster [true|false]')
-        parser.add_argument(
-            '--poll_interval',
+            "--poll_interval",
             default="5",
             type=int,
-            help='Polling interval (in seconds) to wait between checking if the upgrade is complete')
+            help="Polling interval (in seconds) to wait between checking if the upgrade is complete",
+        )
         parser.add_argument(
-            '--timeout',
+            "--timeout",
             default="240",
             type=int,
-            help='Timeout (in minutes) to wait for the upgrade to complete')
-        parser.add_argument(
-            '--kubeconfig',
-            help='Optional kubeconfig location. Incluster cannot be true')
+            help="Timeout (in minutes) to wait for the upgrade to complete",
+        )
+        parser.add_argument("--kubeconfig", help="Optional kubeconfig location. Incluster cannot be true")
         self.args = parser_object.parse_args()
 
         self.args.cluster_name = os.getenv("clustername", "mycluster")

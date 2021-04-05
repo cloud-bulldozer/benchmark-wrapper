@@ -5,11 +5,9 @@ import os
 from .trigger_hammerdb import Trigger_hammerdb
 
 
-class hammerdb_wrapper():
+class hammerdb_wrapper:
     def __init__(self, parser):
-        parser.add_argument(
-            '-u', '--uuid', nargs=1,
-            help='Provide the uuid')
+        parser.add_argument("-u", "--uuid", nargs=1, help="Provide the uuid")
         self.args = parser.parse_args()
         # generic benchmark parameters
         self.args.db_type = ""

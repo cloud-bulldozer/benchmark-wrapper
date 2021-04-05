@@ -64,6 +64,6 @@
         "label": "node_load15",
         "query": "avg(node_load15) by (instance)"
      }
-     
+
   }
 }

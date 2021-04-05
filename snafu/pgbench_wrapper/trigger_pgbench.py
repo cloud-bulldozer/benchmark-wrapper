@@ -18,7 +18,7 @@ import subprocess
 from datetime import datetime
 
 
-class Trigger_pgbench():
+class Trigger_pgbench:
     def __init__(self, args):
         self.port = args.port
         self.uuid = args.uuid
@@ -35,59 +35,50 @@ class Trigger_pgbench():
 
         # Initialize json payload shared metadata
         self.meta_processed = []
-        self.meta_processed.append({
-            "workload": "pgbench",
-            "pgb_vers": self.pgb_vers,
-            "uuid": self.uuid,
-            "user": self.user,
-            "cluster_name": args.cluster_name,
-            "iteration": int(args.run[0]),
-            "database": self.database,
-            "run_start_timestamp": self.run_start_timestamp,
-            "sample_start_timestamp": self.sample_start_timestamp,
-            "description": self.description,
-        })
+        self.meta_processed.append(
+            {
+                "workload": "pgbench",
+                "pgb_vers": self.pgb_vers,
+                "uuid": self.uuid,
+                "user": self.user,
+                "cluster_name": args.cluster_name,
+                "iteration": int(args.run[0]),
+                "database": self.database,
+                "run_start_timestamp": self.run_start_timestamp,
+                "sample_start_timestamp": self.sample_start_timestamp,
+                "description": self.description,
+            }
+        )
 
     def _json_payload(self, meta_processed, data):
         processed = copy.deepcopy(meta_processed)
-        for line in data['config']:
-            processed[0].update({
-                "{}".format(line[0]): self._num_convert(line[1])
-            })
-        for line in data['results']:
-            processed[0].update({
-                "{}".format(line[0]): self._num_convert(line[1])
-            })
+        for line in data["config"]:
+            processed[0].update({"{}".format(line[0]): self._num_convert(line[1])})
+        for line in data["results"]:
+            processed[0].update({"{}".format(line[0]): self._num_convert(line[1])})
         return processed
 
     def _json_payload_raw(self, meta_processed, data):
         processed = copy.deepcopy(meta_processed)
-        for line in data['config']:
-            processed[0].update({
-                "{}".format(line[0]): self._num_convert(line[1])
-            })
-        processed[0].update({
-            "raw_output_b64": data['raw_output_b64'].decode("utf-8")
-        })
+        for line in data["config"]:
+            processed[0].update({"{}".format(line[0]): self._num_convert(line[1])})
+        processed[0].update({"raw_output_b64": data["raw_output_b64"].decode("utf-8")})
         return processed
 
     def _json_payload_prog(self, meta_processed, progress, data):
         processed = []
         for prog in progress:
             entry = copy.copy(meta_processed[0])
-            for line in data['config']:
-                if 'timestamp' not in line[0]:
-                    entry.update({
-                        "{}".format(line[0]): self._num_convert(line[1])
-                    })
+            for line in data["config"]:
+                if "timestamp" not in line[0]:
+                    entry.update({"{}".format(line[0]): self._num_convert(line[1])})
             entry.update(prog)
             processed.append(entry)
         return processed
 
     def _run_pgbench(self):
         cmd = "pgbench -P 10 --progress-timestamp $pgbench_opts"
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         return stdout.strip().decode("utf-8"), stderr.strip().decode("utf-8"), process.returncode
 
@@ -116,27 +107,26 @@ class Trigger_pgbench():
         results = []
         config = stdout.splitlines()
         for idx, line in enumerate(config):
-            config[idx] = line.replace(' = ', ':').split(':', 1)
+            config[idx] = line.replace(" = ", ":").split(":", 1)
             config[idx][0] = config[idx][0].replace(" ", "_").strip()
             config[idx][1] = self._num_convert(config[idx][1].strip())
-            if re.search('tps|latency|processed', config[idx][0]):
+            if re.search("tps|latency|processed", config[idx][0]):
                 results.append(config[idx])
-            if re.search('duration', config[idx][0]):
+            if re.search("duration", config[idx][0]):
                 config[idx][0] += "_seconds"
                 config[idx][1] = self._num_convert(config[idx][1].split()[0])
         for idx, line in enumerate(results):
             if line in config:
                 config.remove(line)
-            if re.search('tps', results[idx][0]):
-                cons = re.findall('.*\((....)uding.*', results[idx][1])  # noqa
+            if re.search("tps", results[idx][0]):
+                cons = re.findall(".*\((....)uding.*", results[idx][1])  # noqa
                 if cons:
-                    results[idx][0] = 'tps_{}_con_est'.format(cons[0]).strip()
-                    results[idx][1] = self._num_convert(
-                        re.sub(' \(.*', '', results[idx][1]).strip())  # noqa
-            elif re.search('latency', results[idx][0]):
+                    results[idx][0] = "tps_{}_con_est".format(cons[0]).strip()
+                    results[idx][1] = self._num_convert(re.sub(" \(.*", "", results[idx][1]).strip())  # noqa
+            elif re.search("latency", results[idx][0]):
                 results[idx][0] += "_ms"
                 results[idx][1] = self._num_convert(results[idx][1].split(" ", 1)[0])
-            elif re.search('processed', results[idx][0]):
+            elif re.search("processed", results[idx][0]):
                 try:
                     results[idx][1] = self._num_convert(results[idx][1].split("/", 1)[0])
                 except AttributeError:
@@ -148,12 +138,14 @@ class Trigger_pgbench():
         progress = []
         for line in stderr.splitlines():
             if "progress" in line:
-                progress.append({
-                    "timestamp": datetime.fromtimestamp(float(line.split(" ")[1])),
-                    "tps": float(line.split(" ")[3]),
-                    "latency_ms": float(line.split(" ")[6]),
-                    "stddev": float(line.split(" ")[9])
-                })
+                progress.append(
+                    {
+                        "timestamp": datetime.fromtimestamp(float(line.split(" ")[1])),
+                        "tps": float(line.split(" ")[3]),
+                        "latency_ms": float(line.split(" ")[6]),
+                        "stddev": float(line.split(" ")[9]),
+                    }
+                )
         return progress
 
     def _summarize_data(self, data, iteration, uuid, database, pgb_vers):
@@ -166,14 +158,14 @@ class Trigger_pgbench():
         print("Database: {}".format(database))
         print("")
         print("PGBench run info:")
-        for line in data['config']:
+        for line in data["config"]:
             print("          {}: {}".format(line[0], line[1]))
         print("")
         # I asked for a mai tai, and they brought me a pina colada,
         # and I said no salt, NO salt on the margarita, but it had salt
         # on it, big grains of salt, floating in the glass.
         print("TPS report:")
-        for line in data['results']:
+        for line in data["results"]:
             print("          {}: {}".format(line[0], line[1]))
         print("")
         print("+{}+".format("-" * (115)))
@@ -199,12 +191,12 @@ class Trigger_pgbench():
         print("\n")
         if len(documents) > 0:
             for document in documents:
-                yield document, 'summary'
+                yield document, "summary"
 
         if len(documents_raw) > 0:
             for document in documents_raw:
-                yield document, 'raw'
+                yield document, "raw"
 
         if len(documents_prog) > 0:
             for document in documents_prog:
-                yield document, 'results'
+                yield document, "results"

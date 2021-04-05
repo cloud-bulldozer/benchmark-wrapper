@@ -1,4 +1,3 @@
-
 from snafu.vegeta_wrapper.vegeta_wrapper import vegeta_wrapper
 from snafu.fio_wrapper.fio_wrapper import fio_wrapper
 from snafu.smallfile_wrapper.smallfile_wrapper import smallfile_wrapper
@@ -18,6 +17,7 @@ from snafu.flent_wrapper.flent_wrapper import flent_wrapper
 from snafu.log_generator_wrapper.log_generator_wrapper import log_generator_wrapper
 
 import logging
+
 logger = logging.getLogger("snafu")
 
 wrapper_dict = {
@@ -37,9 +37,9 @@ wrapper_dict = {
     "oslat": oslat_wrapper,
     "trex": trex_wrapper,
     "flent": flent_wrapper,
-    "log_generator": log_generator_wrapper
-
+    "log_generator": log_generator_wrapper,
 }
+
 
 def wrapper_factory(tool_name, parser):
     try:

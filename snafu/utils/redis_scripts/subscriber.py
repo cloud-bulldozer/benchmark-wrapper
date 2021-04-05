@@ -17,12 +17,12 @@ def run_subscriber(redis_host, redis_port, benchmark):
         count = 1
 
         while STATE:
-            print("Waiting For all {} Pods to get ready ...{}".format(benchmark,count))
+            print("Waiting For all {} Pods to get ready ...{}".format(benchmark, count))
             count += 1
             message = p.get_message()
             if message:
-                command = message['data']
-                if command == b'run':
+                command = message["data"]
+                if command == b"run":
                     STATE = False
 
             time.sleep(1)
@@ -37,11 +37,14 @@ def run_subscriber(redis_host, redis_port, benchmark):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='Redis Subscriber')
-    parser.add_argument("--redis-host", help="input the redis server address. DEFAULT: localhost",
-                        default="localhost", type=str)
-    parser.add_argument("--redis-port", help="input the redis port. DEFAULT: 6379", default=6379,
-                        type=int)
+    parser = argparse.ArgumentParser(prog="Redis Subscriber")
+    parser.add_argument(
+        "--redis-host",
+        help="input the redis server address. DEFAULT: localhost",
+        default="localhost",
+        type=str,
+    )
+    parser.add_argument("--redis-port", help="input the redis port. DEFAULT: 6379", default=6379, type=int)
     parser.add_argument("benchmark", help="input the benchmark to be executed", type=str)
     args = parser.parse_args()
     redis_host = args.redis_host
@@ -50,5 +53,5 @@ def main():
     run_subscriber(redis_host, redis_port, benchmark)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

@@ -23,4 +23,3 @@ COPY snafu/hammerdb/uid_entrypoint /usr/local/bin/
 RUN chmod g+w /etc/passwd
 RUN chmod 755 /usr/local/bin/uid_entrypoint
 RUN /usr/local/bin/uid_entrypoint
-

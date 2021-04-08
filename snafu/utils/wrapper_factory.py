@@ -15,6 +15,7 @@ from snafu.oslat_wrapper.oslat_wrapper import oslat_wrapper
 from snafu.trex_wrapper.trex_wrapper import trex_wrapper
 from snafu.flent_wrapper.flent_wrapper import flent_wrapper
 from snafu.log_generator_wrapper.log_generator_wrapper import log_generator_wrapper
+from snafu.image_pull_wrapper.image_pull_wrapper import image_pull_wrapper
 
 import logging
 
@@ -38,6 +39,7 @@ wrapper_dict = {
     "trex": trex_wrapper,
     "flent": flent_wrapper,
     "log_generator": log_generator_wrapper,
+    "image_pull": image_pull_wrapper,
 }
 
 

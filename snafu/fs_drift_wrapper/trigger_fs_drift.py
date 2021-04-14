@@ -107,6 +107,8 @@ class _trigger_fs_drift:
                     if line == "":
                         continue
                     flds = line.split(",")
+                    rsptime_date = start_time + int(flds[0])
+                    rsptime_date_str = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(rsptime_date))
                     interval = {}
                     # number of fs-drift file operations in this interval
                     interval["op-count"] = int(flds[2])
@@ -122,8 +124,6 @@ class _trigger_fs_drift:
                     interval["uuid"] = self.uuid
                     interval["user"] = self.user
                     interval["sample"] = self.sample
-                    rsptime_date = start_time + int(flds[0])
-                    rsptime_date_str = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(rsptime_date))
                     interval["date"] = rsptime_date_str
                     # file operations per second in this interval
                     interval["file-ops-per-sec"] = float(flds[2]) / sampling_interval

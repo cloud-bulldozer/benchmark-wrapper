@@ -1,6 +1,5 @@
 /.project
 /.pydevproject
 *.pyc
-.tox/
 ripsaw
 results.markdown

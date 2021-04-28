@@ -26,6 +26,7 @@ environments, develop in SNAFU and then write benchmark-operator benchmark to in
 | Log Generator                  | Log throughput to backend      | Working            |
 | Image Pull                     | Time to copy from a container image from a repo | Working |
 | sysbench                       | CPU,Memory,Mutex,Threads,Fileio | Working |
+| DNS-Perf                       | DNS Performance                | Working            |
 
 ## What backend storage do we support?
 

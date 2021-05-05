@@ -41,7 +41,7 @@ cache_reload_time = int(os.getenv("CACHE_RELOAD_TIME", default=10))
 
 
 def drop_cache():
-    ceph_cache_drop_pod_ip = os.getenv("ceph_drop_pod_ip")
+    ceph_cache_drop_pod_ip = os.getenv("ceph_osd_cache_drop_pod_ip")
     if ceph_cache_drop_pod_ip is not None:
         logger.info("ceph OSD cache drop pod: %s" % str(ceph_cache_drop_pod_ip))
         conn = http.client.HTTPConnection(
@@ -49,8 +49,8 @@ def drop_cache():
         )
         if http_debug_level > 0:
             conn.set_debuglevel(http_debug_level)
-        logger.info("requesting ceph to drop cache via %s:%d" % (ceph_cache_drop_pod_ip, dropCephCachePort))
-        conn.request("GET", "/DropCephCache")
+        logger.info("requesting ceph to drop OSD cache via %s:%d" % (ceph_cache_drop_pod_ip, dropCephCachePort))
+        conn.request("GET", "/DropOSDCache")
         rsp = conn.getresponse()
         if rsp.status != http.client.OK:
             logger.error("HTTP ERROR %d: %s" % (rsp.status, rsp.reason))

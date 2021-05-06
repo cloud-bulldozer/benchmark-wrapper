@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import subprocess
-import time
+import datetime
 import logging
 
 logger = logging.getLogger("snafu")

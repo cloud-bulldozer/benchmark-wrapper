@@ -94,9 +94,10 @@ class Trigger_hammerdb:
         data = []
         for line in stdout.splitlines():
             if "TEST RESULT" in line:
-                worker = (line.split(":"))[0]
-                tpm = (line.split(" "))[6]
-                nopm = (line.split(" "))[-2]
+                worker_name = (line.split())[1]
+                worker = int((worker_name.split(":"))[0])
+                tpm = int((line.split())[-3])
+                nopm = int((line.split())[-6])
                 entry = [worker, tpm, nopm]
                 data.append(entry)
         return data
@@ -223,7 +224,7 @@ class Trigger_hammerdb:
             current_worker *= 2
 
     def emit_actions(self):
-        timestamp = str(int(time.time()))
+        timestamp = datetime.datetime.utcnow()
         logger.info("Starting hammerdb run")
         stdout = self._run_hammerdb()
         if stdout[1] == 1:

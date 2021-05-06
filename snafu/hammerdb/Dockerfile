@@ -15,10 +15,10 @@ RUN pip3 install -e /opt/snafu/
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Download and install the hammer suite
-RUN curl -L 'https://github.com/TPC-Council/HammerDB/releases/download/v3.3/HammerDB-3.3-Linux-x86-64-Install' -o hammer_installer
+RUN curl -LO https://github.com/TPC-Council/HammerDB/releases/download/v4.0/HammerDB-4.0-Linux.tar.gz
+RUN tar -xf HammerDB-4.0-Linux.tar.gz
 RUN mkdir /hammer
-RUN chmod 755 hammer_installer
-RUN ./hammer_installer --prefix /hammer --mode silent
+RUN mv HammerDB-4.0/* /hammer
 COPY snafu/hammerdb/uid_entrypoint /usr/local/bin/
 RUN chmod g+w /etc/passwd
 RUN chmod 755 /usr/local/bin/uid_entrypoint

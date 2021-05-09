@@ -57,7 +57,8 @@ class log_generator_wrapper:
         parser.add_argument(
             "--es-index", type=str, default="app*", help="The ES index to search for the messages"
         )
-
+        parser.add_argument("--kafka-bootstrap-server", help="The Kafka Service to connect to")
+        parser.add_argument("--kafka-topic", help="The Kafka topic to verify logs")
         self.args = parser_object.parse_args()
 
         self.args.cluster_name = os.getenv("clustername", "mycluster")

@@ -96,7 +96,7 @@ class Trigger_hammerdb:
             if "TEST RESULT" in line:
                 worker_name = (line.split())[1]
                 worker = int((worker_name.split(":"))[0])
-                if (line.split())[-3] == 'SQL':  # MSSQL
+                if (line.split())[-3] == "SQL":  # MSSQL
                     tpm = int((line.split())[-4])
                     nopm = int((line.split())[-7])
                 else:  # PostgreSQL, MySQL

@@ -194,6 +194,7 @@ class Trigger_hammerdb:
                 print("")
                 print("HammerDB results for:")
                 print("UUID: {}".format(entry["uuid"]))
+                print("ocp_version: {}".format(entry["ocp_version"]))
                 print("Database server: {}".format(entry["db_server"]))
                 print("Database port: {}".format(entry["db_port"]))
                 print("Number of database warehouses: {}".format(entry["db_warehouses"]))

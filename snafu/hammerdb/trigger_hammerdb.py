@@ -95,7 +95,8 @@ class Trigger_hammerdb:
         data = []
         for line in stdout.splitlines():
             if "TEST RESULT" in line:
-                worker = (line.split(":"))[0]
+                worker_name = (line.split())[1]
+                worker = int((worker_name.split(":"))[0])
                 if (line.split())[-3] == "SQL":  # MSSQL
                     tpm = int((line.split())[-4])
                     nopm = int((line.split())[-7])
@@ -194,7 +195,6 @@ class Trigger_hammerdb:
                 print("")
                 print("HammerDB results for:")
                 print("UUID: {}".format(entry["uuid"]))
-                print("ocp_version: {}".format(entry["ocp_version"]))
                 print("Database server: {}".format(entry["db_server"]))
                 print("Database port: {}".format(entry["db_port"]))
                 print("Number of database warehouses: {}".format(entry["db_warehouses"]))

@@ -10,6 +10,7 @@ class hammerdb_wrapper:
         parser.add_argument("-u", "--uuid", nargs=1, help="Provide the uuid")
         self.args = parser.parse_args()
         # generic benchmark parameters
+        self.args.ocp_version= ""
         self.args.db_type = ""
         self.args.db_server = ""
         self.args.db_port = ""
@@ -54,6 +55,8 @@ class hammerdb_wrapper:
         self.args.db_postgresql_storedprocs = ""
 
         # exporting the generic settings
+        if "ocp_version" in os.environ:
+            self.args.ocp_version = os.environ["ocp_version"]
         if "db_type" in os.environ:
             self.args.db_type = os.environ["db_type"]
         if "db_server" in os.environ:

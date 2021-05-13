@@ -11,7 +11,7 @@ class Trigger_hammerdb:
     def __init__(self, args):
         self.uuid = args.uuid
         # generic arguments
-        self.ocp_version= args.ocp_version
+        self.ocp_version = args.ocp_version
         self.db_type = args.db_type
         self.db_server = args.db_server
         self.db_port = args.db_port
@@ -242,6 +242,7 @@ class Trigger_hammerdb:
         documents = self._json_payload(
             data,
             self.uuid,
+            self.ocp_version,
             self.db_server,
             self.db_type,
             self.db_port,

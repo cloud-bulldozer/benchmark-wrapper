@@ -246,6 +246,7 @@ class Trigger_hammerdb:
             self.uuid,
             self.ocp_version,
             self.db_server,
+            self.ocp_version,
             self.db_type,
             self.db_port,
             self.db_warehouses,

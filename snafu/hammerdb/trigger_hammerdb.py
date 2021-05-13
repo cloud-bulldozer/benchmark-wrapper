@@ -11,6 +11,7 @@ class Trigger_hammerdb:
     def __init__(self, args):
         self.uuid = args.uuid
         # generic arguments
+        self.ocp_version= args.ocp_version
         self.db_type = args.db_type
         self.db_server = args.db_server
         self.db_port = args.db_port

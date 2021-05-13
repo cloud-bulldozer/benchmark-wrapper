@@ -111,6 +111,7 @@ class Trigger_hammerdb:
         self,
         data,
         uuid,
+        ocp_version,
         db_type,
         db_server,
         db_port,
@@ -144,6 +145,7 @@ class Trigger_hammerdb:
                     {
                         "workload": "hammerdb",
                         "uuid": uuid,
+                        "ocp_version": ocp_version,
                         "db_type": db_type,
                         "db_server": db_server,
                         "db_port": db_port,

@@ -10,7 +10,7 @@ class hammerdb_wrapper:
         parser.add_argument("-u", "--uuid", nargs=1, help="Provide the uuid")
         self.args = parser.parse_args()
         # generic benchmark parameters
-        self.args.ocp_version= ""
+        self.args.ocp_version = ""
         self.args.db_type = ""
         self.args.db_server = ""
         self.args.db_port = ""

@@ -53,9 +53,9 @@ class Trigger_hammerdb:
         self.db_postgresql_oracompat = args.db_postgresql_oracompat
         self.db_postgresql_storedprocs = args.db_postgresql_storedprocs
         # es customs fields
-        self.ocp_version = args.ocp_version
-        self.cnv_version = args.cnv_version
-        self.db_version = args.db_version
+        self.es_ocp_version = args.es_ocp_version
+        self.es_cnv_version = args.es_cnv_version
+        self.es_db_version = args.es_db_version
 
     def _pack_db_info(self):
         db_info = []
@@ -133,9 +133,9 @@ class Trigger_hammerdb:
         async_client,
         async_verbose,
         async_delay,
-        ocp_version,
-        cnv_version,
-        db_version,
+        es_ocp_version,
+        es_cnv_version,
+        es_db_version,
         timestamp,
     ):
         db_info = self._pack_db_info()
@@ -174,9 +174,9 @@ class Trigger_hammerdb:
                         "worker": data[i][0],
                         "tpm": data[i][1],
                         "nopm": data[i][2],
-                        "ocp_version": ocp_version,
-                        "cnv_version": cnv_version,
-                        "db_version": db_version,
+                        "es_ocp_version": es_ocp_version,
+                        "es_cnv_version": es_cnv_version,
+                        "es_db_version": es_db_version,
                         "timestamp": timestamp,
                     }
                 )
@@ -270,9 +270,9 @@ class Trigger_hammerdb:
             self.async_client,
             self.async_verbose,
             self.async_delay,
-            self.ocp_version,
-            self.cnv_version,
-            self.db_version,
+            self.es_ocp_version,
+            self.es_cnv_version,
+            self.es_db_version,
             timestamp,
         )
         if len(documents) > 0:

@@ -11,7 +11,6 @@ class Trigger_hammerdb:
     def __init__(self, args):
         self.uuid = args.uuid
         # generic arguments
-        self.ocp_version = args.ocp_version
         self.db_type = args.db_type
         self.db_server = args.db_server
         self.db_port = args.db_port
@@ -53,6 +52,10 @@ class Trigger_hammerdb:
         self.db_postgresql_dritasnap = args.db_postgresql_dritasnap
         self.db_postgresql_oracompat = args.db_postgresql_oracompat
         self.db_postgresql_storedprocs = args.db_postgresql_storedprocs
+        # es customs fields
+        self.ocp_version = args.ocp_version
+        self.cnv_version = args.cnv_version
+        self.db_version = args.db_version
 
     def _pack_db_info(self):
         db_info = []
@@ -131,6 +134,9 @@ class Trigger_hammerdb:
         async_client,
         async_verbose,
         async_delay,
+        ocp_version,
+        cnv_version,
+        db_version,
         timestamp,
     ):
         db_info = self._pack_db_info()
@@ -170,6 +176,9 @@ class Trigger_hammerdb:
                         "worker": data[i][0],
                         "tpm": data[i][1],
                         "nopm": data[i][2],
+                        "ocp_version": ocp_version,
+                        "cnv_version": cnv_version,
+                        "db_version": db_version,
                         "timestamp": timestamp,
                     }
                 )
@@ -264,6 +273,9 @@ class Trigger_hammerdb:
             self.async_client,
             self.async_verbose,
             self.async_delay,
+            self.ocp_version,
+            self.cnv_version,
+            self.db_version,
             timestamp,
         )
         if len(documents) > 0:

@@ -114,7 +114,6 @@ class Trigger_hammerdb:
         self,
         data,
         uuid,
-        ocp_version,
         db_type,
         db_server,
         db_port,
@@ -151,7 +150,6 @@ class Trigger_hammerdb:
                     {
                         "workload": "hammerdb",
                         "uuid": uuid,
-                        "ocp_version": ocp_version,
                         "db_type": db_type,
                         "db_server": db_server,
                         "db_port": db_port,
@@ -253,7 +251,6 @@ class Trigger_hammerdb:
         documents = self._json_payload(
             data,
             self.uuid,
-            self.ocp_version,
             self.db_server,
             self.db_type,
             self.db_port,

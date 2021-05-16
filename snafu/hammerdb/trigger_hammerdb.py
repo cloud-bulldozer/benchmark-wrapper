@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import subprocess
-import time
+import datetime
 import logging
 
 logger = logging.getLogger("snafu")
@@ -52,6 +52,11 @@ class Trigger_hammerdb:
         self.db_postgresql_dritasnap = args.db_postgresql_dritasnap
         self.db_postgresql_oracompat = args.db_postgresql_oracompat
         self.db_postgresql_storedprocs = args.db_postgresql_storedprocs
+        # es customs fields
+        self.es_ocp_version = args.es_ocp_version
+        self.es_cnv_version = args.es_cnv_version
+        self.es_db_version = args.es_db_version
+        self.es_os_version = args.es_os_version
 
     def _pack_db_info(self):
         db_info = []
@@ -96,8 +101,12 @@ class Trigger_hammerdb:
             if "TEST RESULT" in line:
                 worker_name = (line.split())[1]
                 worker = int((worker_name.split(":"))[0])
-                tpm = int((line.split())[-3])
-                nopm = int((line.split())[-6])
+                if (line.split())[-3] == "SQL":  # MSSQL
+                    tpm = int((line.split())[-4])
+                    nopm = int((line.split())[-7])
+                else:  # PostgreSQL, MySQL
+                    tpm = int((line.split())[-3])
+                    nopm = int((line.split())[-6])
                 entry = [worker, tpm, nopm]
                 data.append(entry)
         return data
@@ -125,6 +134,10 @@ class Trigger_hammerdb:
         async_client,
         async_verbose,
         async_delay,
+        es_ocp_version,
+        es_cnv_version,
+        es_db_version,
+        es_os_version,
         timestamp,
     ):
         db_info = self._pack_db_info()
@@ -163,6 +176,10 @@ class Trigger_hammerdb:
                         "worker": data[i][0],
                         "tpm": data[i][1],
                         "nopm": data[i][2],
+                        "es_ocp_version": es_ocp_version,
+                        "es_cnv_version": es_cnv_version,
+                        "es_db_version": es_db_version,
+                        "es_os_version": es_os_version,
                         "timestamp": timestamp,
                     }
                 )
@@ -256,6 +273,10 @@ class Trigger_hammerdb:
             self.async_client,
             self.async_verbose,
             self.async_delay,
+            self.es_ocp_version,
+            self.es_cnv_version,
+            self.es_db_version,
+            self.es_os_version,
             timestamp,
         )
         if len(documents) > 0:

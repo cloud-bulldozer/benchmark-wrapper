@@ -57,6 +57,7 @@ class Trigger_hammerdb:
         self.es_cnv_version = args.es_cnv_version
         self.es_db_version = args.es_db_version
         self.es_os_version = args.es_os_version
+        self.es_kind = args.es_kind
 
     def _pack_db_info(self):
         db_info = []
@@ -138,6 +139,7 @@ class Trigger_hammerdb:
         es_cnv_version,
         es_db_version,
         es_os_version,
+        es_kind,
         timestamp,
     ):
         db_info = self._pack_db_info()
@@ -180,6 +182,7 @@ class Trigger_hammerdb:
                         "es_cnv_version": es_cnv_version,
                         "es_db_version": es_db_version,
                         "es_os_version": es_os_version,
+                        "es_kind": es_kind,
                         "timestamp": timestamp,
                     }
                 )
@@ -277,6 +280,7 @@ class Trigger_hammerdb:
             self.es_cnv_version,
             self.es_db_version,
             self.es_os_version,
+            self.es_kind,
             timestamp,
         )
         if len(documents) > 0:

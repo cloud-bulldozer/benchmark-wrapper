@@ -21,6 +21,7 @@ import logging
 import boto3
 import json
 import subprocess
+import uuid
 from kafka import KafkaConsumer, TopicPartition
 
 logger = logging.getLogger("snafu")
@@ -200,10 +201,11 @@ class Trigger_log_generator:
             return 0
 
     def _check_kafka(self, start_time, end_time):
+        group_uuid = "verify_" + str(uuid.uuid4())
         try:
             consumer = KafkaConsumer(
                 self.kafka_topic,
-                group_id="verify1",
+                group_id=group_uuid,
                 bootstrap_servers=[self.kafka_bootstrap_server],
                 consumer_timeout_ms=1000,
             )  # Create consumer for the topic in a new consumer group

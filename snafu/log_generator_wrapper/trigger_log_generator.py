@@ -21,6 +21,7 @@ import logging
 import boto3
 import json
 import subprocess
+from kafka import KafkaConsumer, TopicPartition
 
 logger = logging.getLogger("snafu")
 
@@ -44,6 +45,8 @@ class Trigger_log_generator:
         self.es_url = args.es_url
         self.es_token = args.es_token
         self.es_index = args.es_index
+        self.kafka_bootstrap_server = args.kafka_bootstrap_server
+        self.kafka_topic = args.kafka_topic
 
         if self.messages_per_minute:
             self.total_messages = self.messages_per_minute * self.duration
@@ -79,6 +82,12 @@ class Trigger_log_generator:
         elif self.es_url:
             backend = {"es_url": self.es_url, "es_index": self.es_index, "backend": "elasticsearch"}
             payload.update(backend)
+        elif self.kafka_bootstrap_server:
+            backend = {
+                "kafka_bootstrap_server": self.kafka_bootstrap_server,
+                "kafka_topic": self.kafka_topic,
+                "backend": "kafka",
+            }
         payload.update(data)
         return payload
 
@@ -190,6 +199,50 @@ class Trigger_log_generator:
             logging.info(err)
             return 0
 
+    def _check_kafka(self, start_time, end_time):
+        try:
+            consumer = KafkaConsumer(
+                self.kafka_topic,
+                group_id="verify1",
+                bootstrap_servers=[self.kafka_bootstrap_server],
+                consumer_timeout_ms=1000,
+            )  # Create consumer for the topic in a new consumer group
+        except Exception as e:
+            logging.error("Error connecting to kafka/topic: {}".format(e))  # exit if can't connect to kafka
+            exit(1)
+        partitions = consumer.partitions_for_topic(self.kafka_topic)  # get all partitions for the topic
+        consumer.poll()  # dummy poll so that future seek works
+        count = 0  # initialize count of logs in kafka to 0
+        for partition in partitions:  # loop over all partitions for this topic
+            tp = TopicPartition(self.kafka_topic, partition)
+            beg = consumer.offsets_for_times(
+                {tp: start_time * 1000}
+            )  # get all offsets with timestamp in ms greater than or equal to start_time
+            last = consumer.offsets_for_times(
+                {tp: end_time * 1000}
+            )  # get all offsets with timestamp in ms greater than or equal to start_time
+            if beg[tp] is None:
+                continue  # continue to next partition if no offsets found during test in this partition
+            consumer.seek(tp, beg[tp].offset)  # seek to the offset corresponding to start_time of test
+            for msg in consumer:
+                log_msg = msg.value.decode("utf-8")  # the log messages need to be decoded
+                log_dict = json.loads(
+                    log_msg
+                )  # the json structure was stored as string, so get it back to json to extract message
+                if last[tp] is None:  # handle case where there are no offsets at all after the end_time
+                    if (
+                        log_dict["message"] == self.my_message
+                    ):  # check to make sure the message stored matches the message generated
+                        count += 1
+                else:  # handle case when there are some offsets after the end_time that need to be discounted
+                    if msg.offset >= last[tp].offset:
+                        break  # break out of loop if we encounter an offset after the test end_time
+                    if (
+                        log_dict["message"] == self.my_message
+                    ):  # check to make sure the message stored matches the message generated
+                        count += 1
+        return count
+
     def emit_actions(self):
         logger.info(
             "Running log test with %d byte size for %d minutes at a rate of %d messages per second"
@@ -205,15 +258,17 @@ class Trigger_log_generator:
 
         logger.info("All messages sent")
 
-        if self.cloudwatch_log_group or self.es_url:
+        if self.cloudwatch_log_group or self.es_url or self.kafka_bootstrap_server:
             logger.info("Confirming all %d messages received in backend" % (message_count))
             received_all_messages = False
             current_time = time.time()
             while not received_all_messages and current_time <= end_time + self.timeout:
                 if self.cloudwatch_log_group:
                     messages_received = self._check_cloudwatch(int(start_time), int(end_time))
-                else:
+                elif self.es_url:
                     messages_received = self._check_es(int(start_time), int(end_time))
+                elif self.kafka_bootstrap_server:
+                    messages_received = self._check_kafka(start_time, end_time)
                 if messages_received == message_count:
                     received_all_messages = True
                 else:

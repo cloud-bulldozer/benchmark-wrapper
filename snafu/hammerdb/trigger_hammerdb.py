@@ -254,8 +254,8 @@ class Trigger_hammerdb:
         documents = self._json_payload(
             data,
             self.uuid,
-            self.db_server,
             self.db_type,
+            self.db_server,
             self.db_port,
             self.db_warehouses,
             self.db_num_workers,

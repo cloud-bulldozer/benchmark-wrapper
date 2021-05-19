@@ -22,9 +22,12 @@ import boto3
 import json
 import subprocess
 import uuid
+import os
 from kafka import KafkaConsumer, TopicPartition
 
 logger = logging.getLogger("snafu")
+if (os.getenv("snafu_disable_logs", "False")) == "True":
+    logger.disabled = True
 
 
 class Trigger_log_generator:

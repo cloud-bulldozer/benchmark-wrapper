@@ -303,7 +303,7 @@ class Trigger_log_generator:
 
         data = {"timestamp": timestamp, "actual_duration": int(elapsed_time), "message_count": message_count}
 
-        if self.cloudwatch_log_group or self.es_url:
+        if self.cloudwatch_log_group or self.es_url or self.kafka_bootstrap_server:
             data.update(message_confirmed_received)
 
         es_data = self._json_payload(data)

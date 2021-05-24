@@ -55,6 +55,15 @@ def main():
     )
     parser.add_argument("-t", "--tool", help="Provide tool name", required=True)
     parser.add_argument("--run-id", help="Run ID to unify benchmark results in ES", nargs="?", default="NA")
+    parser.add_argument("--archive-file", help="Archive file that will be indexed into ES")
+    parser.add_argument(
+        "--create-archive",
+        action="store_const",
+        dest="createarchive",
+        const=True,
+        default=False,
+        help="enables creation of archive file",
+    )
     index_args, unknown = parser.parse_known_args()
     index_args.index_results = False
     index_args.prefix = "snafu-%s" % index_args.tool
@@ -85,7 +94,7 @@ def main():
                 ssl_ctx.check_hostname = False
                 ssl_ctx.verify_mode = ssl.CERT_NONE
                 es = elasticsearch.Elasticsearch(
-                    [es_settings["server"]], send_get_body_as="POST", ssl_context=ssl_ctx, use_ssl=True
+                    [es_settings["server"]], send_get_body_as="POST", ssl_context=ssl_ctx, use_ssl=False
                 )
             else:
                 es = elasticsearch.Elasticsearch([es_settings["server"]], send_get_body_as="POST")
@@ -99,9 +108,23 @@ def main():
     # call py es bulk using a process generator to feed it ES documents
     if index_args.index_results:
         parallel_setting = strtobool(os.environ.get("parallel", "false"))
-        res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(
-            es, process_generator(index_args, parser), parallel_setting
-        )
+
+        if "archive" in index_args.tool:
+            if index_args.archive_file:
+                #  if processing a archive file use the process archive file function
+                res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(
+                    es, process_archive_file(index_args), parallel_setting
+                )
+            else:
+                logger.error(
+                    "Attempted to index archive without specifying a file, use --archive-file=<file>"
+                )
+                exit(1)
+        else:
+            # else run a test and process new result documents
+            res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(
+                es, process_generator(index_args, parser), parallel_setting
+            )
 
         logger.info(
             "Indexed results - %s success, %s duplicates, %s failures, with %s retries."
@@ -112,11 +135,23 @@ def main():
         end_t = time.strftime("%Y-%m-%dT%H:%M:%SGMT", time.gmtime(res_end))
 
     else:
+        logger.info("Not connected to Elasticsearch")
         start_t = time.strftime("%Y-%m-%dT%H:%M:%SGMT", time.gmtime())
         # need to loop through generator and pass on all yields
         # this will execute all jobs without elasticsearch
-        for i in process_generator(index_args, parser):
-            pass
+        if "archive" in index_args.tool:
+            if index_args.archive_file:
+                logger.info("Processing archive file, but not indexing results...")
+                for es_friendly_doc in process_archive_file(index_args):
+                    pass
+            else:
+                logger.error(
+                    "Attempted to index archive without specifying a file, use --archive-file=<file>"
+                )
+                exit(1)
+        else:
+            for i in process_generator(index_args, parser):
+                pass
         end_t = time.strftime("%Y-%m-%dT%H:%M:%SGMT", time.gmtime())
 
     start_t = datetime.datetime.strptime(start_t, FMT)
@@ -176,6 +211,8 @@ def get_valid_es_document(action, index, index_args):
     logger.debug("document size is: %s" % document_size_bytes)
     logger.debug(json.dumps(es_valid_document, indent=4, default=str))
 
+    if index_args.createarchive:
+        write_to_archive_file(index_args, es_valid_document)
     return es_valid_document
 
 
@@ -238,6 +275,38 @@ def index_prom_data(index_args, action):
         # get time delta for indexing run
         tdelta = end_t - start_t
         logger.info("Prometheus indexing duration of execution - %s" % tdelta)
+
+
+def process_archive_file(index_args):
+
+    if os.path.isfile(index_args.archive_file):
+        with open(index_args.archive_file) as f:
+            for line in f:
+                es_friendly_document = json.loads(line)
+                document_size_bytes = sys.getsizeof(es_friendly_document)
+                index_args.document_size_capacity_bytes += document_size_bytes
+                yield es_friendly_document
+    else:
+        logger.error("%s Not found" % index_args.archive_file)
+        exit(1)
+
+
+def write_to_archive_file(index_args, es_friendly_documment):
+
+    if index_args.archive_file:
+        archive_filename = index_args.archive_file
+    else:
+        #  assumes that all documents have the same structure
+        user = es_friendly_documment["_source"]["user"]
+        clustername = es_friendly_documment["_source"]["clustername"]
+        uuid = es_friendly_documment["_source"]["uuid"]
+        #  create archive file as user_clustername_uuid.archive in cwd
+        archive_filename = user + "_" + clustername + "_" + uuid + ".archive"
+
+    #  Will write each es friendly document on 1 line, this makes re-indexing easier later
+    with open(archive_filename, "a") as f:
+        json.dump(es_friendly_documment, f)
+        f.write(os.linesep)
 
 
 if __name__ == "__main__":

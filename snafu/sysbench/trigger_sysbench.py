@@ -14,6 +14,7 @@
 import subprocess
 import logging
 import os
+import re
 from datetime import datetime
 
 logger = logging.getLogger("snafu")
@@ -99,6 +100,16 @@ class trigger_sysbench:
         # loop through each line in stdout and capture results
         for line in nospace_stdout.splitlines():
             #  all result fields have : so targeting those lines
+
+            if "transferred" in line and "memory" in self.test_config["test"]:
+                mem_total_transfered, mem_total_transferedpersecond = line.split("transferred")
+                mem_total_transfered = float(mem_total_transfered.replace("MiB", ""))
+
+                mem_total_transferedpersecond = re.sub("[()]", "", mem_total_transferedpersecond)
+                mem_total_transferedpersecond = float(mem_total_transferedpersecond.replace("MiB/sec", ""))
+
+                test_results["transferred(MiB)"] = mem_total_transfered
+                test_results["transferredpersec(MiB/sec)"] = mem_total_transferedpersecond
             if ":" in line:
                 #  break the line into Key value pairs
                 key, value = line.split(":")
@@ -115,7 +126,7 @@ class trigger_sysbench:
                     #  create a nested dict
                     test_results[section] = {}
                 elif section is None:
-                    test_results[key] = value
+                    test_results[key] = float(value)
                 else:
                     #  there are fields with two values, we need to identify them and break
                     #  them down into two sub-fields
@@ -123,13 +134,19 @@ class trigger_sysbench:
                         key = key.replace("(avg/stddev)", "")
                         avg, stddev = value.split("/")
                         test_results[section][key] = {}
-                        test_results[section][key]["avg"] = avg
-                        test_results[section][key]["stddev"] = stddev
+                        test_results[section][key]["avg"] = float(avg)
+                        test_results[section][key]["stddev"] = float(stddev)
                     elif "Totaloperations" in key and "persecond" in value:
                         totaloperations, totaloperationspersecond = value.split("(")
                         totaloperationspersecond = totaloperationspersecond.replace("persecond)", "")
-                        test_results[section]["Totaloperations"] = totaloperations
-                        test_results[section]["Totaloperationspersecond"] = totaloperationspersecond
+                        test_results[section]["Totaloperations"] = float(totaloperations)
+                        test_results[section]["Totaloperationspersecond"] = float(totaloperationspersecond)
+                    elif "totaltime" in key:
+                        key = key + "(seconds)"
+                        value = value.replace("s", "")
+                        test_results[section][key] = float(value)
+                    elif "option" not in section:
+                        test_results[section][key] = float(value)
                     else:
                         #  store the Key value pair in the appropriate section
                         test_results[section][key] = value

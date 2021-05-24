@@ -92,6 +92,7 @@ class Trigger_log_generator:
                 "kafka_topic": self.kafka_topic,
                 "backend": "kafka",
             }
+            payload.update(backend)
         payload.update(data)
         return payload
 
@@ -225,7 +226,7 @@ class Trigger_log_generator:
             )  # get all offsets with timestamp in ms greater than or equal to start_time
             last = consumer.offsets_for_times(
                 {tp: end_time * 1000}
-            )  # get all offsets with timestamp in ms greater than or equal to start_time
+            )  # get all offsets with timestamp in ms greater than or equal to end_time
             if beg[tp] is None:
                 continue  # continue to next partition if no offsets found during test in this partition
             consumer.seek(tp, beg[tp].offset)  # seek to the offset corresponding to start_time of test
@@ -246,6 +247,7 @@ class Trigger_log_generator:
                         log_dict["message"] == self.my_message
                     ):  # check to make sure the message stored matches the message generated
                         count += 1
+        consumer.close()
         return count
 
     def emit_actions(self):
@@ -273,7 +275,12 @@ class Trigger_log_generator:
                 elif self.es_url:
                     messages_received = self._check_es(int(start_time), int(end_time))
                 elif self.kafka_bootstrap_server:
-                    messages_received = self._check_kafka(start_time, end_time)
+                    messages_received = self._check_kafka(start_time, end_time + self.timeout)
+                    logger.info(
+                        "Current messages received is {}, waiting more time for kafka".format(
+                            messages_received
+                        )
+                    )
                 if messages_received == message_count:
                     received_all_messages = True
                 else:

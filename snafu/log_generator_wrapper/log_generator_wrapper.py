@@ -59,6 +59,7 @@ class log_generator_wrapper:
         )
         parser.add_argument("--kafka-bootstrap-server", help="The Kafka Service to connect to")
         parser.add_argument("--kafka-topic", help="The Kafka topic to verify logs")
+        parser.add_argument("--kafka-check", help="Verify if logs made it to kafka sink", action="store_true")
         self.args = parser_object.parse_args()
 
         self.args.cluster_name = os.getenv("clustername", "mycluster")

@@ -73,7 +73,7 @@ def main():
     if es_settings["server"] and ":443" in es_settings["server"]:
         es_settings["verify_cert"] = "false"
     if es_settings["server"]:
-        index_args.prefix = os.getenv("es_index", "")
+        index_args.prefix = os.getenv("es_index", index_args.prefix)
         logger.info("Using elasticsearch server with host: %s" % es_settings["server"])
         logger.info("Using index prefix for ES: %s" % index_args.prefix)
         index_args.index_results = True

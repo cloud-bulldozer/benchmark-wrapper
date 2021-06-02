@@ -17,6 +17,7 @@ from snafu.flent_wrapper.flent_wrapper import flent_wrapper
 from snafu.log_generator_wrapper.log_generator_wrapper import log_generator_wrapper
 from snafu.image_pull_wrapper.image_pull_wrapper import image_pull_wrapper
 from snafu.sysbench.sysbench_wrapper import sysbench_wrapper
+from snafu.dns_perf_wrapper.dns_perf_wrapper import dns_perf_wrapper
 
 import logging
 
@@ -42,6 +43,7 @@ wrapper_dict = {
     "log_generator": log_generator_wrapper,
     "image_pull": image_pull_wrapper,
     "sysbench": sysbench_wrapper,
+    "dns_perf": dns_perf_wrapper,
 }
 
 

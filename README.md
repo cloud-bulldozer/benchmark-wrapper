@@ -88,6 +88,7 @@ python3.7 ./snafu/run_snafu.py --tool archive --archive-file /tmp/my_sysbench_da
 | Log Generator                  | Log throughput to backend      | Working            |
 | Image Pull                     | Time to copy from a container image from a repo | Working |
 | sysbench                       | CPU,Memory,Mutex,Threads,Fileio | Working |
+| DNS-Perf                       | DNS Performance                | Working            |
 
 ## Supported backend data storage?
 

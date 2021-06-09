@@ -1,12 +1,74 @@
 # Benchmark-Wrapper aka SNAFU - Situation Normal: All F'ed Up
 
-Most Performance workload tools were written to tell you the performance at a given time under given circumstances.
+Benchmark-wrapper provides a convenient mechanism for launching, processing, and storing data produced by a suite of performance benchmarks. Users can run Benchmark-wrapper in a traditional bare-metal environment or with the use of [benchmark-operator](https://github.com/cloud-bulldozer/benchmark-operator) ran in a containerized environment such as Kubernetes.
 
-These scripts are to help enable these legacy tools store their data for long term investigations.
+Note: If you need your benchmark to collect data for both Kubernetes and non-Kubernetes
+environments, incorporate your benchmark into benchmark-wrapper and then write a benchmark-operator benchmark to integrate with Kubernetes.
 
-Note: SNAFU does not depend upon Kubernetes, so you can use run_snafu.py on a bare-metal or VM cluster without relying
-on Kubernetes to start/stop pods.  So if you need your benchmark to collect data for both Kubernetes and non-Kubernetes
-environments, develop in SNAFU and then write benchmark-operator benchmark to integrate with Kubernetes.
+**Why Should I use Benchmark-wrapper?**
+
+Traditionally benchmark tools have presented users with an adhoc raw standard output, limiting ability to perform detailed statistical analysis, no way to preserve results for long term archive, and difficulty at being platform agnostic. Benchmark-wrapper aims to solve all of these issues and provide users with a integrated streamlined interface.
+
+# How to Run
+
+
+It is suggested to use a virtual environment to install and run snafu.
+
+```
+python3 -m venv /path/to/new/virtual/environment
+source /path/to/new/virtual/environment/bin/activate
+git clone https://github.com/cloud-bulldozer/snafu
+python setup.py develop
+run_snafu --tool Your_Benchmark ...
+```
+## - Install ##
+
+```
+git clone https://github.com/cloud-bulldozer/benchmark-wrapper.git
+sudo pip3 install /path-to-benchmark-wrapper/benchmark-wrapper
+```
+
+## - Configure ##
+Benchmark-wrapper uses several environment variable to provide user context and interfaces to ES.
+
+```
+export uuid=<RFC4122 Version 4 uuid>
+export test_user=<test user name>
+export clustername=<platform or cluster descriptive name>
+export es=<http://es_address:es_port>
+```
+
+## - Run ##
+
+```
+python3.7 ./snafu/run_snafu.py --tool <tool name>  followed by tool dependent parameters.
+```
+
+for example:
+
+```
+python3.7 ./snafu/run_snafu.py --tool sysbench -f example__cpu_test.conf
+```
+
+## Archiving data
+
+Benchmark-wrapper has two forms of capturing data. The first and preferred method is directly writing data to Elasticsearch, users will need to set the **es** environment variable in order to enable this. The second method used for capturing data is writing to a local archive file, this is intended to be enabled when Elasticsearch is not available for direct indexing or for a backup of indexed results. Both methods can be enabled at the same time, and are independent of each other.
+
+To enable writing to an archive file users can use the --create-archive, if users require the file to be named/located in a specific location they can use --archive-file <file name>.
+
+For example:
+
+```
+python3.7 ./snafu/run_snafu.py --tool sysbench -f example__cpu_test.conf --create-archive --archive-file /tmp/my_sysbench_data.archive
+```
+
+To index from an archive file users can invoke run_snafu as follows:
+
+```
+python3.7 ./snafu/run_snafu.py --tool archive --archive-file /tmp/my_sysbench_data.archive
+```
+
+ **Note**: The archive file contains Elasticsearch friendly documents per line and is intended for future indexing, so it is not expect that users evaluate or review it manually.
 
 ## What workloads do we support?
 
@@ -25,8 +87,10 @@ environments, develop in SNAFU and then write benchmark-operator benchmark to in
 | OpenShift Scaling              | Time to scale                  | Working            |
 | Log Generator                  | Log throughput to backend      | Working            |
 | Image Pull                     | Time to copy from a container image from a repo | Working |
+| sysbench                       | CPU,Memory,Mutex,Threads,Fileio | Working |
+| DNS-Perf                       | DNS Performance                | Working            |
 
-## What backend storage do we support?
+## Supported backend data storage?
 
 | Storage        | Status   |
 | -------------- | -------- |
@@ -34,18 +98,7 @@ environments, develop in SNAFU and then write benchmark-operator benchmark to in
 | Prom           | Planned  |
 
 
-It is suggested to use a venv to install and run snafu.
-
-```
-python3 -m venv /path/to/new/virtual/environment
-source /path/to/new/virtual/environment/bin/activate
-git clone https://github.com/cloud-bulldozer/snafu
-python setup.py develop
-run_snafu --tool Your_Benchmark ...
-```
-
-
-## how do I develop a snafu extension for my benchmark?
+# how do I develop a snafu extension for my benchmark?
 
 In what follows, your benchmark's name should be substituted for the name "Your_Benchmark".  Use alphanumerics and
 underscores only in your benchmark name.
@@ -106,7 +159,7 @@ server that is viewable with Kibana and Grafana!
 
 Look at some of the other benchmarks for examples of how this works.
 
-## How do I post results to Elasticsearch from my wrapper?
+## How do I prepare results for Elasticsearch indexing from my wrapper?
 
 Every snafu benchmark will use Elasticsearch index name of the form **orchestrator-benchmark-doctype**, consisting of the 3
 components:

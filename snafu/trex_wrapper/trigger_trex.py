@@ -49,7 +49,7 @@ class Trigger_trex:
     def _run_trex(self):
 
         # TRex non interactive command
-        trex_cmd = "./_t-rex-64 -i --no-hw-flow-stat"
+        trex_cmd = "./t-rex-64 -i --no-ofed-check --no-hw-flow-stat"
         # command to run burst script with a 10 sec buffer to trex service
         burst_cmd = "sleep 10 && run_simple_burst"
         # TRex server process

@@ -19,5 +19,9 @@ A suite of benchmarks comes supported out-of-the-box.
 
 <!--- Table of Contents Sidebar --->
 ```{toctree}
-test
+install
+usage
+workloads
+exports
+contributing
 ```

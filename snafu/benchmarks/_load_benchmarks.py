@@ -24,12 +24,11 @@ def load_benchmarks() -> Tuple[List[str], List[str]]:
 
     imported, failed = [], []
     for _, module, _ in pkgutil.iter_modules([os.path.dirname(__file__)]):
-        try:
-            importlib.import_module(module, package=__name__)
-            imported.append(module)
-        except ImportError as e:
-            failed.append(module)
-            raise e
-            pass
+        if not module.startswith("_"):
+            try:
+                importlib.import_module(module, package=__name__)
+                imported.append(module)
+            except ImportError:
+                failed.append(module)
 
     return imported, failed

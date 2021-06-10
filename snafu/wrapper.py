@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 import logging
 import argparse
 import configargparse
-from . import registry
+from snafu import registry
 
 
 JSONMetric = NewType("JSONMetric", dict)

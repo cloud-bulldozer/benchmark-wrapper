@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Implementation of Wrapper base class"""
+from typing import Any, Iterable, NewType, Union
+from abc import ABC, abstractmethod
 import logging
 import argparse
 import configargparse
 from . import registry
 
 
-class Wrapper(metaclass=registry.ToolRegistryMeta):
+JSONMetric = NewType("JSONMetric", dict)
+
+
+class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
     """
-    Base class for wrapped external tools.
+    Abstract Base class for wrapped external tools.
 
     Uses the ``registry.ToolRegistryMeta`` metaclass, allowing for each subclass to be added into the
     tool registry automatically.
@@ -69,3 +74,44 @@ class Wrapper(metaclass=registry.ToolRegistryMeta):
         """
 
         pass
+
+
+class Benchmark(Wrapper, ABC):
+    """
+    Abstract Base class for benchmark tools.
+
+    To use, subclass, set the ``tool_name`` attribute, and overwrite the ``emit_metrics`` method.
+
+    Examples
+    --------
+    >>> from snafu.wrapper import Benchmark
+    >>> class MyBenchmark(Benchmark):
+    ...     tool_name = "mybenchmark"
+    ...     def __init__(self, my_arg: str):
+    ...         super().__init__()
+    ...         self.my_arg = my_arg
+    ...     def emit_metrics(self) -> Iterable[JSONMetric]:
+    ...         for x in range(5):
+    ...             yield x
+    ...
+    >>> from snafu.registry import TOOLS
+    >>> mybench = TOOLS["mybenchmark"]("arg1")
+    >>> mybench.my_arg
+    'arg1'
+    >>> list(mybench.emit_metrics())
+    [0, 1, 2, 3, 4]
+    """
+
+    tool_name = "_base_benchmark"
+
+    def __init__(self):
+        super(Wrapper, self).__init__()
+
+    def start(self) -> None:
+        """Execute the benchmark."""
+
+        pass
+
+    @abstractmethod
+    def emit_metrics(self) -> Iterable[JSONMetric]:
+        """Yield metrics for export."""

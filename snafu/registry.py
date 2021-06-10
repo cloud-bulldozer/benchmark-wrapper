@@ -11,12 +11,13 @@ After snafu loads up and all the classes are created, the registry dict can be a
 ``registry.TOOLS``. Key names will be tool names, values will be their wrapper classes.
 """
 from typing import Dict
+from abc import ABCMeta
 
 
 TOOLS: Dict[str, object] = dict()
 
 
-class ToolRegistryMeta(type):
+class ToolRegistryMeta(ABCMeta):
     """
     Metaclass which automatically populates ``registry.REGISTRY`` with a ``cls.tool_name: cls`` mapping.
 

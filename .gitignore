@@ -61,5 +61,9 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
+# Visual Studio
+.vscode/
+.history
+
 # macOS files
 .DS_Store

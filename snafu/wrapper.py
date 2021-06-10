@@ -31,6 +31,9 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
     arg_parser : configargparse.ArgumentParser
         Argument parser that tool-specific arguments can be added onto. Please see
         the "ArgParser Singletons" section of https://pypi.org/project/ConfigArgParse/.
+    arg_group
+        Argument group for the wrapped tool. Use this object when adding arguments to be parsed, then
+        parse using ``arg_parser``.
     config : argparse.Namespace
         Parsed config from argument parser. Will be set to ``None`` until populated with
         ``populate_args``.
@@ -41,9 +44,8 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
     tool_name = "_base_wrapper"
 
     def __init__(self, config: Dict[str, Any] = None, required_args: List[str] = None):
-        self.arg_parser: configargparse.ArgumentParser = (
-            configargparse.get_argument_parser().add_argument_group(self.tool_name)
-        )
+        self.arg_parser: configargparse.ArgumentParser = configargparse.get_argument_parser()
+        self.arg_group = self.arg_parser.add_argument_group(self.tool_name)
         self.config: argparse.Namespace = argparse.Namespace()
         if config is not None:
             self.config.__dict__.update(config)
@@ -66,7 +68,7 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
         ...
         ...     def __init__(self):
         ...         super().__init__(config={"arg1": "one", "arg2": "override me"})
-        ...         self.arg_parser.add_argument("--arg2")
+        ...         self.arg_group.add_argument("--arg2")
         ...
         >>> mytool = MyTool()
         >>> vars(mytool.config)
@@ -95,7 +97,7 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
         ...
         ...     def __init__(self):
         ...         super().__init__(required_args=["arg1"])
-        ...         self.arg_parser.add_argument("--arg1")
+        ...         self.arg_group.add_argument("--arg1")
         ...
         >>> mytool = MyTool()
         >>> vars(mytool.config)

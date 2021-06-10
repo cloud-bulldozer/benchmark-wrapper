@@ -36,7 +36,7 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
     def __init__(self):
         self.arg_parser: configargparse.ArgumentParser = configargparse.get_argument_parser()
         self.config: argparse.Namespace = None
-        self.logger = logging.getLogger("snafu").getChild(self.tool_name)
+        self.logger: logging.Logger = logging.getLogger("snafu").getChild(self.tool_name)
 
     def populate_args(self) -> None:
         """Use argument parser to parser args and populate ``config`` attribute."""

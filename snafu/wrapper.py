@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Implementation of Wrapper base class"""
+"""Tools for wrapping external tools."""
 from typing import Any, Dict, Iterable, List, NewType
 from abc import ABC, abstractmethod
 import logging

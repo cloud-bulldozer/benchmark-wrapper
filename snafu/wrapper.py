@@ -59,7 +59,7 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
 
     def setup(self) -> None:
         """
-        Setup step.
+        Setup step for ensuring external tool is ready to go.
 
         Can be used to create connections to databases, create files on disk, etc.
         """
@@ -68,9 +68,9 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
 
     def cleanup(self):
         """
-        Cleanup step.
+        Cleanup step for wrapping up usage of external tool.
 
-        Can be used to destroy connections to databases, cleanup files on disk, export config files, etc.
+        Can be used to clean connections, cleanup files on disk, export config files, etc.
         """
 
         pass

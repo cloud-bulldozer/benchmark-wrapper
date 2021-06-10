@@ -8,12 +8,12 @@ registry dict when the class is created. For more information on metaclasses, se
 https://www.geeksforgeeks.org/python-metaclasses/.
 
 After snafu loads up and all the classes are created, the registry dict can be accessed at
-``registry.TOOL_REGISTRY``. Key names will be tool names, values will be their wrapper classes.
+``registry.TOOLS``. Key names will be tool names, values will be their wrapper classes.
 """
 from typing import Dict
 
 
-TOOL_REGISTRY: Dict[str, object] = dict()
+TOOLS: Dict[str, object] = dict()
 
 
 class ToolRegistryMeta(type):
@@ -30,7 +30,7 @@ class ToolRegistryMeta(type):
     >>> class Example(metaclass=snafu.registry.ToolRegistryMeta):
     ...     tool_name = "my_awesome_tool"
     ...
-    >>> snafu.registry.TOOL_REGISTRY["my_awesome_tool"]().tool_name
+    >>> snafu.registry.TOOLS["my_awesome_tool"]().tool_name
     'my_awesome_tool'
     """
 
@@ -38,6 +38,6 @@ class ToolRegistryMeta(type):
         """Called when a new class is created."""
 
         new_class = super().__new__(cls, clsname, superclasses, attributedict)
-        TOOL_REGISTRY[attributedict["tool_name"]] = new_class
+        TOOLS[attributedict["tool_name"]] = new_class
 
         return new_class

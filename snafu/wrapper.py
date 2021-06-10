@@ -41,7 +41,9 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
     tool_name = "_base_wrapper"
 
     def __init__(self, config: Dict[str, Any] = None, required_args: List[str] = None):
-        self.arg_parser: configargparse.ArgumentParser = configargparse.get_argument_parser()
+        self.arg_parser: configargparse.ArgumentParser = (
+            configargparse.get_argument_parser().add_argument_group(self.tool_name)
+        )
         self.config: argparse.Namespace = argparse.Namespace()
         if config is not None:
             self.config.__dict__.update(config)

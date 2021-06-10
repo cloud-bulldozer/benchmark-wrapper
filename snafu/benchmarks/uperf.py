@@ -5,13 +5,17 @@ from snafu.wrapper import Benchmark
 
 
 class Uperf(Benchmark):
-    """Wrapper for the uperf benchmark."""
+    """
+    Wrapper for the uperf benchmark.
+    """
 
     tool_name = "uperf"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def run(self):
+        """Run uperf benchmark."""
 
     def emit_metrics(self):
         """Emit uperf metrics."""
-        pass

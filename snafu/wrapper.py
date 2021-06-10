@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Implementation of Wrapper base class"""
-from typing import Any, Iterable, NewType, Union
+from typing import Iterable, NewType
 from abc import ABC, abstractmethod
 import logging
 import argparse
@@ -107,7 +107,7 @@ class Benchmark(Wrapper, ABC):
     def __init__(self):
         super(Wrapper, self).__init__()
 
-    def start(self) -> None:
+    def run(self) -> None:
         """Execute the benchmark."""
 
         pass

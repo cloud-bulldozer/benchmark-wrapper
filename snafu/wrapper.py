@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Implementation of Wrapper base class"""
-from typing import Iterable, NewType
+from typing import Any, Dict, Iterable, List, NewType
 from abc import ABC, abstractmethod
 import logging
 import argparse
@@ -19,6 +19,13 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
     Uses the ``registry.ToolRegistryMeta`` metaclass, allowing for each subclass to be added into the
     tool registry automatically.
 
+    Parameters
+    ----------
+    config : dict, optional
+        Initial config for tool. Given value should be dict of key-value pairs, where keys are strings.
+    required_args : list of str, optional
+        List of required arguments. Will check for these values in ``config`` during preflight_checks.
+
     Attributes
     ----------
     arg_parser : configargparse.ArgumentParser
@@ -33,19 +40,82 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
 
     tool_name = "_base_wrapper"
 
-    def __init__(self):
+    def __init__(self, config: Dict[str, Any] = None, required_args: List[str] = None):
         self.arg_parser: configargparse.ArgumentParser = configargparse.get_argument_parser()
-        self.config: argparse.Namespace = None
+        self.config: argparse.Namespace = argparse.Namespace()
+        if config is not None:
+            self.config.__dict__.update(config)
+        self.required_args: List[str] = required_args if required_args is not None else list()
         self.logger: logging.Logger = logging.getLogger("snafu").getChild(self.tool_name)
 
-    def populate_args(self) -> None:
-        """Use argument parser to parser args and populate ``config`` attribute."""
+    def parse_args(self, args: List[str] = None) -> None:
+        """
+        Use argument parser to parse args and set attributes in config namespace.
 
-        self.config = self.arg_parser.parse_args()
+        Will update ``config`` with the attributes of the ``argparse.Namespace`` pulled from the argument
+        parser. For more information on this, see the ``namespace`` argument of
+        ``argparse.ArgumentParser.parse_known_args``
+
+        Examples
+        --------
+        >>> from snafu.wrapper import Wrapper
+        >>> class MyTool(Wrapper):
+        ...     tool_name = "my_tool"
+        ...
+        ...     def __init__(self):
+        ...         super().__init__(config={"arg1": "one", "arg2": "override me"})
+        ...         self.arg_parser.add_argument("--arg2")
+        ...
+        >>> mytool = MyTool()
+        >>> vars(mytool.config)
+        {'arg1': 'one', 'arg2': 'override me'}
+        >>> mytool.parse_args(args=['--arg2', 'two'])
+        >>> vars(mytool.config)
+        {'arg1': 'one', 'arg2': 'two'}
+        """
+
+        self.arg_parser.parse_known_args(args=args, namespace=self.config)
+
+    def check_required_args(self) -> bool:
+        """
+        Check that all required args are present in config
+
+        Returns
+        -------
+        bool
+            ``True`` on success, ``False`` if a required arg is not present.
+
+        Examples
+        --------
+        >>> from snafu.wrapper import Wrapper
+        >>> class MyTool(Wrapper):
+        ...     tool_name = "my_tool"
+        ...
+        ...     def __init__(self):
+        ...         super().__init__(required_args=["arg1"])
+        ...         self.arg_parser.add_argument("--arg1")
+        ...
+        >>> mytool = MyTool()
+        >>> vars(mytool.config)
+        {}
+        >>> mytool.check_required_args()
+        False
+        >>> mytool.parse_args(args=['--arg1', 'one'])
+        >>> vars(mytool.config)
+        {'arg1': 'one'}
+        >>> mytool.check_required_args()
+        True
+        """
+
+        known_args = self.config.__dict__.keys()
+        for arg in self.required_args:
+            if arg not in known_args:
+                return False
+        return True
 
     def preflight_checks(self) -> bool:
         """
-        Preflight checks to run before setup.
+        Preflight checks to run before setup. By default runs ``check_required_args``.
 
         Can be used to check existence of config params, needed libraries, etc.
 
@@ -55,7 +125,7 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
             ``True`` on success, ``False`` if checks fail.
         """
 
-        return True
+        return self.check_required_args()
 
     def setup(self) -> None:
         """
@@ -104,13 +174,11 @@ class Benchmark(Wrapper, ABC):
 
     tool_name = "_base_benchmark"
 
-    def __init__(self):
-        super(Wrapper, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(Wrapper, self).__init__(*args, **kwargs)
 
     def run(self) -> None:
         """Execute the benchmark."""
-
-        pass
 
     @abstractmethod
     def emit_metrics(self) -> Iterable[JSONMetric]:

@@ -156,6 +156,13 @@ class Benchmark(Wrapper, ABC):
 
     To use, subclass, set the ``tool_name`` attribute, and overwrite the ``emit_metrics`` method.
 
+    Parameters
+    ----------
+    metadata : list of str
+        List of common metadata that should be exported into JSON payload. Subclasses should implement
+        logic to include these config key names in their exported documents. Store as ``metadata``
+        attribute
+
     Examples
     --------
     >>> from snafu.wrapper import Benchmark
@@ -178,8 +185,9 @@ class Benchmark(Wrapper, ABC):
 
     tool_name = "_base_benchmark"
 
-    def __init__(self, *args, **kwargs):
-        super(Wrapper, self).__init__(*args, **kwargs)
+    def __init__(self, metadata: List[str] = None, **kwargs):
+        super().__init__(**kwargs)
+        self.metadata: List[str] = metadata if metadata is not None else list()
 
     def run(self) -> None:
         """Execute the benchmark."""

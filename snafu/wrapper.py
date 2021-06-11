@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Tools for wrapping external tools."""
-from typing import Any, Dict, Iterable, List, NewType, Set
+from typing import Any, Dict, Iterable, List, NewType, Set, Tuple
 from abc import ABC, abstractmethod
 import logging
+import subprocess
 import argparse
 import configargparse
 from snafu import registry
@@ -177,6 +178,8 @@ class Benchmark(Wrapper, ABC):
     ...     def __init__(self, my_arg: str):
     ...         super().__init__()
     ...         self.my_arg = my_arg
+    ...     def run(self):
+    ...         pass
     ...     def emit_metrics(self) -> Iterable[JSONMetric]:
     ...         for x in range(5):
     ...             yield x
@@ -194,6 +197,31 @@ class Benchmark(Wrapper, ABC):
     def __init__(self, metadata: List[str] = None, **kwargs):
         super().__init__(**kwargs)
         self.metadata: List[str] = metadata if metadata is not None else list()
+
+    def run_process(self, cmd: str) -> Tuple[str, str, int]:
+        """
+        Run the given command as a subprocess within a shell and return stdout, stderr and returncode.
+
+        Examples
+        --------
+        >>> from snafu.wrapper import Benchmark
+        >>> class MyBenchmark(Benchmark):
+        ...     tool_name = "mybenchmark"
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...     def run(self):
+        ...         pass
+        ...     def emit_metrics(self):
+        ...         yield dict()
+        >>> mybench = MyBenchmark()
+        >>> mybench.run_process("echo 'Hello World'")
+        ('Hello World', '', 0)
+        """
+
+        self.logger.info(f"Running command {cmd}")
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        return stdout.strip().decode("utf-8"), stderr.strip().decode("utf-8"), process.returncode
 
     @abstractmethod
     def run(self) -> None:

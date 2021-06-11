@@ -154,7 +154,7 @@ class Benchmark(Wrapper, ABC):
     """
     Abstract Base class for benchmark tools.
 
-    To use, subclass, set the ``tool_name`` attribute, and overwrite the ``emit_metrics`` method.
+    To use, subclass, set the ``tool_name`` attribute, and overwrite the ``emit_metrics`` and ``run`` methods.
 
     Parameters
     ----------

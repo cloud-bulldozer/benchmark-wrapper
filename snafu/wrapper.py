@@ -339,8 +339,13 @@ class Benchmark(Wrapper, ABC):
 
     @abstractmethod
     def run(self) -> Tuple[bool, Any]:
-        """Execute the benchmark."""
+        """
+        Execute the benchmark and return results Tuple.
+
+        First item in results tuple is bool representing if the benchmark run successfully or not.
+        Second is item that is passed to ``emit_metrics`` for document export.
+        """
 
     @abstractmethod
-    def emit_metrics(self) -> Iterable[JSONMetric]:
+    def emit_metrics(self, Any) -> Iterable[JSONMetric]:
         """Yield metrics for export."""

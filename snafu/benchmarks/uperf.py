@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Wrapper for running the uperf benchmark. See http://uperf.org/ for more information."""
+from typing import Tuple
 from snafu.wrapper import Benchmark
 
 
@@ -64,8 +65,28 @@ class Uperf(Benchmark):
         self.arg_group.add_argument("-u", "--uuid", dest="uuid", env_var="UUID", help="Provide UUID of run")
         self.arg_group.add_argument("--user", dest="user", env_var="USER", help="Provide user")
 
-    def run(self):
-        """Run uperf benchmark."""
+        self.required_args.update({"workload", "uuid", "user"})
+
+    def setup(self):
+        """Setup uperf."""
+
+    def cleanup(self):
+        """Cleanup uperf."""
+
+    def run(self) -> Tuple[bool, str]:
+        """
+        Run uperf benchmark.
+
+        Returns
+        -------
+        tuple :
+            First value in tuple is bool representing if we were able to run uperf successfully. Second
+            value in tuple is what was returned from call to ``Wrapper.run_process``.
+        """
+
+        cmd = f"uperf -v -a -R -i 1 -m {self.config.workload}"
+        results = self.run_process(cmd, retries=2, expected_rc=0)
+        return results["success"], results
 
     def emit_metrics(self):
         """Emit uperf metrics."""

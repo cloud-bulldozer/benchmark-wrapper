@@ -93,13 +93,18 @@ class Uperf(Benchmark):
 
         cmd = f"uperf -v -a -R -i 1 -m {self.config.workload}"
         results: List[str] = list()
-        for _ in self.config.sample:
+        for sample_num in range(1, self.config.sample + 1):
+            self.logger.info(f"Starting Uperf sample number {sample_num}")
             sample = self.run_process(cmd, retries=2, expected_rc=0)
             if not sample["success"]:
+                self.logger.critical(f"Uperf failed to run! Got results: {sample}")
                 return False, results
             else:
+                self.logger.info(f"Finished collecting sample {sample_num}")
+                self.logger.debug(f"Got results: {sample}")
                 results.append(sample["stdout"])
 
+        self.logger.info(f"Successfully collected {self.config.sample} samples.")
         return True, results
 
     def emit_metrics(self):

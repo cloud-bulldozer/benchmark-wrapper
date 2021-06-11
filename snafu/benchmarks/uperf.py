@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Wrapper for running the uperf benchmark. See http://uperf.org/ for more information."""
-from typing import Tuple
+from typing import List, Tuple
 from snafu.wrapper import Benchmark
 
 
@@ -73,20 +73,29 @@ class Uperf(Benchmark):
     def cleanup(self):
         """Cleanup uperf."""
 
-    def run(self) -> Tuple[bool, str]:
+    def run(self) -> Tuple[bool, List[str]]:
         """
-        Run uperf benchmark.
+        Run uperf benchmark ``self.config.sample`` number of times.
+
+        Returns immediately if a sample fails. Will attempt to Uperf run three times for each sample.
 
         Returns
         -------
         tuple :
             First value in tuple is bool representing if we were able to run uperf successfully. Second
-            value in tuple is what was returned from call to ``Wrapper.run_process``.
+            value in tuple is a list of stdouts returned by successful uperf samples.
         """
 
         cmd = f"uperf -v -a -R -i 1 -m {self.config.workload}"
-        results = self.run_process(cmd, retries=2, expected_rc=0)
-        return results["success"], results
+        results: List[str] = list()
+        for _ in self.config.sample:
+            sample = self.run_process(cmd, retries=2, expected_rc=0)
+            if not sample["success"]:
+                return False, results
+            else:
+                results.append(sample["stdout"])
+
+        return True, results
 
     def emit_metrics(self):
         """Emit uperf metrics."""

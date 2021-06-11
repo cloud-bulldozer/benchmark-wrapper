@@ -80,7 +80,9 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
         {'arg1': 'one', 'arg2': 'two'}
         """
 
+        self.logger.debug("Parsing args using argparse.")
         self.arg_parser.parse_known_args(args=args, namespace=self.config)
+        self.logger.debug(f"Final config: {vars(self.config)}")
 
     def check_required_args(self) -> bool:
         """
@@ -113,9 +115,11 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
         True
         """
 
+        self.logger.debug(f"Checking for the following required args: {', '.join(self.required_args)}")
         known_args = self.config.__dict__.keys()
         for arg in self.required_args:
             if arg not in known_args:
+                self.logger.warning(f"Missing config argument {arg}!")
                 return False
         return True
 

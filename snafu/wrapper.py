@@ -246,7 +246,8 @@ class Benchmark(Wrapper, ABC):
             Command to run. On each failed attempt, a dict containing metadata will be appended to the list
             at 'failed' key. stdout, stderr and return code will be saved in "stdout", "stderr" and "rc"
             keys respectively. On the successful attempt, each key will be stored in the returnd
-            dict itself. If stdout or stderr is empty, then it will not be returned.
+            dict itself and the "success" key will be set to true. If stdout or stderr is empty, then it
+            will not be returned.
         retries : int, optional
             Number of retries for running the command. Will run the command once, check return code, then
             re-run ``retries`` number of times. Defaults to 0. For each attempt, attempt number will be
@@ -289,7 +290,7 @@ class Benchmark(Wrapper, ABC):
         """
 
         self.logger.info(f"Running command {cmd}")
-        result: Dict[str, Any] = dict()
+        result: Dict[str, Any] = {"success": False}
 
         tries: int = 0
 
@@ -322,6 +323,7 @@ class Benchmark(Wrapper, ABC):
             if rc == expected_rc:
                 self.logger.info(f"Command successful!")
                 result.update(attempt)
+                result["success"] = True
                 break
             else:
                 self.logger.info(f"Command unsuccessful")

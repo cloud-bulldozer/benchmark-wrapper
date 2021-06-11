@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Tools for wrapping external tools."""
-from typing import Any, Dict, Iterable, List, NewType
+from typing import Any, Dict, Iterable, List, NewType, Set
 from abc import ABC, abstractmethod
 import logging
 import argparse
@@ -23,8 +23,8 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
     ----------
     config : dict, optional
         Initial config for tool. Given value should be dict of key-value pairs, where keys are strings.
-    required_args : list of str, optional
-        List of required arguments. Will check for these values in ``config`` during preflight_checks.
+    required_args : iterable, optional
+        Iterable of required arguments. Will check for these values in ``config`` during preflight_checks.
 
     Attributes
     ----------
@@ -37,19 +37,21 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
     config : argparse.Namespace
         Parsed config from argument parser. Will be set to ``None`` until populated with
         ``populate_args``.
+    required_args : set
+        Set of required args given during instance creation.
     logger : logging.Logger
         Python logger for logging messages. Will be named "snafu.<tool_name>".
     """
 
     tool_name = "_base_wrapper"
 
-    def __init__(self, config: Dict[str, Any] = None, required_args: List[str] = None):
+    def __init__(self, config: Dict[str, Any] = None, required_args: Iterable[str] = None):
         self.arg_parser: configargparse.ArgumentParser = configargparse.get_argument_parser()
         self.arg_group = self.arg_parser.add_argument_group(self.tool_name)
         self.config: argparse.Namespace = argparse.Namespace()
         if config is not None:
             self.config.__dict__.update(config)
-        self.required_args: List[str] = required_args if required_args is not None else list()
+        self.required_args: Set[str] = set(required_args) if required_args is not None else set()
         self.logger: logging.Logger = logging.getLogger("snafu").getChild(self.tool_name)
 
     def parse_args(self, args: List[str] = None) -> None:

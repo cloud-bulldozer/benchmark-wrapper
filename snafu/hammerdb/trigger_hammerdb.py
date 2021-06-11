@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import subprocess
-import time
+import datetime
 import logging
 
 logger = logging.getLogger("snafu")
@@ -52,6 +52,12 @@ class Trigger_hammerdb:
         self.db_postgresql_dritasnap = args.db_postgresql_dritasnap
         self.db_postgresql_oracompat = args.db_postgresql_oracompat
         self.db_postgresql_storedprocs = args.db_postgresql_storedprocs
+        # es customs fields
+        self.es_ocp_version = args.es_ocp_version
+        self.es_cnv_version = args.es_cnv_version
+        self.es_db_version = args.es_db_version
+        self.es_os_version = args.es_os_version
+        self.es_kind = args.es_kind
 
     def _pack_db_info(self):
         db_info = []
@@ -94,9 +100,14 @@ class Trigger_hammerdb:
         data = []
         for line in stdout.splitlines():
             if "TEST RESULT" in line:
-                worker = (line.split(":"))[0]
-                tpm = (line.split(" "))[6]
-                nopm = (line.split(" "))[-2]
+                worker_name = (line.split())[1]
+                worker = int((worker_name.split(":"))[0])
+                if (line.split())[-3] == "SQL":  # MSSQL
+                    tpm = int((line.split())[-4])
+                    nopm = int((line.split())[-7])
+                else:  # PostgreSQL, MySQL
+                    tpm = int((line.split())[-3])
+                    nopm = int((line.split())[-6])
                 entry = [worker, tpm, nopm]
                 data.append(entry)
         return data
@@ -124,6 +135,11 @@ class Trigger_hammerdb:
         async_client,
         async_verbose,
         async_delay,
+        es_ocp_version,
+        es_cnv_version,
+        es_db_version,
+        es_os_version,
+        es_kind,
         timestamp,
     ):
         db_info = self._pack_db_info()
@@ -162,6 +178,11 @@ class Trigger_hammerdb:
                         "worker": data[i][0],
                         "tpm": data[i][1],
                         "nopm": data[i][2],
+                        "es_ocp_version": es_ocp_version,
+                        "es_cnv_version": es_cnv_version,
+                        "es_db_version": es_db_version,
+                        "es_os_version": es_os_version,
+                        "es_kind": es_kind,
                         "timestamp": timestamp,
                     }
                 )
@@ -223,7 +244,7 @@ class Trigger_hammerdb:
             current_worker *= 2
 
     def emit_actions(self):
-        timestamp = str(int(time.time()))
+        timestamp = datetime.datetime.utcnow()
         logger.info("Starting hammerdb run")
         stdout = self._run_hammerdb()
         if stdout[1] == 1:
@@ -236,8 +257,8 @@ class Trigger_hammerdb:
         documents = self._json_payload(
             data,
             self.uuid,
-            self.db_server,
             self.db_type,
+            self.db_server,
             self.db_port,
             self.db_warehouses,
             self.db_num_workers,
@@ -255,6 +276,11 @@ class Trigger_hammerdb:
             self.async_client,
             self.async_verbose,
             self.async_delay,
+            self.es_ocp_version,
+            self.es_cnv_version,
+            self.es_db_version,
+            self.es_os_version,
+            self.es_kind,
             timestamp,
         )
         if len(documents) > 0:

@@ -157,7 +157,7 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
 
     def preflight_checks(self) -> bool:
         """
-        Preflight checks to run before setup. By default runs ``check_required_args``.
+        Preflight checks to run before setup.
 
         Can be used to check existence of config params, needed libraries, etc.
 
@@ -167,7 +167,7 @@ class Wrapper(ABC, metaclass=registry.ToolRegistryMeta):
             ``True`` on success, ``False`` if checks fail.
         """
 
-        return self.check_required_args()
+        pass
 
     def setup(self) -> None:
         """

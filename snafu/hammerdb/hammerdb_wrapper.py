@@ -52,6 +52,12 @@ class hammerdb_wrapper:
         self.args.db_postgresql_dritasnap = ""
         self.args.db_postgresql_oracompat = ""
         self.args.db_postgresql_storedprocs = ""
+        # es custom fields
+        self.args.es_ocp_version = ""
+        self.args.es_cnv_version = ""
+        self.args.es_db_version = ""
+        self.args.es_os_version = ""
+        self.args.es_kind = ""
 
         # exporting the generic settings
         if "db_type" in os.environ:
@@ -134,6 +140,17 @@ class hammerdb_wrapper:
             self.args.db_postgresql_oracompat = os.environ["db_postgresql_oracompat"]
         if "db_postgresql_storedprocs" in os.environ:
             self.args.db_postgresql_storedprocs = os.environ["db_postgresql_storedprocs"]
+        # es custom fields
+        if "es_ocp_version" in os.environ:
+            self.args.es_ocp_version = os.environ["es_ocp_version"]
+        if "es_cnv_version" in os.environ:
+            self.args.es_cnv_version = os.environ["es_cnv_version"]
+        if "es_db_version" in os.environ:
+            self.args.es_db_version = os.environ["es_db_version"]
+        if "es_os_version" in os.environ:
+            self.args.es_os_version = os.environ["es_os_version"]
+        if "es_kind" in os.environ:
+            self.args.es_kind = os.environ["es_kind"]
 
     def run(self):
         hammerdb_wrapper_obj = Trigger_hammerdb(self.args)

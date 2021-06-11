@@ -338,8 +338,8 @@ class Benchmark(Wrapper, ABC):
         return result
 
     @abstractmethod
-    def run(self) -> None:
-        """Execute the benchmark."""
+    def run(self) -> Any:
+        """Execute the benchmark. Return true on success or false on failure."""
 
     @abstractmethod
     def emit_metrics(self) -> Iterable[JSONMetric]:

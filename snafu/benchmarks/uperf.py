@@ -3,7 +3,8 @@
 """Wrapper for running the uperf benchmark. See http://uperf.org/ for more information."""
 from typing import Dict, List, Tuple, Union
 import re
-from snafu.wrapper import Benchmark
+import datetime
+from snafu.wrapper import Benchmark, JSONMetric
 
 
 class Uperf(Benchmark):
@@ -29,15 +30,15 @@ class Uperf(Benchmark):
         )
         self.arg_group.add_argument(
             "--resourcetype",
-            dest="resourcetype",
+            dest="kind",
             env_var="RESOURCETYPE",
             help="Provide the resource type for uperf run - pod/vm/baremetal",
         )
         # TODO: need help text for these and add some standardization
-        self.arg_group.add_argument("--ips", dest="ips", env_var="ips", default="")
-        self.arg_group.add_argument("-h", "--remoteip", dest="remoteip", env_var="h", default="")
+        self.arg_group.add_argument("--ips", dest="client_ips", env_var="ips", default="")
+        self.arg_group.add_argument("-h", "--remoteip", dest="remote_ip", env_var="h", default="")
         self.arg_group.add_argument("--hostnet", dest="hostnetwork", env_var="hostnet", default="False")
-        self.arg_group.add_argument("--serviceip", dest="serviceip", env_var="serviceip", default="False")
+        self.arg_group.add_argument("--serviceip", dest="service_ip", env_var="serviceip", default="False")
         self.arg_group.add_argument("--server-node", dest="server_node", env_var="server_node", default="")
         self.arg_group.add_argument("--client-node", dest="client_node", env_var="client_node", default="")
         self.arg_group.add_argument("--cluster-name", dest="cluster_name", env_var="clustername", default="")
@@ -49,7 +50,7 @@ class Uperf(Benchmark):
             "--network-policy", dest="networkpolicy", env_var="networkpolicy", default=""
         )
         self.arg_group.add_argument("--nodes-count", dest="nodes_in_iter", env_var="node_count", default="")
-        self.arg_group.add_argument("--pod-density", dest="pod_density", env_var="pod_count", default="")
+        self.arg_group.add_argument("--pod-density", dest="density", env_var="pod_count", default="")
         self.arg_group.add_argument("--colocate", dest="colocate", env_var="colocate", default="")
         self.arg_group.add_argument("--step-size", dest="step_size", env_var="stepsize", default="")
         # density_range and node_range are defined and exported in the cr file
@@ -66,7 +67,7 @@ class Uperf(Benchmark):
         self.arg_group.add_argument("-u", "--uuid", dest="uuid", env_var="UUID", help="Provide UUID of run")
         self.arg_group.add_argument("--user", dest="user", env_var="USER", help="Provide user")
 
-        self.required_args.update({"workload", "uuid", "user"})
+        self.required_args.update({"workload", "sample", "kind", "uuid", "user"})
 
     def preflight_checks(self) -> bool:
         checks = [self.check_required_args(), self.check_file(self.config.workload)]
@@ -135,3 +136,69 @@ class Uperf(Benchmark):
                 "duration": len(results),
             },
         )
+
+    def get_metric(self, stdout: str, sample_num: int) -> List[JSONMetric]:
+        """Return list of JSON-compatible dict metrics given Uperf sample."""
+
+        results, data = self.parse_stdout(stdout)
+
+        processed: List[JSONMetric] = []
+        prev_bytes: int = 0
+        prev_ops: int = 0
+        prev_timestamp: float = 0.0
+        bytes: int = 0
+        ops: int = 0
+        timestamp: float = 0.0
+        norm_ops: int = 0
+        norm_ltcy: float = 0.0
+
+        for result in results:
+            timestamp, bytes, ops = float(result[0]), int(result[1]), int(result[2])
+
+            norm_ops = ops - prev_ops
+            if norm_ops == 0:
+                norm_ltcy = 0.0
+            else:
+                norm_ltcy = ((timestamp - prev_timestamp) / norm_ops) * 1000
+
+            datapoint = {
+                "workload": "uperf",
+                "iteration": sample_num,
+                "uperf_ts": datetime.datetime.fromtimestamp(int(result[0].split(".")[0]) / 1000),
+                "bytes": bytes,
+                "norm_byte": bytes - prev_bytes,
+                "ops": ops,
+                "norm_ops": norm_ops,
+                "norm_ltcy": norm_ltcy,
+                "density_range": [int(x) for x in self.config.density_range.split("-") if x != ""],
+                "node_range": [int(x) for x in self.config.node_range.split("-") if x != ""],
+            }
+            config_keys = set(self.metadata).union(
+                {
+                    "uuid",
+                    "user",
+                    "cluster_name",
+                    "hostnetwork",
+                    "remote_ip",
+                    "client_ips",
+                    "service_ip",
+                    "kind",
+                    "client_node",
+                    "server_node",
+                    "num_pairs",
+                    "multus_client",
+                    "networkpolicy",
+                    "density",
+                    "nodes_in_iter",
+                    "step_size",
+                    "colocate",
+                    "pod_id",
+                }
+            )
+            for key in config_keys:
+                datapoint[key] = getattr(self.config, key, None)
+            datapoint.update(data)
+            processed.append(JSONMetric(datapoint))
+            prev_timestamp, prev_bytes, prev_ops = timestamp, bytes, ops
+
+        return processed

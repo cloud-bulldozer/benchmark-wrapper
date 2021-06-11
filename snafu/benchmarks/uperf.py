@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Wrapper for running the uperf benchmark. See http://uperf.org/ for more information."""
-from typing import Dict, List, Tuple, Union
+from typing import Dict, Iterable, List, Tuple, Union
 import re
 import datetime
 from snafu.wrapper import Benchmark, JSONMetric
@@ -74,12 +74,6 @@ class Uperf(Benchmark):
 
         return False not in checks
 
-    def setup(self):
-        """Setup uperf."""
-
-    def cleanup(self):
-        """Cleanup uperf."""
-
     def run(self) -> Tuple[bool, List[str]]:
         """
         Run uperf benchmark ``self.config.sample`` number of times.
@@ -109,9 +103,6 @@ class Uperf(Benchmark):
         self.logger.info(f"Successfully collected {self.config.sample} samples.")
         return True, results
 
-    def emit_metrics(self):
-        """Emit uperf metrics."""
-
     @staticmethod
     def parse_stdout(stdout: str) -> Tuple[List[Tuple[str, str, str]], Dict[str, Union[str, int]]]:
         """Return parsed stdout of Uperf sample."""
@@ -137,7 +128,7 @@ class Uperf(Benchmark):
             },
         )
 
-    def get_metric(self, stdout: str, sample_num: int) -> List[JSONMetric]:
+    def get_metrics(self, stdout: str, sample_num: int) -> List[JSONMetric]:
         """Return list of JSON-compatible dict metrics given Uperf sample."""
 
         results, data = self.parse_stdout(stdout)
@@ -202,3 +193,15 @@ class Uperf(Benchmark):
             prev_timestamp, prev_bytes, prev_ops = timestamp, bytes, ops
 
         return processed
+
+    def emit_metrics(self, raw_results: List[str]) -> Iterable[JSONMetric]:
+        """
+        Emit uperf metrics.
+
+        Takes in raw stdout samples from uperf. Essentially, take second value returned from ``run`` method
+        and provide it here.
+        """
+
+        for sample_num, sample in enumerate(raw_results):
+            for metric in self.get_metrics(sample, sample_num):
+                yield metric

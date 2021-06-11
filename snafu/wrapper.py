@@ -244,17 +244,17 @@ class Benchmark(Wrapper, ABC):
         ---------
         cmd : str
             Command to run. On each failed attempt, a dict containing metadata will be appended to the list
-            at 'failed' key. stdout, stderr and return code will be saved in "stdout", "stderr" and "rc"
-            keys respectively. On the successful attempt, each key will be stored in the returnd
-            dict itself and the "success" key will be set to true. If stdout or stderr is empty, then it
-            will not be returned.
+            at 'failed' key. stdout, stderr and return code will be saved in ``stdout``, ``stderr`` and
+            ``rc`` keys respectively. On the successful attempt, each key will be stored in the returnd
+            dict itself and the ``success`` key will be set to true. If stdout or stderr from process is
+            empty, then it will not be placed in return dict.
         retries : int, optional
             Number of retries for running the command. Will run the command once, check return code, then
             re-run ``retries`` number of times. Defaults to 0. For each attempt, attempt number will be
-            stored in "attempt" key and expected return code will be stored in "expected_rc".
+            stored in ``attempt`` key and expected return code will be stored in ``expected_rc``.
         time : bool, optional
             If True, will time execution and return number of seconds it command took to run.
-            Defaults to False. Run time will be saved in the "elapsed_seconds" key for each attempt.
+            Defaults to False. Run time will be saved in the ``elapsed_seconds`` key for each attempt.
         expected_rc : int, optional
             Expected return code of command. Defaults to 0.
 
@@ -273,20 +273,27 @@ class Benchmark(Wrapper, ABC):
         ...         yield dict()
         >>> mybench = MyBenchmark()
         >>> pprint(mybench.run_process("echo 'Hello World'"))
-        {'attempt': 1, 'expected_rc': 0, 'rc': 0, 'stdout': 'Hello World'}
+        {'attempt': 1,
+         'expected_rc': 0,
+         'rc': 0,
+         'stdout': 'Hello World',
+         'success': True}
         >>> int(mybench.run_process("sleep 1", time=True)['elapsed_seconds'])
         1
         >>> pprint(mybench.run_process("echo 'test' | grep 'hello'", expected_rc=1))
-        {'attempt': 1, 'expected_rc': 1, 'rc': 1}
+        {'attempt': 1, 'expected_rc': 1, 'rc': 1, 'success': True}
         >>> fn = random.randint(1, 10)
         >>> pprint(mybench.run_process(f"echo -n 'test' >> /tmp/{fn}; grep -w testtest /tmp/{fn}", retries=1))
         {'attempt': 2,
          'expected_rc': 0,
          'failed': [{'attempt': 1, 'expected_rc': 0, 'rc': 1}],
          'rc': 0,
-         'stdout': 'testtest'}
+         'stdout': 'testtest',
+         'success': True}
         >>> pprint(mybench.run_process(f"rm /tmp/{fn}"))
-        {'attempt': 1, 'expected_rc': 0, 'rc': 0}
+        {'attempt': 1, 'expected_rc': 0, 'rc': 0, 'success': True}
+        >>> pprint(mybench.run_process(f"rm /tmp/{fn} 2&> /dev/null"))
+        {'failed': [{'attempt': 1, 'expected_rc': 0, 'rc': 1}], 'success': False}
         """
 
         self.logger.info(f"Running command {cmd}")
@@ -321,19 +328,20 @@ class Benchmark(Wrapper, ABC):
 
             self.logger.debug(f"Got return code {rc}, expected {expected_rc}")
             if rc == expected_rc:
-                self.logger.info(f"Command successful!")
+                self.logger.info(f"Command successful: {cmd}")
                 result.update(attempt)
                 result["success"] = True
                 break
             else:
-                self.logger.warning(f"Command unsuccessful")
+                self.logger.warning(f"Got bad return code from command: {cmd}")
                 if result.get("failed", None) is None:
                     result["failed"] = [attempt]
                 else:
                     result["failed"].append(attempt)
         else:
             # If we hit retry limit, we go here
-            self.logger.critical(f"Tried running command {tries} times, with no success.")
+            plural = "s" if tries > 1 else ""
+            self.logger.critical(f"After {tries} attempt{plural}, unable to run command: {cmd}")
 
         return result
 

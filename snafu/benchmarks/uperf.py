@@ -67,6 +67,11 @@ class Uperf(Benchmark):
 
         self.required_args.update({"workload", "uuid", "user"})
 
+    def preflight_checks(self) -> bool:
+        checks = [self.check_required_args(), self.check_file(self.config.workload)]
+
+        return False not in checks
+
     def setup(self):
         """Setup uperf."""
 

@@ -326,14 +326,14 @@ class Benchmark(Wrapper, ABC):
                 result["success"] = True
                 break
             else:
-                self.logger.info(f"Command unsuccessful")
+                self.logger.warning(f"Command unsuccessful")
                 if result.get("failed", None) is None:
                     result["failed"] = [attempt]
                 else:
                     result["failed"].append(attempt)
         else:
             # If we hit retry limit, we go here
-            self.logger.info(f"Tried running command {tries} times, with no success.")
+            self.logger.critical(f"Tried running command {tries} times, with no success.")
 
         return result
 

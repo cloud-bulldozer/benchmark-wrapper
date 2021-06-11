@@ -189,6 +189,7 @@ class Benchmark(Wrapper, ABC):
         super().__init__(**kwargs)
         self.metadata: List[str] = metadata if metadata is not None else list()
 
+    @abstractmethod
     def run(self) -> None:
         """Execute the benchmark."""
 

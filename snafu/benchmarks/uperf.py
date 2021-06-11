@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Wrapper for running the uperf benchmark. See http://uperf.org/ for more information."""
-from typing import List, Tuple
+from typing import Dict, List, Tuple, Union
+import re
 from snafu.wrapper import Benchmark
 
 
@@ -109,3 +110,28 @@ class Uperf(Benchmark):
 
     def emit_metrics(self):
         """Emit uperf metrics."""
+
+    @staticmethod
+    def parse_stdout(stdout: str) -> Tuple[List[Tuple[str, str, str]], Dict[str, Union[str, int]]]:
+        """Return parsed stdout of Uperf sample."""
+
+        # This will effectivly give us:
+        # <profile name="{{test}}-{{proto}}-{{wsize}}-{{rsize}}-{{nthr}}">
+        config = re.findall(r"running profile:(.*) \.\.\.", stdout)[0]
+        test_type, protocol, wsize, rsize, nthr = config.split("-")
+        # This will yeild us this structure :
+        #     timestamp, number of bytes, number of operations
+        # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
+        results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)", stdout)
+        # We assume message_size=write_message_size to prevent breaking dependant implementations
+        return (
+            results,
+            {
+                "test_type": test_type,
+                "protocol": protocol,
+                "message_size": int(wsize),
+                "read_message_size": int(rsize),
+                "num_threads": int(nthr),
+                "duration": len(results),
+            },
+        )

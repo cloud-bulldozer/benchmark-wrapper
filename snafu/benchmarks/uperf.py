@@ -214,18 +214,18 @@ class Uperf(Benchmark):
                 return
             else:
                 self.logger.info(f"Finished collecting sample {sample_num}")
-                self.logger.debug(f"Got results: {sample}")
+                self.logger.debug(f"Got sample: {sample}")
 
                 stdout: UperfStdout = self.parse_stdout(sample["successful"]["stdout"])
                 result_data: List[UperfResultData] = self.get_results_from_stdout(stdout)
-                stdout["config"].update(self.config.config)
+                stdout["config"].update(vars(self.config.config))
 
                 for result_datapoint in result_data:
                     result_datapoint["iteration"] = sample_num
                     result: BenchmarkResult = self.create_new_result(
                         data=result_datapoint, config=stdout["config"], label="results"
                     )
-                    self.logger.debug(f"Got result {result}")
+                    self.logger.debug(f"Got sample result: {result}")
                     yield result
 
         self.logger.info(f"Successfully collected {self.config.sample} samples of Uperf.")

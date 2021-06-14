@@ -1,10 +1,61 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Wrapper for running the uperf benchmark. See http://uperf.org/ for more information."""
-from typing import Dict, Iterable, List, Tuple, Union
+from typing import Iterable, List, Tuple, TypedDict
 import re
 import datetime
-from snafu.wrapper import Benchmark, JSONMetric
+from snafu.benchmark import Benchmark, BenchmarkResult
+from snafu.config import ConfigArgument, check_file
+from snafu.process import sample_process, ProcessSample
+
+
+class RawUperfResult(TypedDict):
+    timestamp: float
+    bytes: int
+    ops: int
+
+
+class UperfConfig(TypedDict, total=False):
+    # Parsed from stdout
+    test_type: str
+    protocol: str
+    message_size: int
+    read_message_size: int
+    num_threads: int
+    duration: int
+    # Given through args
+    hostnetwork: str
+    remote_ip: str
+    client_ips: str
+    service_ip: str
+    kind: str
+    client_node: str
+    server_node: str
+    num_pairs: str
+    multus_client: str
+    networkpolicy: str
+    density: str
+    nodes_in_iter: str
+    step_size: str
+    colocate: str
+    density_range: List[int]
+    node_range: List[int]
+    pod_id: str
+
+
+class UperfStdout(TypedDict):
+    results: Tuple[RawUperfResult, ...]
+    config: UperfConfig
+
+
+class UperfResultData(TypedDict, total=False):
+    uperf_ts: datetime.datetime
+    bytes: int
+    norm_byte: int
+    ops: int
+    norm_ops: int
+    norm_ltcy: float
+    iteration: int
 
 
 class Uperf(Benchmark):
@@ -13,13 +64,16 @@ class Uperf(Benchmark):
     """
 
     tool_name = "uperf"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.arg_group.add_argument(
-            "-w", "--workload", dest="workload", env_var="WORKLOAD", help="Provide XML workload location"
-        )
-        self.arg_group.add_argument(
+    args = (
+        ConfigArgument(
+            "-w",
+            "--workload",
+            dest="workload",
+            env_var="WORKLOAD",
+            help="Provide XML workload location",
+            required=True,
+        ),
+        ConfigArgument(
             "-s",
             "--sample",
             dest="sample",
@@ -27,84 +81,47 @@ class Uperf(Benchmark):
             default=1,
             type=int,
             help="Number of times to run the benchmark",
-        )
-        self.arg_group.add_argument(
+            required=True,
+        ),
+        ConfigArgument(
             "--resourcetype",
             dest="kind",
             env_var="RESOURCETYPE",
             help="Provide the resource type for uperf run - pod/vm/baremetal",
-        )
-        # TODO: need help text for these and add some standardization
-        self.arg_group.add_argument("--ips", dest="client_ips", env_var="ips", default="")
-        self.arg_group.add_argument("-h", "--remoteip", dest="remote_ip", env_var="h", default="")
-        self.arg_group.add_argument("--hostnet", dest="hostnetwork", env_var="hostnet", default="False")
-        self.arg_group.add_argument("--serviceip", dest="service_ip", env_var="serviceip", default="False")
-        self.arg_group.add_argument("--server-node", dest="server_node", env_var="server_node", default="")
-        self.arg_group.add_argument("--client-node", dest="client_node", env_var="client_node", default="")
-        self.arg_group.add_argument("--cluster-name", dest="cluster_name", env_var="clustername", default="")
-        self.arg_group.add_argument("--num-pairs", dest="num_pairs", env_var="num_pairs", default="")
-        self.arg_group.add_argument(
-            "--multus-client", dest="multus_client", env_var="multus_client", default=""
-        )
-        self.arg_group.add_argument(
-            "--network-policy", dest="networkpolicy", env_var="networkpolicy", default=""
-        )
-        self.arg_group.add_argument("--nodes-count", dest="nodes_in_iter", env_var="node_count", default="")
-        self.arg_group.add_argument("--pod-density", dest="density", env_var="pod_count", default="")
-        self.arg_group.add_argument("--colocate", dest="colocate", env_var="colocate", default="")
-        self.arg_group.add_argument("--step-size", dest="step_size", env_var="stepsize", default="")
+            required=True,
+        ),
+        # These need help text
+        ConfigArgument("--ips", dest="client_ips", env_var="ips", default=""),
+        ConfigArgument("-h", "--remoteip", dest="remote_ip", env_var="h", default=""),
+        ConfigArgument("--hostnet", dest="hostnetwork", env_var="hostnet", default="False"),
+        ConfigArgument("--serviceip", dest="service_ip", env_var="serviceip", default="False"),
+        ConfigArgument("--server-node", dest="server_node", env_var="server_node", default=""),
+        ConfigArgument("--client-node", dest="client_node", env_var="client_node", default=""),
+        ConfigArgument("--num-pairs", dest="num_pairs", env_var="num_pairs", default=""),
+        ConfigArgument("--multus-client", dest="multus_client", env_var="multus_client", default=""),
+        ConfigArgument("--network-policy", dest="networkpolicy", env_var="networkpolicy", default=""),
+        ConfigArgument("--nodes-count", dest="nodes_in_iter", env_var="node_count", default=""),
+        ConfigArgument("--pod-density", dest="density", env_var="pod_count", default=""),
+        ConfigArgument("--colocate", dest="colocate", env_var="colocate", default=""),
+        ConfigArgument("--step-size", dest="step_size", env_var="stepsize", default=""),
         # density_range and node_range are defined and exported in the cr file
         # it will appear in ES as startvalue-endvalue, for example
         # 5-10, for a run that began with 5 nodes involved and ended with 10
-        self.arg_group.add_argument(
-            "--density-range", dest="density_range", env_var="density_range", default=""
-        )
-        self.arg_group.add_argument("--node-range", dest="node_range", env_var="node_range", default="")
+        ConfigArgument("--density-range", dest="density_range", env_var="density_range", default=""),
+        ConfigArgument("--node-range", dest="node_range", env_var="node_range", default=""),
         # each node will run with density number of pods, this is the 0 based
         # number of that pod, useful for displaying throughput of each density
-        self.arg_group.add_argument("--pod-id", dest="pod-id", env_var="my_pod_idx", default="")
-        # TODO: Are these two common metadata?
-        self.arg_group.add_argument("-u", "--uuid", dest="uuid", env_var="UUID", help="Provide UUID of run")
-        self.arg_group.add_argument("--user", dest="user", env_var="USER", help="Provide user")
-
-        self.required_args.update({"workload", "sample", "kind", "uuid", "user"})
-
-    def preflight_checks(self) -> bool:
-        checks = [self.check_required_args(), self.check_file(self.config.workload)]
-
-        return False not in checks
-
-    def run(self) -> Tuple[bool, List[str]]:
-        """
-        Run uperf benchmark ``self.config.sample`` number of times.
-
-        Returns immediately if a sample fails. Will attempt to Uperf run three times for each sample.
-
-        Returns
-        -------
-        tuple :
-            First value in tuple is bool representing if we were able to run uperf successfully. Second
-            value in tuple is a list of stdouts returned by successful uperf samples.
-        """
-
-        cmd = f"uperf -v -a -R -i 1 -m {self.config.workload}"
-        results: List[str] = list()
-        for sample_num in range(1, self.config.sample + 1):
-            self.logger.info(f"Starting Uperf sample number {sample_num}")
-            sample = self.run_process(cmd, retries=2, expected_rc=0)
-            if not sample["success"]:
-                self.logger.critical(f"Uperf failed to run! Got results: {sample}")
-                return False, results
-            else:
-                self.logger.info(f"Finished collecting sample {sample_num}")
-                self.logger.debug(f"Got results: {sample}")
-                results.append(sample["stdout"])
-
-        self.logger.info(f"Successfully collected {self.config.sample} samples.")
-        return True, results
+        ConfigArgument("--pod-id", dest="pod-id", env_var="my_pod_idx", default=""),
+        # metadata
+        ConfigArgument("--cluster-name", dest="cluster_name", env_var="clustername", default=""),
+        ConfigArgument(
+            "-u", "--uuid", dest="uuid", env_var="UUID", help="Provide UUID of run", required=True
+        ),
+        ConfigArgument("--user", dest="user", env_var="USER", help="Provide user", required=True),
+    )
 
     @staticmethod
-    def parse_stdout(stdout: str) -> Tuple[List[Tuple[str, str, str]], Dict[str, Union[str, int]]]:
+    def parse_stdout(stdout: str) -> UperfStdout:
         """Return parsed stdout of Uperf sample."""
 
         # This will effectivly give us:
@@ -116,24 +133,25 @@ class Uperf(Benchmark):
         # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
         results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)", stdout)
         # We assume message_size=write_message_size to prevent breaking dependant implementations
-        return (
-            results,
-            {
-                "test_type": test_type,
-                "protocol": protocol,
-                "message_size": int(wsize),
-                "read_message_size": int(rsize),
-                "num_threads": int(nthr),
-                "duration": len(results),
-            },
+
+        return UperfStdout(
+            results=tuple(
+                RawUperfResult(timestamp=float(r[0]), bytes=int(r[1]), ops=int(r[2])) for r in results
+            ),
+            config=UperfConfig(
+                test_type=test_type,
+                protocol=protocol,
+                message_size=int(wsize),
+                read_message_size=int(rsize),
+                num_threads=int(nthr),
+                duration=len(results),
+            ),
         )
 
-    def get_metrics(self, stdout: str, sample_num: int) -> List[JSONMetric]:
-        """Return list of JSON-compatible dict metrics given Uperf sample."""
+    def get_results_from_stdout(self, stdout: UperfStdout) -> List[UperfResultData]:
+        """Return list of results given raw uperf stdout."""
 
-        results, data = self.parse_stdout(stdout)
-
-        processed: List[JSONMetric] = []
+        processed: List[BenchmarkResult] = []
         prev_bytes: int = 0
         prev_ops: int = 0
         prev_timestamp: float = 0.0
@@ -143,8 +161,8 @@ class Uperf(Benchmark):
         norm_ops: int = 0
         norm_ltcy: float = 0.0
 
-        for result in results:
-            timestamp, bytes, ops = float(result[0]), int(result[1]), int(result[2])
+        for result in stdout["results"]:
+            timestamp, bytes, ops = result["timestamp"], result["bytes"], result["ops"]
 
             norm_ops = ops - prev_ops
             if norm_ops == 0:
@@ -152,56 +170,62 @@ class Uperf(Benchmark):
             else:
                 norm_ltcy = ((timestamp - prev_timestamp) / norm_ops) * 1000
 
-            datapoint = {
-                "workload": "uperf",
-                "iteration": sample_num,
-                "uperf_ts": datetime.datetime.fromtimestamp(int(result[0].split(".")[0]) / 1000),
-                "bytes": bytes,
-                "norm_byte": bytes - prev_bytes,
-                "ops": ops,
-                "norm_ops": norm_ops,
-                "norm_ltcy": norm_ltcy,
-                "density_range": [int(x) for x in self.config.density_range.split("-") if x != ""],
-                "node_range": [int(x) for x in self.config.node_range.split("-") if x != ""],
-            }
-            config_keys = set(self.metadata).union(
-                {
-                    "uuid",
-                    "user",
-                    "cluster_name",
-                    "hostnetwork",
-                    "remote_ip",
-                    "client_ips",
-                    "service_ip",
-                    "kind",
-                    "client_node",
-                    "server_node",
-                    "num_pairs",
-                    "multus_client",
-                    "networkpolicy",
-                    "density",
-                    "nodes_in_iter",
-                    "step_size",
-                    "colocate",
-                    "pod_id",
-                }
+            datapoint = UperfResultData(
+                uperf_ts=datetime.datetime.fromtimestamp(int(timestamp) / 1000),
+                bytes=bytes,
+                norm_byte=bytes - prev_bytes,
+                ops=ops,
+                norm_ops=norm_ops,
+                norm_ltcy=norm_ltcy,
             )
-            for key in config_keys:
-                datapoint[key] = getattr(self.config, key, None)
-            datapoint.update(data)
-            processed.append(JSONMetric(datapoint))
+
+            processed.append(datapoint)
             prev_timestamp, prev_bytes, prev_ops = timestamp, bytes, ops
 
         return processed
 
-    def emit_metrics(self, raw_results: List[str]) -> Iterable[JSONMetric]:
+    def run(self) -> Iterable[BenchmarkResult]:
         """
-        Emit uperf metrics.
+        Run uperf benchmark ``self.config.sample`` number of times.
 
-        Takes in raw stdout samples from uperf. Essentially, take second value returned from ``run`` method
-        and provide it here.
+        Returns immediately if a sample fails. Will attempt to Uperf run three times for each sample.
         """
 
-        for sample_num, sample in enumerate(raw_results):
-            for metric in self.get_metrics(sample, sample_num):
-                yield metric
+        self.config.parse_args()
+        if isinstance(self.config.density_range, str):
+            self.config.config.density_range = [
+                int(x) for x in self.config.config.density_range.split("-") if x != ""
+            ]
+        if isinstance(self.config.node_range, str):
+            self.config.config.node_range = [
+                int(x) for x in self.config.config.node_range.split("-") if x != ""
+            ]
+        if not check_file(self.config.workload):
+            self.logger.critical(f"Unable to read workload file located at {self.config.workload}")
+
+        cmd = f"uperf -v -a -R -i 1 -m {self.config.workload}"
+
+        for sample_num in range(1, self.config.sample + 1):
+            self.logger.info(f"Starting Uperf sample number {sample_num}")
+            sample: ProcessSample = sample_process(cmd, self.logger, retries=2, expected_rc=0)
+
+            if not sample["success"]:
+                self.logger.critical(f"Uperf failed to run! Got results: {sample}")
+                return
+            else:
+                self.logger.info(f"Finished collecting sample {sample_num}")
+                self.logger.debug(f"Got results: {sample}")
+
+                stdout: UperfStdout = self.parse_stdout(sample["successful"]["stdout"])
+                result_data: List[UperfResultData] = self.get_results_from_stdout(stdout)
+                stdout["config"].update(self.config.config)
+
+                for result_datapoint in result_data:
+                    result_datapoint["iteration"] = sample_num
+                    result: BenchmarkResult = self.create_new_result(
+                        data=result_datapoint, config=stdout["config"], label="results"
+                    )
+                    self.logger.debug(f"Got result {result}")
+                    yield result
+
+        self.logger.info(f"Successfully collected {self.config.sample} samples of Uperf.")

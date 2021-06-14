@@ -67,6 +67,7 @@ class get_prometheus_data:
                 filename = tool_include_file
             else:
                 filename = os.path.join(include_file_dir, "included_labels.json")
+            logger.info("using prometheus metric include file %s" % filename)
 
             # open tools include file and loop through all
             with open(filename, "r") as f:

@@ -4,7 +4,7 @@
 from typing import Iterable, List, Tuple, TypedDict
 import re
 import datetime
-from snafu.benchmark import Benchmark, BenchmarkResult
+from snafu.benchmarks import Benchmark, BenchmarkResult
 from snafu.config import ConfigArgument, check_file
 from snafu.process import sample_process, ProcessSample
 

@@ -184,14 +184,10 @@ class Uperf(Benchmark):
 
         return processed
 
-    def run(self) -> Iterable[BenchmarkResult]:
-        """
-        Run uperf benchmark ``self.config.sample`` number of times.
-
-        Returns immediately if a sample fails. Will attempt to Uperf run three times for each sample.
-        """
-
+    def setup(self) -> bool:
+        """Parse config and check that workload file exists."""
         self.config.parse_args()
+
         if isinstance(self.config.density_range, str):
             self.config.config.density_range = [
                 int(x) for x in self.config.config.density_range.split("-") if x != ""
@@ -202,6 +198,21 @@ class Uperf(Benchmark):
             ]
         if not check_file(self.config.workload):
             self.logger.critical(f"Unable to read workload file located at {self.config.workload}")
+            return False
+
+        return True
+
+    def run(self) -> Iterable[BenchmarkResult]:
+        """
+        Run uperf benchmark ``self.config.sample`` number of times.
+
+        Returns immediately if a sample fails. Will attempt to Uperf run three times for each sample.
+        """
+
+        self.logger.info("Running setup tasks.")
+        if not self.setup():
+            self.logger.critical(f"Something went wrong during setup, refusing to run.")
+            return
 
         cmd = f"uperf -v -a -R -i 1 -m {self.config.workload}"
 

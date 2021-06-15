@@ -56,5 +56,9 @@ class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
         return result
 
     @abstractmethod
+    def setup(self) -> bool:
+        """Setup the benchmark, returning ``False`` if something went wrong."""
+
+    @abstractmethod
     def run(self) -> Iterable[BenchmarkResult]:
         """Execute the benchmark and return Iterable of Metrics."""

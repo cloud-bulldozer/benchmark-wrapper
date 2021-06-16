@@ -5,8 +5,15 @@ from typing import Iterable, List, Tuple, TypedDict
 import re
 import datetime
 from snafu.benchmarks import Benchmark, BenchmarkResult
-from snafu.config import ConfigArgument, check_file
+from snafu.config import ConfigArgument, FuncAction, check_file
 from snafu.process import sample_process, ProcessSample
+
+
+class ParseRangeAction(FuncAction):
+    """Parses node_range and density_range attributes."""
+
+    def func(self, arg: str) -> List[int]:
+        return [int(x) for x in arg.split("-") if x != ""]
 
 
 class RawUperfResult(TypedDict):
@@ -107,8 +114,16 @@ class Uperf(Benchmark):
         # density_range and node_range are defined and exported in the cr file
         # it will appear in ES as startvalue-endvalue, for example
         # 5-10, for a run that began with 5 nodes involved and ended with 10
-        ConfigArgument("--density-range", dest="density_range", env_var="density_range", default=""),
-        ConfigArgument("--node-range", dest="node_range", env_var="node_range", default=""),
+        ConfigArgument(
+            "--density-range",
+            dest="density_range",
+            env_var="density_range",
+            default="",
+            action=ParseRangeAction,
+        ),
+        ConfigArgument(
+            "--node-range", dest="node_range", env_var="node_range", default="", action=ParseRangeAction
+        ),
         # each node will run with density number of pods, this is the 0 based
         # number of that pod, useful for displaying throughput of each density
         ConfigArgument("--pod-id", dest="pod-id", env_var="my_pod_idx", default=""),
@@ -187,15 +202,8 @@ class Uperf(Benchmark):
     def setup(self) -> bool:
         """Parse config and check that workload file exists."""
         self.config.parse_args()
+        self.logger.debug(f"Got config: {vars(self.config)}")
 
-        if isinstance(self.config.density_range, str):
-            self.config.config.density_range = [
-                int(x) for x in self.config.config.density_range.split("-") if x != ""
-            ]
-        if isinstance(self.config.node_range, str):
-            self.config.config.node_range = [
-                int(x) for x in self.config.config.node_range.split("-") if x != ""
-            ]
         if not check_file(self.config.workload):
             self.logger.critical(f"Unable to read workload file located at {self.config.workload}")
             return False

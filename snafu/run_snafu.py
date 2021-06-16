@@ -16,7 +16,7 @@
 #
 import os
 import sys
-import argparse
+import configargparse
 import elasticsearch
 import time
 import datetime
@@ -26,6 +26,7 @@ import urllib3
 import json
 import ssl
 from distutils.util import strtobool
+from snafu.benchmarks import load_benchmarks
 from snafu.utils.common_logging import setup_loggers
 from snafu.utils.get_prometheus_data import get_prometheus_data
 from snafu.utils.wrapper_factory import wrapper_factory
@@ -43,7 +44,13 @@ urllib3_log.setLevel(logging.CRITICAL)
 
 def main():
     # collect arguments
-    parser = argparse.ArgumentParser(description="run script", add_help=False)
+    parser = configargparse.get_argument_parser(
+        description="Run benchmark-wrapper and export results.",
+        add_config_file_help=True,
+        add_env_var_help=True,
+        default_config_files=["./snafu.yml"],
+        ignore_unknown_config_file_keys=False,
+    )
     parser.add_argument(
         "-v",
         "--verbose",
@@ -52,6 +59,12 @@ def main():
         const=logging.DEBUG,
         default=logging.INFO,
         help="enables verbose wrapper debugging info",
+    )
+    parser.add_argument("-f", "--config", help="Config file to load", is_config_file=True)
+    parser.add_argument(
+        "-l",
+        "--labels",
+        help="Metadata to add in results exported by benchmark. Format: key1=value1,key2=value2,...",
     )
     parser.add_argument("-t", "--tool", help="Provide tool name", required=True)
     parser.add_argument("--run-id", help="Run ID to unify benchmark results in ES", nargs="?", default="NA")
@@ -71,6 +84,9 @@ def main():
     setup_loggers("snafu", index_args.loglevel)
     log_level_str = "DEBUG" if index_args.loglevel == logging.DEBUG else "INFO"
     logger.info("logging level is %s" % log_level_str)
+
+    # Load benchmarks into registry
+    load_benchmarks()
 
     # set up a standard format for time
     FMT = "%Y-%m-%dT%H:%M:%SGMT"

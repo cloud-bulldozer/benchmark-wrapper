@@ -18,6 +18,7 @@ from snafu.log_generator_wrapper.log_generator_wrapper import log_generator_wrap
 from snafu.image_pull_wrapper.image_pull_wrapper import image_pull_wrapper
 from snafu.sysbench.sysbench_wrapper import sysbench_wrapper
 from snafu.dns_perf_wrapper.dns_perf_wrapper import dns_perf_wrapper
+from snafu.registry import TOOLS
 
 import logging
 
@@ -48,11 +49,19 @@ wrapper_dict = {
 
 
 def wrapper_factory(tool_name, parser):
-    try:
+    if TOOLS.get(tool_name, None) is not None:
+        wrapper = TOOLS[tool_name]
+        wrapper_obj = wrapper()
+    elif wrapper_dict.get(tool_name, None) is not None:
         wrapper = wrapper_dict[tool_name]
+        wrapper_obj = wrapper(parser)
+    else:
+        wrapper = None
+        wrapper_obj = None
+
+    if wrapper is not None:
         logger.info("identified %s as the benchmark wrapper" % tool_name)
-    except KeyError:
+        return wrapper_obj
+    else:
         logger.error("Tool name %s is not recognized." % tool_name)
         return 1  # if error return 1 and fail
-    else:
-        return wrapper(parser)

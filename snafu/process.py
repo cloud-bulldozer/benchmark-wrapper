@@ -22,6 +22,12 @@ class ProcessSample(TypedDict, total=False):
     successful: ProcessRun
 
 
+# TODO: environment variables
+# TODO: Allow for specifying shell=False
+# TODO: Confirm process exits before returning
+# TODO: Add more robust proccess running that allows benchmarks to pull stdout/stderr in real time and log
+
+
 def _run_process(cmd: str) -> Tuple[str, str, int]:
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()

@@ -79,3 +79,6 @@ class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
     @abstractmethod
     def run(self) -> Iterable[BenchmarkResult]:
         """Execute the benchmark and return Iterable of Metrics."""
+
+    # TODO: Add cleanup method
+    # TODO: Add method which runs setup -> run -> cleanup

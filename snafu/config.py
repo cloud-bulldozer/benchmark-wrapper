@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 """Tools for setting up config arguments."""
 import os
-from typing import Iterable, List
+from typing import Any, Iterable, List
 import argparse
 import configargparse
+
+# TODO: Add ability to create dependent args that are only required when another arg is given
 
 
 def check_file(file: str, perms: int = None) -> bool:
@@ -18,6 +20,22 @@ def check_file(file: str, perms: int = None) -> bool:
         perms = os.R_OK
     perms |= os.F_OK
     return os.access(os.path.abspath(file), perms)
+
+
+class FuncAction(argparse.Action):
+    """argparse Action to run a function on an arg before storing it."""
+
+    def func(self, arg: Any) -> Any:
+        """Overwrite me."""
+
+    def __call__(
+        self,
+        parser: configargparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string=None,
+    ):
+        setattr(namespace, self.dest, self.func(values))
 
 
 class ConfigArgument:

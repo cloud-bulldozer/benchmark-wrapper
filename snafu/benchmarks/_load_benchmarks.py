@@ -4,10 +4,11 @@
 import os
 import pkgutil
 import importlib
+import logging
 from typing import Tuple, List
 
 
-def load_benchmarks() -> Tuple[List[str], List[str]]:
+def load_benchmarks(logger: logging.Logger = None) -> Tuple[List[str], List[str]]:
     """
     Autodetect modules in same directory as source file (``__file__``) and automatically import them.
 
@@ -22,13 +23,27 @@ def load_benchmarks() -> Tuple[List[str], List[str]]:
         the second a list of modules that failed to import due to an ImportError.
     """
 
+    if logger is None:
+        logger = logging.getLogger("snafu")
+
     imported, failed = [], []
-    for _, module, _ in pkgutil.iter_modules([os.path.dirname(__file__)]):
+    # __file__ is full path to this module
+    module_name = f".{os.path.basename(__file__).replace('.py', '')}"
+    # __name__ is module name with full package hierarchy
+    package = __name__.replace(module_name, "")
+    module_dir = os.path.dirname(__file__)
+    logger.debug(f"Looking for benchmarks in {module_dir}")
+
+    for _, module, _ in pkgutil.iter_modules([module_dir]):
         if not module.startswith("_"):
+            logger.debug(f"Trying to import module {module}")
             try:
-                importlib.import_module(module, package=__name__)
+                # specify relative import using dot notation
+                importlib.import_module(f".{module}", package=package)
                 imported.append(module)
-            except ImportError:
+                logger.debug(f"Successfully imported benchmark: {module}")
+            except ImportError as exception:
+                logger.warning(f"Unable to import {module} benchmark: {exception}", exc_info=True)
                 failed.append(module)
 
     return imported, failed

@@ -61,11 +61,6 @@ def main():
         help="enables verbose wrapper debugging info",
     )
     parser.add_argument("-f", "--config", help="Config file to load", is_config_file=True)
-    parser.add_argument(
-        "-l",
-        "--labels",
-        help="Metadata to add in results exported by benchmark. Format: key1=value1,key2=value2,...",
-    )
     parser.add_argument("-t", "--tool", help="Provide tool name", required=True)
     parser.add_argument("--run-id", help="Run ID to unify benchmark results in ES", nargs="?", default="NA")
     parser.add_argument("--archive-file", help="Archive file that will be indexed into ES")

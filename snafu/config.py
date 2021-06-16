@@ -36,7 +36,7 @@ class Config:
     def __init__(self, tool_name: str):
         self.config: argparse.Namespace = argparse.Namespace()
         self.parser: configargparse.ArgumentParser = configargparse.get_argument_parser()
-        self.group = self.parser.get_argument_group(tool_name)
+        self.group = self.parser.add_argument_group(tool_name)
 
     def __getattr__(self, attr):
         return getattr(self.config, attr, None)

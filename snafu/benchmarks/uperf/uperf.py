@@ -16,7 +16,7 @@ class ParseRangeAction(FuncAction):
         return [int(x) for x in arg.split("-") if x != ""]
 
 
-class RawUperfResult(TypedDict):
+class RawUperfStat(TypedDict):
     timestamp: float
     bytes: int
     ops: int
@@ -51,11 +51,11 @@ class UperfConfig(TypedDict, total=False):
 
 
 class UperfStdout(TypedDict):
-    results: Tuple[RawUperfResult, ...]
+    results: Tuple[RawUperfStat, ...]
     config: UperfConfig
 
 
-class UperfResultData(TypedDict, total=False):
+class UperfStat(TypedDict, total=False):
     uperf_ts: datetime.datetime
     bytes: int
     norm_byte: int
@@ -151,7 +151,7 @@ class Uperf(Benchmark):
 
         return UperfStdout(
             results=tuple(
-                RawUperfResult(timestamp=float(r[0]), bytes=int(r[1]), ops=int(r[2])) for r in results
+                RawUperfStat(timestamp=float(r[0]), bytes=int(r[1]), ops=int(r[2])) for r in results
             ),
             config=UperfConfig(
                 test_type=test_type,
@@ -163,10 +163,10 @@ class Uperf(Benchmark):
             ),
         )
 
-    def get_results_from_stdout(self, stdout: UperfStdout) -> List[UperfResultData]:
+    def get_results_from_stdout(self, stdout: UperfStdout) -> List[UperfStat]:
         """Return list of results given raw uperf stdout."""
 
-        processed: List[BenchmarkResult] = []
+        processed: List[UperfStat] = []
         prev_bytes: int = 0
         prev_ops: int = 0
         prev_timestamp: float = 0.0
@@ -185,7 +185,7 @@ class Uperf(Benchmark):
             else:
                 norm_ltcy = ((timestamp - prev_timestamp) / norm_ops) * 1000
 
-            datapoint = UperfResultData(
+            datapoint = UperfStat(
                 uperf_ts=datetime.datetime.fromtimestamp(int(timestamp) / 1000),
                 bytes=bytes,
                 norm_byte=bytes - prev_bytes,
@@ -236,7 +236,7 @@ class Uperf(Benchmark):
                 self.logger.debug(f"Got sample: {sample}")
 
                 stdout: UperfStdout = self.parse_stdout(sample["successful"]["stdout"])
-                result_data: List[UperfResultData] = self.get_results_from_stdout(stdout)
+                result_data: List[UperfStat] = self.get_results_from_stdout(stdout)
                 stdout["config"].update(vars(self.config.config))
 
                 for result_datapoint in result_data:

@@ -26,12 +26,12 @@ import urllib3
 import json
 import ssl
 from distutils.util import strtobool
-from snafu.benchmarks import load_benchmarks
 from snafu.utils.common_logging import setup_loggers
 from snafu.utils.get_prometheus_data import get_prometheus_data
 from snafu.utils.wrapper_factory import wrapper_factory
 from snafu.utils.request_cache_drop import drop_cache
 from snafu.utils.py_es_bulk import streaming_bulk
+from snafu import benchmarks
 
 logger = logging.getLogger("snafu")
 
@@ -80,8 +80,9 @@ def main():
     log_level_str = "DEBUG" if index_args.loglevel == logging.DEBUG else "INFO"
     logger.info("logging level is %s" % log_level_str)
 
-    # Load benchmarks into registry
-    load_benchmarks()
+    # Log loaded benchmarks
+    show_db_tb = index_args.loglevel == logging.DEBUG
+    benchmarks.DETECTED_BENCHMARKS.log(logger=logger, level=logging.INFO, show_tb=show_db_tb)
 
     # set up a standard format for time
     FMT = "%Y-%m-%dT%H:%M:%SGMT"

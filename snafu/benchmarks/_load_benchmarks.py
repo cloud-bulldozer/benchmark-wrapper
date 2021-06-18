@@ -12,20 +12,27 @@ import importlib
 import traceback
 import logging
 from dataclasses import dataclass
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, Type, List, Union
+from types import TracebackType
+
+
+_EXC_INFO_TYPE = Union[Tuple[Type[BaseException], BaseException, TracebackType], Tuple[None, None, None]]
 
 
 @dataclass
 class DetectedBenchmarks:
     imported: List[str]
     failed: List[str]
-    errors: Dict[str, Tuple[str, str, str]]
+    errors: Dict[str, _EXC_INFO_TYPE]
 
-    def log(self, logger: logging.Logger, level: int = logging.DEBUG, show_tb: bool = False) -> str:
+    def log(self, logger: logging.Logger, level: int = logging.DEBUG, show_tb: bool = False) -> None:
         logger.log(
-            level, f"Successfully imported {len(self.imported)} benchmark modules: {', '.join(self.imported)}"
+            level,
+            f"Successfully imported {len(self.imported)} benchmark modules: {', '.join(self.imported)}",
         )
-        logger.log(level, f"Failed to import {len(self.failed)} benchmark modules: {', '.join(self.failed)}")
+        logger.log(
+            level, f"Failed to import {len(self.failed)} benchmark modules: {', '.join(self.failed)}",
+        )
         if show_tb:
             logger.log(level, f"Got the following errors:")
             for benchmark, exc_info in self.errors.items():

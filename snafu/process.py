@@ -1,25 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Tools for running subprocesses"""
-from typing import List, TypedDict, Tuple
+from typing import List, Optional, Tuple
+import dataclasses
 import datetime
 import logging
 import subprocess
 
 
-class ProcessRun(TypedDict, total=False):
-    rc: int
-    stdout: str
-    stderr: str
-    runtime: float
+@dataclasses.dataclass
+class ProcessRun:
+    rc: Optional[int] = None
+    stdout: Optional[str] = None
+    stderr: Optional[str] = None
+    time_seconds: Optional[float] = None
 
 
-class ProcessSample(TypedDict, total=False):
-    expected_rc: int
-    success: bool
-    attempts: int
-    failed: List[ProcessRun]
-    successful: ProcessRun
+@dataclasses.dataclass
+class ProcessSample:
+    expected_rc: Optional[int] = None
+    success: Optional[bool] = None
+    attempts: Optional[int] = None
+    failed: List[ProcessRun] = list()
+    successful: ProcessRun = ProcessRun()
 
 
 # TODO: environment variables
@@ -41,7 +44,6 @@ def sample_process(
 
     logger.info(f"Running command: {cmd}")
     result = ProcessSample(expected_rc=expected_rc)
-    result["failed"] = list()
     tries: int = 0
 
     while tries <= retries:
@@ -57,27 +59,27 @@ def sample_process(
         if time:
             end_time = datetime.datetime.utcnow()
             diff_seconds = (end_time - start_time).total_seconds()
-            attempt["runtime"] = diff_seconds
+            attempt.time_seconds = diff_seconds
 
-        attempt["stdout"] = stdout
-        attempt["stderr"] = stderr
-        attempt["rc"] = rc
+        attempt.stdout = stdout
+        attempt.stderr = stderr
+        attempt.rc = rc
         logger.info(f"Finished running. Got attempt: {attempt}")
 
         logger.debug(f"Got return code {rc}, expected {expected_rc}")
         if rc == expected_rc:
             logger.info(f"Command successful!")
-            result["successful"] = attempt
-            result["success"] = True
+            result.successful = attempt
+            result.success = True
             break
         else:
             logger.warning(f"Got bad return code from command.")
-            result["failed"].append(attempt)
+            result.failed.append(attempt)
     else:
         # If we hit retry limit, we go here
         plural = "s" if tries > 1 else ""
         logger.critical(f"After {tries} attempt{plural}, unable to run command: {cmd}")
-        result["success"] = False
+        result.success = False
 
-    result["attempts"] = tries
+    result.attempts = tries
     return result

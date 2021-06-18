@@ -243,14 +243,20 @@ class Uperf(Benchmark):
             self.logger.info(f"Starting Uperf sample number {sample_num}")
             sample: ProcessSample = sample_process(cmd, self.logger, retries=2, expected_rc=0)
 
-            if not sample["success"]:
+            if not sample.success:
                 self.logger.critical(f"Uperf failed to run! Got results: {sample}")
                 return
             else:
                 self.logger.info(f"Finished collecting sample {sample_num}")
                 self.logger.debug(f"Got sample: {sample}")
 
-                stdout: UperfStdout = self.parse_stdout(sample["successful"]["stdout"])
+                if sample.successful.stdout is None:
+                    self.logger.critical(
+                        f"Uperf ran successfully, but didn't get stdout. Got results: {sample}"
+                    )
+                    return
+
+                stdout: UperfStdout = self.parse_stdout(sample.successful.stdout)
                 result_data: List[UperfStat] = self.get_results_from_stdout(stdout)
                 config: UperfConfig = UperfConfig.new(stdout, self.config)
 

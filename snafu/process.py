@@ -60,7 +60,7 @@ def sample_process(
         if time:
             start_time = datetime.datetime.utcnow()
 
-        stdout, stderr, rc = _run_process(cmd)
+        stdout, stderr, rc = _run_process(cmd, shell, env)
 
         if time:
             end_time = datetime.datetime.utcnow()

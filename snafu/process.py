@@ -104,11 +104,12 @@ def sample_process(
 ) -> ProcessSample:
     """Run the given command as a subprocess within a shell"""
 
-    logger.info(f"Running command with timeout of {timeout}: {cmd}")
+    logger.debug(f"Running command with timeout of {timeout}: {cmd}")
     logger.debug(f"Using args: {kwargs}")
 
     result = ProcessSample(expected_rc=expected_rc)
     tries: int = 0
+    tries_plural: str = ""
 
     while tries <= retries:
         tries += 1
@@ -118,20 +119,21 @@ def sample_process(
             lp.cleanup()
             attempt: ProcessRun = lp.attempt
 
-        logger.info(f"Finished running. Got attempt: {attempt}")
+        logger.debug(f"Finished running. Got attempt: {attempt}")
         logger.debug(f"Got return code {attempt.rc}, expected {expected_rc}")
         if attempt.rc == expected_rc:
-            logger.info(f"Command successful!")
+            logger.debug(f"Command finished with {tries} attempt{tries_plural}: {cmd}")
             result.successful = attempt
             result.success = True
             break
         else:
-            logger.warning(f"Got bad return code from command.")
+            logger.warning(f"Got bad return code from command: {cmd}.")
             result.failed.append(attempt)
+
+        tries_plural = "s"
     else:
         # If we hit retry limit, we go here
-        plural = "s" if tries > 1 else ""
-        logger.critical(f"After {tries} attempt{plural}, unable to run command: {cmd}")
+        logger.critical(f"After {tries} attempt{tries_plural}, unable to run command: {cmd}")
         result.success = False
 
     result.attempts = tries

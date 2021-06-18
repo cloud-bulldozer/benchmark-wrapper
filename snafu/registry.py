@@ -4,8 +4,7 @@
 Implement a global tool registry that automatically maps tool names to their classes.
 
 This works by having a metaclass (added onto ```wrapper.Wrapper``), add tool classes to into the
-registry dict when the class is created. For more information on metaclasses, see:
-https://www.geeksforgeeks.org/python-metaclasses/.
+registry dict when the class is created.
 
 After snafu loads up and all the classes are created, the registry dict can be accessed at
 ``registry.TOOLS``. Key names will be tool names, values will be their wrapper classes.
@@ -39,6 +38,8 @@ class ToolRegistryMeta(ABCMeta):
         """Called when a new class is created."""
 
         new_class = super().__new__(cls, clsname, superclasses, attributedict)
+        if attributedict.get("tool_name", None) is None:
+            raise KeyError("When using ToolRegistryMeta, please set the 'tool_name' class attribute.")
         TOOLS[attributedict["tool_name"]] = new_class
 
         return new_class

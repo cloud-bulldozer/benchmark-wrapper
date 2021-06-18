@@ -25,9 +25,6 @@ class ProcessSample:
     successful: ProcessRun = ProcessRun()
 
 
-# TODO: environment variables
-# TODO: Allow for specifying shell=False
-# TODO: Confirm process exits before returning
 # TODO: Add more robust proccess running that allows benchmarks to pull stdout/stderr in real time and log
 
 

@@ -52,12 +52,12 @@ class Config:
     """
 
     def __init__(self, tool_name: str):
-        self.config: argparse.Namespace = argparse.Namespace()
+        self.params: argparse.Namespace = argparse.Namespace()
         self.parser: configargparse.ArgumentParser = configargparse.get_argument_parser()
         self.group = self.parser.add_argument_group(tool_name)
 
     def __getattr__(self, attr):
-        return getattr(self.config, attr, None)
+        return getattr(self.params, attr, None)
 
     def add_argument(self, *args, **kwargs) -> None:
         """Add argument into the config. Uses arg and kwarg format of argparse.add_argument."""
@@ -73,4 +73,4 @@ class Config:
     def parse_args(self, args: List[str] = None) -> None:
         """Parse arguments and set values in ``config`` attribute."""
 
-        self.parser.parse_known_args(args=args, namespace=self.config)
+        self.parser.parse_known_args(args=args, namespace=self.params)

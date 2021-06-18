@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Tools for running subprocesses"""
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 import dataclasses
 import datetime
 import logging
@@ -21,7 +21,7 @@ class ProcessSample:
     expected_rc: Optional[int] = None
     success: Optional[bool] = None
     attempts: Optional[int] = None
-    failed: List[ProcessRun] = list()
+    failed: List[ProcessRun] = dataclasses.field(default_factory=list)
     successful: ProcessRun = ProcessRun()
 
 
@@ -31,14 +31,20 @@ class ProcessSample:
 # TODO: Add more robust proccess running that allows benchmarks to pull stdout/stderr in real time and log
 
 
-def _run_process(cmd: str) -> Tuple[str, str, int]:
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+def _run_process(cmd: str, shell: bool, env: Dict[str, str]) -> Tuple[str, str, int]:
+    process = subprocess.Popen(cmd, shell=shell, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
     return stdout.strip().decode("utf-8"), stderr.strip().decode("utf-8"), process.returncode
 
 
 def sample_process(
-    cmd: str, logger: logging.Logger, retries: int = 0, time: bool = False, expected_rc: int = 0
+    cmd: str,
+    logger: logging.Logger,
+    retries: int = 0,
+    time: bool = False,
+    expected_rc: int = 0,
+    shell: bool = True,
+    env: Dict[str, str] = None,
 ) -> ProcessSample:
     """Run the given command as a subprocess within a shell"""
 

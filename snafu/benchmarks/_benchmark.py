@@ -32,7 +32,18 @@ class LabelParserAction(FuncAction):
     """argparse action to parse labels in the format of key=value1,key2=value2,... into a dict"""
 
     def func(self, arg: str) -> Dict[str, str]:
-        return dict(map(lambda pair: pair.split("="), arg.strip().split(",")))
+        labels = dict()
+        for pair in arg.strip().split(","):
+            pair_split = pair.split("=")
+
+            if len(pair_split) != 2:
+                raise ValueError(
+                    f"Got invalid format for labels, should be in format key=value,key=value,...: {arg}"
+                )
+            key, value = pair_split
+
+            labels[key] = value
+        return labels
 
 
 class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
@@ -61,14 +72,10 @@ class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
         self.config.populate_parser(self._common_args)
         self.config.populate_parser(self.args)
 
-    def create_new_result(
-        self, data: Dict[str, Any], config: Dict[str, Any], extra_metadata: Dict[str, Any], label: str
-    ) -> BenchmarkResult:
-        metadata = self.config.labels
-        metadata.update(extra_metadata)
+    def create_new_result(self, data: Dict[str, Any], config: Dict[str, Any], label: str) -> BenchmarkResult:
 
         result = BenchmarkResult(
-            name=self.tool_name, metadata=metadata, data=data, config=config, label=label
+            name=self.tool_name, metadata=self.config.labels, data=data, config=config, label=label,
         )
         return result
 

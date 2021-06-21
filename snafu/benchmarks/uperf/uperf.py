@@ -5,6 +5,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import re
 import datetime
 import dataclasses
+import shlex
 from snafu.benchmarks import Benchmark, BenchmarkResult
 from snafu.config import Config, ConfigArgument, FuncAction, check_file
 from snafu.process import sample_process, ProcessSample
@@ -237,11 +238,19 @@ class Uperf(Benchmark):
             self.logger.critical(f"Something went wrong during setup, refusing to run.")
             return
 
-        cmd = f"uperf -v -a -R -i 1 -m {self.config.workload}"
+        cmd = shlex.split(f"uperf -v -a -R -i 1 -m {self.config.workload}")
 
         for sample_num in range(1, self.config.sample + 1):
             self.logger.info(f"Starting Uperf sample number {sample_num}")
-            sample: ProcessSample = sample_process(cmd, self.logger, retries=2, expected_rc=0)
+            sample: ProcessSample = sample_process(
+                cmd,
+                self.logger,
+                retries=2,
+                expected_rc=0,
+                env={
+                    env_var: getattr(self.config, dest) for env_var, dest in self.config.env_to_params.items()
+                },
+            )
 
             if not sample.success:
                 self.logger.critical(f"Uperf failed to run! Got results: {sample}")

@@ -39,12 +39,12 @@ class LiveProcess:
         self.stderr: queue.Queue = queue.Queue()
         self._stdout: bytes = b""
         self._stderr: bytes = b""
+        self.attempt: Optional[ProcessRun] = ProcessRun()
 
         # These set later on
         self.start_time: Optional[datetime.datetime] = None
         self.process: Optional[subprocess.Popen] = None
         self.end_time: Optional[datetime.datetime] = None
-        self.attempt: Optional[ProcessRun] = None
         self.threads: Optional[List[threading.Thread]] = None
 
     @staticmethod
@@ -110,13 +110,12 @@ class LiveProcess:
 
             self.cleaned = True
 
-            self.attempt = ProcessRun(
-                stdout=self._stdout.decode("utf-8"),
-                stderr=self._stderr.decode("utf-8"),
-                rc=self.process.returncode,
-                hit_timeout=hit_timeout,
-                time_seconds=(self.end_time - self.start_time).total_seconds(),
-            )
+            self.attempt.stdout = self._stdout.decode("utf-8")
+            self.attempt.stderr = self._stderr.decode("utf-8")
+            self.attempt.rc = self.process.returncode
+            self.attempt.time_seconds = (self.end_time - self.start_time).total_seconds()
+            if hit_timeout is not None:
+                self.attempt.hit_timeout = hit_timeout
 
     def __exit__(self, *args, **kwargs):
         self.cleanup()

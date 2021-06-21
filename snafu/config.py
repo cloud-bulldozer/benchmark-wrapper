@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Tools for setting up config arguments."""
 import os
-from typing import Any, Iterable, List
+from typing import Any, Iterable, List, Mapping
 import argparse
 import configargparse
 
@@ -55,6 +55,7 @@ class Config:
         self.params: argparse.Namespace = argparse.Namespace()
         self.parser: configargparse.ArgumentParser = configargparse.get_argument_parser()
         self.group = self.parser.add_argument_group(tool_name)
+        self.env_to_params: Mapping[str, str] = dict()
 
     def __getattr__(self, attr):
         return getattr(self.params, attr, None)
@@ -62,7 +63,10 @@ class Config:
     def add_argument(self, *args, **kwargs) -> None:
         """Add argument into the config. Uses arg and kwarg format of argparse.add_argument."""
 
-        self.group.add_argument(*args, **kwargs)
+        action = self.group.add_argument(*args, **kwargs)
+        env_var = getattr(action, "env_var", None)
+        if env_var is not None:
+            self.env_to_params[env_var] = action.dest
 
     def populate_parser(self, args: Iterable[ConfigArgument]) -> None:
         """Populate args in parser from given args list."""

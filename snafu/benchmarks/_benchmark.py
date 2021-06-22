@@ -50,7 +50,7 @@ class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
     """
     Abstract Base class for benchmark tools.
 
-    To use, subclass, set the ``tool_name`` and ``args`` attribute, and overwrite the ``run`` and
+    To use, subclass, set the ``tool_name`` and ``args`` attribute, and overwrite the ``run``, ``cleanup`` and
     ``setup`` methods.
     """
 
@@ -84,8 +84,26 @@ class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
         """Setup the benchmark, returning ``False`` if something went wrong."""
 
     @abstractmethod
-    def run(self) -> Iterable[BenchmarkResult]:
-        """Execute the benchmark and return Iterable of Metrics."""
+    def collect(self) -> Iterable[BenchmarkResult]:
+        """Execute the benchmark and return Iterable of BenchmarkResults."""
 
-    # TODO: Add cleanup method
-    # TODO: Add method which runs setup -> run -> cleanup
+    @abstractmethod
+    def cleanup(self) -> bool:
+        """Cleanup the benchmark as needed."""
+
+    def run(self) -> Iterable[BenchmarkResult]:
+        """Run setup -> collect -> cleanup. Yield from collect."""
+
+        self.logger.info(f"Starting {self.tool_name} wrapper.")
+        self.logger.info("Running setup tasks.")
+        if not self.setup():
+            self.logger.critical(f"Something went wrong during setup, refusing to run.")
+            return
+
+        self.logger.info(f"Collecting results from benchmark.")
+        yield from self.collect()
+
+        self.logger.info(f"Cleaning up")
+        if not self.cleanup():
+            self.logger.critical(f"Something went wrong during cleanup.")
+            return

@@ -226,7 +226,7 @@ class Uperf(Benchmark):
 
         return True
 
-    def run(self) -> Iterable[BenchmarkResult]:
+    def collect(self) -> Iterable[BenchmarkResult]:
         """
         Run uperf benchmark ``self.config.sample`` number of times.
 
@@ -280,3 +280,6 @@ class Uperf(Benchmark):
                     yield result
 
         self.logger.info(f"Successfully collected {self.config.sample} samples of Uperf.")
+
+    def cleanup(self) -> bool:
+        return True

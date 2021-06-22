@@ -33,7 +33,7 @@ class DetectedBenchmarks:
         logger.log(
             level, f"Failed to import {len(self.failed)} benchmark modules: {', '.join(self.failed)}",
         )
-        if show_tb:
+        if show_tb and len(self.errors) > 0:
             logger.log(level, f"Got the following errors:")
             for benchmark, exc_info in self.errors.items():
                 tb = "".join(traceback.format_exception(*exc_info))

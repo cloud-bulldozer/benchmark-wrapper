@@ -6,8 +6,6 @@ from typing import Any, Iterable, List, Mapping
 import argparse
 import configargparse
 
-# TODO: Add ability to create dependent args that are only required when another arg is given
-
 
 def check_file(file: str, perms: int = None) -> bool:
     """

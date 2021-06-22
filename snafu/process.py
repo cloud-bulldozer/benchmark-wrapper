@@ -6,6 +6,8 @@ import dataclasses
 import datetime
 import logging
 import subprocess
+import threading
+import queue
 
 
 @dataclasses.dataclass
@@ -14,7 +16,6 @@ class ProcessRun:
     stdout: Optional[str] = None
     stderr: Optional[str] = None
     time_seconds: Optional[float] = None
-    hit_timeout: Optional[bool] = None
 
 
 @dataclasses.dataclass
@@ -33,12 +34,17 @@ class LiveProcess:
         self.timeout: Optional[int] = timeout
         self.kwargs: Mapping[str, Any] = kwargs
         self.cleaned: bool = False
+        self.stdout: queue.Queue = queue.Queue()
+        self.stderr: queue.Queue = queue.Queue()
+        self._stdout: bytes = b""
+        self._stderr: bytes = b""
+        self.attempt: Optional[ProcessRun] = ProcessRun()
 
         # These set later on
         self.start_time: Optional[datetime.datetime] = None
         self.process: Optional[subprocess.Popen] = None
         self.end_time: Optional[datetime.datetime] = None
-        self.attempt: Optional[ProcessRun] = None
+        self.threads: Optional[List[threading.Thread]] = None
 
     @staticmethod
     def _check_pipes(kwargs):
@@ -50,10 +56,30 @@ class LiveProcess:
             kwargs["stdout"] = subprocess.PIPE
             kwargs["stderr"] = subprocess.PIPE
 
+    def _enqueue_line_from_fh(self, fh, queue, store):
+        for line in iter(fh.readline, b""):
+            queue.put(line)
+            # use this method since running in separate thread
+            setattr(self, store, getattr(self, store) + line)
+
     def start(self):
         self._check_pipes(self.kwargs)
         self.start_time = datetime.datetime.utcnow()
         self.process = subprocess.Popen(self.cmd, **self.kwargs)
+        self.threads = [
+            threading.Thread(
+                target=self._enqueue_line_from_fh,
+                args=(self.process.stdout, self.stdout, "_stdout"),
+                daemon=True,
+            ),
+            threading.Thread(
+                target=self._enqueue_line_from_fh,
+                args=(self.process.stderr, self.stderr, "_stderr"),
+                daemon=True,
+            ),
+        ]
+
+        [t.start() for t in self.threads]
 
     def __enter__(self):
         self.start()
@@ -61,34 +87,23 @@ class LiveProcess:
 
     def cleanup(self):
         if not self.cleaned:
-            hit_timeout = False
-            try:
-                self.process.wait(timeout=self.timeout)
-            except subprocess.TimeoutExpired:
-                hit_timeout = True
-                self.process.kill()
+            if self.timeout is not None:
+                try:
+                    self.process.wait(timeout=self.timeout)
+                except subprocess.TimeoutExpired:
+                    self.process.kill()
+                    self.process.wait()
+            else:
                 self.process.wait()
 
             self.end_time = datetime.datetime.utcnow()
+            [t.join() for t in self.threads]
+
             self.cleaned = True
-
-            if self.process.stdout is not None:
-                stdout = self.process.stdout.read()
-            else:
-                stdout = b""
-
-            if self.process.stderr is not None:
-                stderr = self.process.stderr.read()
-            else:
-                stderr = b""
-
-            self.attempt = ProcessRun(
-                stdout=stdout.strip().decode("utf-8"),
-                stderr=stderr.strip().decode("utf-8"),
-                rc=self.process.returncode,
-                hit_timeout=hit_timeout,
-                time_seconds=(self.end_time - self.start_time).total_seconds(),
-            )
+            self.attempt.stdout = self._stdout.decode("utf-8")
+            self.attempt.stderr = self._stderr.decode("utf-8")
+            self.attempt.rc = self.process.returncode
+            self.attempt.time_seconds = (self.end_time - self.start_time).total_seconds()
 
     def __exit__(self, *args, **kwargs):
         self.cleanup()

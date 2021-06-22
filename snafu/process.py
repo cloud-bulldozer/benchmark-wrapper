@@ -16,7 +16,6 @@ class ProcessRun:
     stdout: Optional[str] = None
     stderr: Optional[str] = None
     time_seconds: Optional[float] = None
-    hit_timeout: Optional[bool] = None
 
 
 @dataclasses.dataclass
@@ -63,7 +62,10 @@ class LiveProcess:
             # use this method since running in separate thread
             setattr(self, store, getattr(self, store) + line)
 
-    def _launch_output_threads(self):
+    def start(self):
+        self._check_pipes(self.kwargs)
+        self.start_time = datetime.datetime.utcnow()
+        self.process = subprocess.Popen(self.cmd, **self.kwargs)
         self.threads = [
             threading.Thread(
                 target=self._enqueue_line_from_fh,
@@ -79,43 +81,29 @@ class LiveProcess:
 
         [t.start() for t in self.threads]
 
-    def start(self):
-        self._check_pipes(self.kwargs)
-        self.start_time = datetime.datetime.utcnow()
-        self.process = subprocess.Popen(self.cmd, **self.kwargs)
-        self._launch_output_threads()
-
     def __enter__(self):
         self.start()
         return self
 
     def cleanup(self):
         if not self.cleaned:
-
             if self.timeout is not None:
-                hit_timeout = False
                 try:
                     self.process.wait(timeout=self.timeout)
                 except subprocess.TimeoutExpired:
-                    hit_timeout = True
                     self.process.kill()
                     self.process.wait()
             else:
-                hit_timeout = None
                 self.process.wait()
 
             self.end_time = datetime.datetime.utcnow()
-
             [t.join() for t in self.threads]
 
             self.cleaned = True
-
             self.attempt.stdout = self._stdout.decode("utf-8")
             self.attempt.stderr = self._stderr.decode("utf-8")
             self.attempt.rc = self.process.returncode
             self.attempt.time_seconds = (self.end_time - self.start_time).total_seconds()
-            if hit_timeout is not None:
-                self.attempt.hit_timeout = hit_timeout
 
     def __exit__(self, *args, **kwargs):
         self.cleanup()

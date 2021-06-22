@@ -50,7 +50,9 @@ def main():
         add_env_var_help=True,
         default_config_files=["./snafu.yml"],
         ignore_unknown_config_file_keys=False,
+        add_help=False,
     )
+    parser.add_argument("--help", action="help")
     parser.add_argument(
         "-v",
         "--verbose",

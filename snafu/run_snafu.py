@@ -52,7 +52,6 @@ def main():
         ignore_unknown_config_file_keys=False,
         add_help=False,
     )
-    parser.add_argument("--help", action="help")
     parser.add_argument(
         "-v",
         "--verbose",
@@ -62,7 +61,7 @@ def main():
         default=logging.INFO,
         help="enables verbose wrapper debugging info",
     )
-    parser.add_argument("-f", "--config", help="Config file to load", is_config_file=True)
+    parser.add_argument("--config", help="Config file to load", is_config_file=True)
     parser.add_argument("-t", "--tool", help="Provide tool name", required=True)
     parser.add_argument("--run-id", help="Run ID to unify benchmark results in ES", nargs="?", default="NA")
     parser.add_argument("--archive-file", help="Archive file that will be indexed into ES")

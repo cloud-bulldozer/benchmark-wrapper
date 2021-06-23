@@ -233,11 +233,6 @@ class Uperf(Benchmark):
         Returns immediately if a sample fails. Will attempt to Uperf run three times for each sample.
         """
 
-        self.logger.info("Running setup tasks.")
-        if not self.setup():
-            self.logger.critical(f"Something went wrong during setup, refusing to run.")
-            return
-
         cmd = shlex.split(f"uperf -v -a -R -i 1 -m {self.config.workload}")
 
         for sample_num in range(1, self.config.sample + 1):

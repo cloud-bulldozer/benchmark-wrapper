@@ -180,28 +180,36 @@ def process_generator(index_args, parser):
     benchmark_wrapper_object_generator = generate_wrapper_object(index_args, parser)
 
     for wrapper_object in benchmark_wrapper_object_generator:
-        for data_object in wrapper_object.run():
-            # drop cache after every sample
-            drop_cache()
-            for action, index in data_object.emit_actions():
-                if "get_prometheus_trigger" in index and "prom_es" in os.environ:
-                    # Action will contain the following
-                    """
-                    action: {
-                              "uuid": <uuid>
-                              "user": <user>
-                              "clustername": <clustername>
-                              "sample": <int>
-                              "starttime": <datetime> datetime.utcnow().strftime('%s')
-                              "endtime": <datetime>
-                              test_config: {...}
-                            }
-                    """
-
-                    index_prom_data(index_args, action)
+        if isinstance(wrapper_object, benchmarks.Benchmark):
+            for result in wrapper_object.run():
+                if result.label == "get_prometheus_trigger" and "prom_es" in os.environ:
+                    index_prom_data(index_args, result.to_json())
                 else:
-                    es_valid_document = get_valid_es_document(action, index, index_args)
+                    es_valid_document = get_valid_es_document(result.to_json, result.label, index_args)
                     yield es_valid_document
+        else:
+            for data_object in wrapper_object.run():
+                # drop cache after every sample
+                drop_cache()
+                for action, index in data_object.emit_actions():
+                    if "get_prometheus_trigger" in index and "prom_es" in os.environ:
+                        # Action will contain the following
+                        """
+                        action: {
+                                  "uuid": <uuid>
+                                  "user": <user>
+                                  "clustername": <clustername>
+                                  "sample": <int>
+                                  "starttime": <datetime> datetime.utcnow().strftime('%s')
+                                  "endtime": <datetime>
+                                  test_config: {...}
+                                }
+                        """
+
+                        index_prom_data(index_args, action)
+                    else:
+                        es_valid_document = get_valid_es_document(action, index, index_args)
+                        yield es_valid_document
 
 
 def generate_wrapper_object(index_args, parser):

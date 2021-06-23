@@ -1,7 +1,5 @@
 # Benchmark-Wrapper aka SNAFU - Situation Normal: All F'ed Up
 
-[![Documentation Status](https://readthedocs.org/projects/my-benchmark-wrapper-fork/badge/?version=latest)](https://my-benchmark-wrapper-fork.readthedocs.io/en/latest/?badge=latest)
-
 Benchmark-wrapper provides a convenient mechanism for launching, processing, and storing data produced by a suite of performance benchmarks. Users can run Benchmark-wrapper in a traditional bare-metal environment or with the use of [benchmark-operator](https://github.com/cloud-bulldozer/benchmark-operator) ran in a containerized environment such as Kubernetes.
 
 Note: If you need your benchmark to collect data for both Kubernetes and non-Kubernetes

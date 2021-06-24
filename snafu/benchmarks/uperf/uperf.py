@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Wrapper for running the uperf benchmark. See http://uperf.org/ for more information."""
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 import re
 import datetime
 import dataclasses
@@ -9,6 +9,10 @@ import shlex
 from snafu.benchmarks import Benchmark, BenchmarkResult
 from snafu.config import Config, ConfigArgument, FuncAction, check_file
 from snafu.process import sample_process, ProcessSample
+
+
+def _int_or_none(val) -> Union[int, None]:
+    return None if val is None else int(val)
 
 
 class ParseRangeAction(FuncAction):
@@ -28,25 +32,23 @@ class RawUperfStat:
 @dataclasses.dataclass
 class UperfStdout:
     results: Tuple[RawUperfStat, ...]
-    test_type: str
-    protocol: str
-    message_size: int
-    read_message_size: int
-    num_threads: int
     duration: int
+    test_type: Optional[str] = None
+    protocol: Optional[str] = None
+    message_size: Optional[int] = None
+    read_message_size: Optional[int] = None
+    num_threads: Optional[int] = None
 
 
 @dataclasses.dataclass
 class UperfConfig:
-    # Parsed from stdout
-    test_type: str
-    protocol: str
-    message_size: int
-    read_message_size: int
-    num_threads: int
-    duration: int
-    # Given through args
-    kind: str
+    test_type: Optional[str] = None
+    protocol: Optional[str] = None
+    message_size: Optional[int] = None
+    read_message_size: Optional[int] = None
+    num_threads: Optional[int] = None
+    duration: Optional[int] = None
+    kind: Optional[str] = None
     hostnetwork: Optional[str] = None
     remote_ip: Optional[str] = None
     client_ips: Optional[str] = None
@@ -68,7 +70,10 @@ class UperfConfig:
     def new(cls, stdout: UperfStdout, config: Config):
         kwargs: Dict[str, Any] = dict()
         for fields in dataclasses.fields(cls):
-            kwargs[fields.name] = getattr(stdout, fields.name, getattr(config, fields.name, None))
+            val = getattr(stdout, fields.name, None)
+            if val is None:
+                val = getattr(config, fields.name, None)
+            kwargs[fields.name] = val
         return cls(**kwargs)
 
 
@@ -129,6 +134,11 @@ class Uperf(Benchmark):
         ConfigArgument("--pod-density", dest="density", env_var="pod_count", default=""),
         ConfigArgument("--colocate", dest="colocate", env_var="colocate", default=""),
         ConfigArgument("--step-size", dest="step_size", env_var="stepsize", default=""),
+        ConfigArgument("--test-type", dest="test_type", env_var="test_type", default=""),
+        ConfigArgument("--proto", dest="protocol", env_var="proto", default=""),
+        ConfigArgument("--rsize", dest="read_message_size", env_var="rsize", default=None, type=_int_or_none),
+        ConfigArgument("--wsize", dest="message_size", env_var="wsize", default=None, type=_int_or_none),
+        ConfigArgument("--nthr", dest="num_threads", env_var="nthr", default=None, type=_int_or_none),
         # density_range and node_range are defined and exported in the cr file
         # it will appear in ES as startvalue-endvalue, for example
         # 5-10, for a run that began with 5 nodes involved and ended with 10
@@ -153,14 +163,35 @@ class Uperf(Benchmark):
         ConfigArgument("--user", dest="user", env_var="USER", help="Provide user", required=True),
     )
 
-    @staticmethod
-    def parse_stdout(stdout: str) -> UperfStdout:
+    def parse_stdout(self, stdout: str) -> UperfStdout:
         """Return parsed stdout of Uperf sample."""
 
         # This will effectivly give us:
         # <profile name="{{test}}-{{proto}}-{{wsize}}-{{rsize}}-{{nthr}}">
-        config = re.findall(r"running profile:(.*) \.\.\.", stdout)[0]
-        test_type, protocol, wsize, rsize, nthr = config.split("-")
+        test_type, protocol, wsize, rsize, nthr = (None for _ in range(5))
+        profile_name = re.findall(r"running profile:(.*) \.\.\.", stdout)[0]
+        try:
+            test_type, protocol, wsize, rsize, nthr = profile_name.split("-")
+            wsize = int(wsize)
+            rsize = int(rsize)
+            nthr = int(nthr)
+        except ValueError:
+            self.logger.warning(
+                f"Unable to parse detected profile name: {profile_name}. Expected format of "
+                "'test_name-protocol-message_size-read_message_size-num_threads'"
+            )
+
+        overwritten: List[str] = []
+        for param in ("test_type", "protocol", "message_size", "read_message_size", "num_threads"):
+            if getattr(self.config, param, None) is not None:
+                overwritten.append(param)
+
+        if len(overwritten) > 0:
+            self.logger.warning(
+                "The following params will be overwritten due to values found in workload "
+                f"profile name: {', '.join(overwritten)}"
+            )
+
         # This will yeild us this structure :
         #     timestamp, number of bytes, number of operations
         # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
@@ -173,9 +204,9 @@ class Uperf(Benchmark):
             ),
             test_type=test_type,
             protocol=protocol,
-            message_size=int(wsize),
-            read_message_size=int(rsize),
-            num_threads=int(nthr),
+            message_size=wsize,
+            read_message_size=rsize,
+            num_threads=nthr,
             duration=len(results),
         )
 
@@ -202,7 +233,7 @@ class Uperf(Benchmark):
                 norm_ltcy = ((timestamp - prev_timestamp) / norm_ops) * 1000
 
             datapoint = UperfStat(
-                uperf_ts=datetime.datetime.fromtimestamp(int(timestamp) / 1000),
+                uperf_ts=str(datetime.datetime.fromtimestamp(int(timestamp) / 1000)),
                 bytes=bytes,
                 norm_byte=bytes - prev_bytes,
                 ops=ops,
@@ -238,13 +269,7 @@ class Uperf(Benchmark):
         for sample_num in range(1, self.config.sample + 1):
             self.logger.info(f"Starting Uperf sample number {sample_num}")
             sample: ProcessSample = sample_process(
-                cmd,
-                self.logger,
-                retries=2,
-                expected_rc=0,
-                env={
-                    env_var: getattr(self.config, dest) for env_var, dest in self.config.env_to_params.items()
-                },
+                cmd, self.logger, retries=2, expected_rc=0, env=self.config.get_env(),
             )
 
             if not sample.success:

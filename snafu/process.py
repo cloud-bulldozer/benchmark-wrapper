@@ -130,7 +130,7 @@ def sample_process(
         tries += 1
         logger.debug(f"On try {tries}")
 
-        with LiveProcess(cmd, timeout) as lp:
+        with LiveProcess(cmd, timeout, **kwargs) as lp:
             lp.cleanup()
             attempt: ProcessRun = lp.attempt
 
@@ -153,3 +153,6 @@ def sample_process(
 
     result.attempts = tries
     return result
+
+
+# TODO: Add a sampler

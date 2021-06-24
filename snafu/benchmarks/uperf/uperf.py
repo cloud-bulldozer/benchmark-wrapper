@@ -79,7 +79,7 @@ class UperfConfig:
 
 @dataclasses.dataclass
 class UperfStat:
-    uperf_ts: datetime.datetime
+    uperf_ts: str
     bytes: int
     norm_byte: int
     ops: int

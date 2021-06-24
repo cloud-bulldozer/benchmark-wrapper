@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable
 from dataclasses import dataclass
 import logging
-import json
 from snafu import registry
 from snafu.config import Config, ConfigArgument, FuncAction
 
@@ -18,14 +17,14 @@ class BenchmarkResult:
     data: Dict[str, Any]
     label: str
 
-    def to_json(self) -> str:
+    def to_jsonable(self) -> Dict[str, Any]:
         result: Dict[str, Any] = dict()
         result.update(self.config)
         result.update(self.data)
         result["benchmark"] = self.name
         result["metadata"] = self.metadata
 
-        return json.dumps(result)
+        return result
 
 
 class LabelParserAction(FuncAction):

@@ -58,6 +58,13 @@ class Config:
     def __getattr__(self, attr):
         return getattr(self.params, attr, None)
 
+    def get_env(self) -> Mapping[str, str]:
+        """Return parsed env variables and their values, updated with os environment."""
+
+        env = {env_var: str(getattr(self.params, dest)) for env_var, dest in self.env_to_params.items()}
+        env.update(os.environ)
+        return env
+
     def add_argument(self, *args, **kwargs) -> None:
         """Add argument into the config. Uses arg and kwarg format of argparse.add_argument."""
 

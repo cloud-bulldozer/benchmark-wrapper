@@ -233,7 +233,7 @@ class Uperf(Benchmark):
                 norm_ltcy = ((timestamp - prev_timestamp) / norm_ops) * 1000
 
             datapoint = UperfStat(
-                uperf_ts=str(datetime.datetime.fromtimestamp(int(timestamp) / 1000)),
+                uperf_ts=datetime.datetime.fromtimestamp(int(timestamp) / 1000).isoformat(),
                 bytes=bytes,
                 norm_byte=bytes - prev_bytes,
                 ops=ops,

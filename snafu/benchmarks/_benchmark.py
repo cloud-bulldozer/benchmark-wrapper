@@ -69,7 +69,9 @@ class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
         ),
         ConfigArgument("--cluster-name", dest="cluster_name", env_var="clustername", default=None),
         ConfigArgument("--user", dest="user", env_var="test_user", help="Provide user", default=None),
-        ConfigArgument("--uuid", dest="uuid", env_var="uuid", help="Provide UUID for run", default=None),
+        ConfigArgument(
+            "-u", "--uuid", dest="uuid", env_var="uuid", help="Provide UUID for run", default=None
+        ),
     )
 
     def __init__(self):

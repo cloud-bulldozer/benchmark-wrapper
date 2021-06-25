@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 """Tools for setting up config arguments."""
 import os
-from typing import Any, Dict, Iterable, List, Mapping, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Tuple, TypeVar, Union
 import argparse
 import configargparse
+
+
+_T = TypeVar("T")
 
 
 def check_file(file: str, perms: int = None) -> bool:
@@ -32,6 +35,28 @@ def check_file(file: str, perms: int = None) -> bool:
         perms = os.R_OK
     perms |= os.F_OK
     return os.access(os.path.abspath(file), perms)
+
+
+def none_or_type(t: _T) -> Callable[[Any], Union[_T, None]]:
+    """
+    Return a function which supports allowing an argparse argument to be ``None`` or a specific type.
+
+    Paramaters
+    ----------
+    t : type
+        Type that the returned function will attempt to cast given arguments to.
+
+    Returns
+    -------
+    callable
+        Takes in an argument. If the argument is ``None`` then ``None`` is returned. Otherwise,
+        the argument is casted to the given type ``t``.
+    """
+
+    def _t_or_none(val: Any) -> Union[_T, None]:
+        return val if val is None else t(val)
+
+    return _t_or_none
 
 
 class FuncAction(argparse.Action):
@@ -128,7 +153,7 @@ class Config:
         self.params: argparse.Namespace = argparse.Namespace()
         self.parser: configargparse.ArgumentParser = configargparse.get_argument_parser()
         self.group = self.parser.add_argument_group(tool_name)
-        self.env_to_params: Mapping[str, str] = dict()
+        self.env_to_params: Dict[str, str] = dict()
 
     def __getattr__(self, attr):
         return getattr(self.params, attr, None)

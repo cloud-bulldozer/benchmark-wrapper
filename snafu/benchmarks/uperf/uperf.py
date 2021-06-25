@@ -7,12 +7,8 @@ import datetime
 import dataclasses
 import shlex
 from snafu.benchmarks import Benchmark, BenchmarkResult
-from snafu.config import Config, ConfigArgument, FuncAction, check_file
+from snafu.config import Config, ConfigArgument, FuncAction, check_file, none_or_type
 from snafu.process import sample_process, ProcessSample
-
-
-def _int_or_none(val) -> Union[int, None]:
-    return None if val is None else int(val)
 
 
 class ParseRangeAction(FuncAction):
@@ -122,7 +118,7 @@ class Uperf(Benchmark):
         ),
         # These need help text
         ConfigArgument("--ips", dest="client_ips", env_var="ips", default=""),
-        ConfigArgument("-h", "--remoteip", dest="remote_ip", env_var="h", default=""),
+        ConfigArgument("--remoteip", dest="remote_ip", env_var="h", default=""),
         ConfigArgument("--hostnet", dest="hostnetwork", env_var="hostnet", default="False"),
         ConfigArgument("--serviceip", dest="service_ip", env_var="serviceip", default="False"),
         ConfigArgument("--server-node", dest="server_node", env_var="server_node", default=""),
@@ -136,9 +132,11 @@ class Uperf(Benchmark):
         ConfigArgument("--step-size", dest="step_size", env_var="stepsize", default=""),
         ConfigArgument("--test-type", dest="test_type", env_var="test_type", default=""),
         ConfigArgument("--proto", dest="protocol", env_var="proto", default=""),
-        ConfigArgument("--rsize", dest="read_message_size", env_var="rsize", default=None, type=_int_or_none),
-        ConfigArgument("--wsize", dest="message_size", env_var="wsize", default=None, type=_int_or_none),
-        ConfigArgument("--nthr", dest="num_threads", env_var="nthr", default=None, type=_int_or_none),
+        ConfigArgument(
+            "--rsize", dest="read_message_size", env_var="rsize", default=None, type=none_or_type(int)
+        ),
+        ConfigArgument("--wsize", dest="message_size", env_var="wsize", default=None, type=none_or_type(int)),
+        ConfigArgument("--nthr", dest="num_threads", env_var="nthr", default=1, type=int),
         # density_range and node_range are defined and exported in the cr file
         # it will appear in ES as startvalue-endvalue, for example
         # 5-10, for a run that began with 5 nodes involved and ended with 10
@@ -155,12 +153,6 @@ class Uperf(Benchmark):
         # each node will run with density number of pods, this is the 0 based
         # number of that pod, useful for displaying throughput of each density
         ConfigArgument("--pod-id", dest="pod-id", env_var="my_pod_idx", default=""),
-        # metadata
-        ConfigArgument("--cluster-name", dest="cluster_name", env_var="clustername", default=""),
-        ConfigArgument(
-            "-u", "--uuid", dest="uuid", env_var="uuid", help="Provide UUID of run", required=True,
-        ),
-        ConfigArgument("--user", dest="user", env_var="test_user", help="Provide user", required=True),
     )
 
     def parse_stdout(self, stdout: str) -> UperfStdout:
@@ -168,29 +160,33 @@ class Uperf(Benchmark):
 
         # This will effectivly give us:
         # <profile name="{{test}}-{{proto}}-{{wsize}}-{{rsize}}-{{nthr}}">
-        test_type, protocol, wsize, rsize, nthr = (None for _ in range(5))
         profile_name = re.findall(r"running profile:(.*) \.\.\.", stdout)[0]
-        try:
-            test_type, protocol, wsize, rsize, nthr = profile_name.split("-")
-            wsize = int(wsize)
-            rsize = int(rsize)
-            nthr = int(nthr)
-        except ValueError:
+        vals = profile_name.split("-")
+        parsed_profile_name_types: Dict[str, type] = {
+            "test_type": str,
+            "protocol": str,
+            "message_size": int,
+            "read_message_size": int,
+            "num_threads": int,
+        }
+        parsed_profile_name: Dict[str, Optional[Union[str, int]]] = dict()
+        if len(vals) != 5:
             self.logger.warning(
                 f"Unable to parse detected profile name: {profile_name}. Expected format of "
                 "'test_name-protocol-message_size-read_message_size-num_threads'"
             )
-
-        overwritten: List[str] = []
-        for param in ("test_type", "protocol", "message_size", "read_message_size", "num_threads"):
-            if getattr(self.config, param, None) is not None:
-                overwritten.append(param)
-
-        if len(overwritten) > 0:
-            self.logger.warning(
-                "The following params will be overwritten due to values found in workload "
-                f"profile name: {', '.join(overwritten)}"
-            )
+            parsed_profile_name = {key: None for key in parsed_profile_name_types.keys()}
+        else:
+            overwritten: List[str] = []
+            for i, (key, cast) in enumerate(parsed_profile_name_types.items()):
+                if getattr(self.config, key, None) is not None:
+                    overwritten.append(key)
+                parsed_profile_name[key] = cast(vals[i])
+            if len(overwritten) > 0:
+                self.logger.warning(
+                    "The following params will be overwritten due to values found in workload "
+                    f"profile name: {', '.join(overwritten)}"
+                )
 
         # This will yeild us this structure :
         #     timestamp, number of bytes, number of operations
@@ -202,12 +198,8 @@ class Uperf(Benchmark):
             results=tuple(
                 RawUperfStat(timestamp=float(r[0]), bytes=int(r[1]), ops=int(r[2])) for r in results
             ),
-            test_type=test_type,
-            protocol=protocol,
-            message_size=wsize,
-            read_message_size=rsize,
-            num_threads=nthr,
             duration=len(results),
+            **parsed_profile_name,
         )
 
     def get_results_from_stdout(self, stdout: UperfStdout) -> List[UperfStat]:
@@ -250,6 +242,10 @@ class Uperf(Benchmark):
         """Parse config and check that workload file exists."""
         self.config.parse_args()
         self.logger.debug(f"Got config: {vars(self.config)}")
+
+        if not getattr(self.config, "user", False) or not getattr(self.config, "uuid", False):
+            self.logger.critical("Missing required metadata. Need both user and uuid to continue")
+            return False
 
         if not check_file(self.config.workload):
             self.logger.critical(f"Unable to read workload file located at {self.config.workload}")
@@ -294,7 +290,7 @@ class Uperf(Benchmark):
                     result: BenchmarkResult = self.create_new_result(
                         data=dataclasses.asdict(result_datapoint),
                         config=dataclasses.asdict(config),
-                        label="results",
+                        tag="results",
                     )
                     self.logger.debug(f"Got sample result: {result}")
                     yield result

@@ -158,9 +158,9 @@ class Uperf(Benchmark):
         # metadata
         ConfigArgument("--cluster-name", dest="cluster_name", env_var="clustername", default=""),
         ConfigArgument(
-            "-u", "--uuid", dest="uuid", env_var="UUID", help="Provide UUID of run", required=True,
+            "-u", "--uuid", dest="uuid", env_var="uuid", help="Provide UUID of run", required=True,
         ),
-        ConfigArgument("--user", dest="user", env_var="USER", help="Provide user", required=True),
+        ConfigArgument("--user", dest="user", env_var="test_user", help="Provide user", required=True),
     )
 
     def parse_stdout(self, stdout: str) -> UperfStdout:

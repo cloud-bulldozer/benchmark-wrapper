@@ -182,10 +182,10 @@ def process_generator(index_args, parser):
     for wrapper_object in benchmark_wrapper_object_generator:
         if isinstance(wrapper_object, benchmarks.Benchmark):
             for result in wrapper_object.run():
-                if result.label == "get_prometheus_trigger" and "prom_es" in os.environ:
+                if result.tag == "get_prometheus_trigger" and "prom_es" in os.environ:
                     index_prom_data(index_args, result.to_json())
                 else:
-                    es_valid_document = get_valid_es_document(result.to_jsonable(), result.label, index_args)
+                    es_valid_document = get_valid_es_document(result.to_jsonable(), result.tag, index_args)
                     yield es_valid_document
         else:
             for data_object in wrapper_object.run():

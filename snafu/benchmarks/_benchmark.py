@@ -15,14 +15,16 @@ class BenchmarkResult:
     metadata: Dict[str, Any]
     config: Dict[str, Any]
     data: Dict[str, Any]
-    label: str
+    labels: Dict[str, Any]
+    tag: str
 
     def to_jsonable(self) -> Dict[str, Any]:
         result: Dict[str, Any] = dict()
         result.update(self.config)
         result.update(self.data)
-        result["benchmark"] = self.name
-        result["metadata"] = self.metadata
+        result.update(self.metadata)
+        result.update(self.labels)
+        result["workload"] = self.name
 
         return result
 
@@ -49,20 +51,25 @@ class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
     """
     Abstract Base class for benchmark tools.
 
-    To use, subclass, set the ``tool_name`` and ``args`` attribute, and overwrite the ``run``, ``cleanup`` and
-    ``setup`` methods.
+    To use, subclass, set the ``tool_name``, ``args`` and ``metadata`` attributes, and overwrite the
+    ``run``, ``cleanup`` and ``setup`` methods.
     """
 
     tool_name = "_base_benchmark"
     args: Iterable[ConfigArgument] = tuple()
+    metadata: Iterable[str] = ["cluster_name", "user", "uuid"]
     _common_args: Iterable[ConfigArgument] = (
         ConfigArgument(
             "-l",
             "--labels",
-            help="Metadata to add in results exported by benchmark. Format: key1=value1,key2=value2,...",
+            help="Extra labels to add in results exported by benchmark. Format: key1=value1,key2=value2,...",
             dest="labels",
+            default=dict(),
             action=LabelParserAction,
         ),
+        ConfigArgument("--cluster-name", dest="cluster_name", env_var="clustername", default=None),
+        ConfigArgument("--user", dest="user", env_var="test_user", help="Provide user", default=None),
+        ConfigArgument("--uuid", dest="uuid", env_var="uuid", help="Provide UUID for run", default=None),
     )
 
     def __init__(self):
@@ -71,10 +78,22 @@ class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
         self.config.populate_parser(self._common_args)
         self.config.populate_parser(self.args)
 
-    def create_new_result(self, data: Dict[str, Any], config: Dict[str, Any], label: str) -> BenchmarkResult:
+    def get_metadata(self) -> Dict[str, str]:
+        metadata: Dict[str, str] = dict()
+        for key in self.metadata:
+            value = getattr(self.config, key, None)
+            if value is not None:
+                metadata[key] = value
+        return metadata
 
+    def create_new_result(self, data: Dict[str, Any], config: Dict[str, Any], tag: str) -> BenchmarkResult:
         result = BenchmarkResult(
-            name=self.tool_name, metadata=self.config.labels, data=data, config=config, label=label,
+            name=self.tool_name,
+            labels=self.config.labels,
+            metadata=self.get_metadata(),
+            tag=tag,
+            data=data,
+            config=config,
         )
         return result
 

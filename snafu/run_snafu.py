@@ -16,7 +16,7 @@
 #
 import os
 import sys
-import argparse
+import configargparse
 import elasticsearch
 import time
 import datetime
@@ -31,6 +31,7 @@ from snafu.utils.get_prometheus_data import get_prometheus_data
 from snafu.utils.wrapper_factory import wrapper_factory
 from snafu.utils.request_cache_drop import drop_cache
 from snafu.utils.py_es_bulk import streaming_bulk
+from snafu import benchmarks
 
 logger = logging.getLogger("snafu")
 
@@ -43,7 +44,14 @@ urllib3_log.setLevel(logging.CRITICAL)
 
 def main():
     # collect arguments
-    parser = argparse.ArgumentParser(description="run script", add_help=False)
+    parser = configargparse.get_argument_parser(
+        description="Run benchmark-wrapper and export results.",
+        add_config_file_help=True,
+        add_env_var_help=True,
+        default_config_files=["./snafu.yml"],
+        ignore_unknown_config_file_keys=False,
+        add_help=False,
+    )
     parser.add_argument(
         "-v",
         "--verbose",
@@ -53,6 +61,7 @@ def main():
         default=logging.INFO,
         help="enables verbose wrapper debugging info",
     )
+    parser.add_argument("--config", help="Config file to load", is_config_file=True)
     parser.add_argument("-t", "--tool", help="Provide tool name", required=True)
     parser.add_argument("--run-id", help="Run ID to unify benchmark results in ES", nargs="?", default="NA")
     parser.add_argument("--archive-file", help="Archive file that will be indexed into ES")
@@ -71,6 +80,10 @@ def main():
     setup_loggers("snafu", index_args.loglevel)
     log_level_str = "DEBUG" if index_args.loglevel == logging.DEBUG else "INFO"
     logger.info("logging level is %s" % log_level_str)
+
+    # Log loaded benchmarks
+    show_db_tb = index_args.loglevel == logging.DEBUG
+    benchmarks.DETECTED_BENCHMARKS.log(logger=logger, level=logging.INFO, show_tb=show_db_tb)
 
     # set up a standard format for time
     FMT = "%Y-%m-%dT%H:%M:%SGMT"
@@ -167,28 +180,36 @@ def process_generator(index_args, parser):
     benchmark_wrapper_object_generator = generate_wrapper_object(index_args, parser)
 
     for wrapper_object in benchmark_wrapper_object_generator:
-        for data_object in wrapper_object.run():
-            # drop cache after every sample
-            drop_cache()
-            for action, index in data_object.emit_actions():
-                if "get_prometheus_trigger" in index and "prom_es" in os.environ:
-                    # Action will contain the following
-                    """
-                    action: {
-                              "uuid": <uuid>
-                              "user": <user>
-                              "clustername": <clustername>
-                              "sample": <int>
-                              "starttime": <datetime> datetime.utcnow().strftime('%s')
-                              "endtime": <datetime>
-                              test_config: {...}
-                            }
-                    """
-
-                    index_prom_data(index_args, action)
+        if isinstance(wrapper_object, benchmarks.Benchmark):
+            for result in wrapper_object.run():
+                if result.tag == "get_prometheus_trigger" and "prom_es" in os.environ:
+                    index_prom_data(index_args, result.to_json())
                 else:
-                    es_valid_document = get_valid_es_document(action, index, index_args)
+                    es_valid_document = get_valid_es_document(result.to_jsonable(), result.tag, index_args)
                     yield es_valid_document
+        else:
+            for data_object in wrapper_object.run():
+                # drop cache after every sample
+                drop_cache()
+                for action, index in data_object.emit_actions():
+                    if "get_prometheus_trigger" in index and "prom_es" in os.environ:
+                        # Action will contain the following
+                        """
+                        action: {
+                                  "uuid": <uuid>
+                                  "user": <user>
+                                  "clustername": <clustername>
+                                  "sample": <int>
+                                  "starttime": <datetime> datetime.utcnow().strftime('%s')
+                                  "endtime": <datetime>
+                                  test_config: {...}
+                                }
+                        """
+
+                        index_prom_data(index_args, action)
+                    else:
+                        es_valid_document = get_valid_es_document(action, index, index_args)
+                        yield es_valid_document
 
 
 def generate_wrapper_object(index_args, parser):
@@ -203,7 +224,7 @@ def get_valid_es_document(action, index, index_args):
     else:
         es_index = index_args.prefix
     es_valid_document = {"_index": es_index, "_op_type": "create", "_source": action, "_id": ""}
-    logger.debug("Run ID is {index_args.run_id}")
+    logger.debug(f"Run ID is {index_args.run_id}")
     es_valid_document["run_id"] = action["run_id"] = index_args.run_id
     es_valid_document["_id"] = hashlib.sha256(str(action).encode()).hexdigest()
     document_size_bytes = sys.getsizeof(es_valid_document)

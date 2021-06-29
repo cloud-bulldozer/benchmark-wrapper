@@ -57,10 +57,11 @@ class LiveProcess:
             kwargs["stderr"] = subprocess.PIPE
 
     def _enqueue_line_from_fh(self, fh, queue, store):
-        for line in iter(fh.readline, b""):
-            queue.put(line)
-            # use this method since running in separate thread
-            setattr(self, store, getattr(self, store) + line)
+        if fh is not None:
+            for line in iter(fh.readline, b""):
+                queue.put(line)
+                # use this method since running in separate thread
+                setattr(self, store, getattr(self, store) + line)
 
     def start(self):
         self._check_pipes(self.kwargs)

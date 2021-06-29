@@ -68,3 +68,7 @@ venv.bak/
 
 # macOS files
 .DS_Store
+
+# Test caches
+.tox
+.coverage

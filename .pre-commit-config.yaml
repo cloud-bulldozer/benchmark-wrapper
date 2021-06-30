@@ -27,6 +27,9 @@ repos:
       - id: isort
         args:
         - --profile=black
+        - --no-sections
+        - --color
+        - --line-length=110
 
   - repo: https://gitlab.com/PyCQA/flake8
     rev: '3.7.8'

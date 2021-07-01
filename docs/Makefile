@@ -7,12 +7,19 @@ SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = build
+LINKCHECKDIR  = $(BUILDDIR)/linkcheck
 
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 .PHONY: help Makefile
+
+.PHONY: checklinks
+checklinks:
+	$(SPHINXBUILD) -b linkcheck "$(SOURCEDIR)" $(LINKCHECKDIR) $(SPHINXOPTS) $(0)
+	@echo
+	@echo "Check finished. Report is in $(LINKCHECKDIR)."
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).

@@ -264,7 +264,7 @@ def sample_process(
 
     _plural = "s" if num_samples > 1 else ""
     logger.info(f"Collecting {num_samples} sample{_plural} of command {cmd}")
-    for sample_num in range(1, num_samples):
+    for sample_num in range(1, num_samples + 1):
         logger.debug(f"Starting sample {sample_num}")
         sample: ProcessSample = get_process_sample(
             cmd, logger, retries=retries, expected_rc=expected_rc, timeout=timeout, **kwargs

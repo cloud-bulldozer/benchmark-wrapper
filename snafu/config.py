@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Tools for setting up config arguments."""
-import os
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Tuple, TypeVar, Union
 import argparse
+import os
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Sequence, Tuple, Union
+
 import configargparse
-
-
-_T = TypeVar("T")
 
 
 def check_file(file: str, perms: int = None) -> bool:
@@ -37,13 +35,13 @@ def check_file(file: str, perms: int = None) -> bool:
     return os.access(os.path.abspath(file), perms)
 
 
-def none_or_type(t: _T) -> Callable[[Any], Union[_T, None]]:
+def none_or_type(target_type: type) -> Callable[[Any], Union[type, None]]:
     """
     Return a function which supports allowing an argparse argument to be ``None`` or a specific type.
 
     Paramaters
     ----------
-    t : type
+    target_type : type
         Type that the returned function will attempt to cast given arguments to.
 
     Returns
@@ -53,8 +51,8 @@ def none_or_type(t: _T) -> Callable[[Any], Union[_T, None]]:
         the argument is casted to the given type ``t``.
     """
 
-    def _t_or_none(val: Any) -> Union[_T, None]:
-        return val if val is None else t(val)
+    def _t_or_none(val: Any) -> Union[type, None]:
+        return val if val is None else target_type(val)
 
     return _t_or_none
 
@@ -74,7 +72,7 @@ class FuncAction(argparse.Action):
     ...         return str(arg) + "_this_is_my_string"
     >>> import argparse
     >>> p = argparse.ArgumentParser()
-    >>> p.add_argument("value", type=str, action=AppendStr)
+    >>> _ = p.add_argument("value", type=str, action=AppendStr)
     >>> p.parse_args(["my_input"]).value
     'my_input_this_is_my_string'
     """
@@ -86,9 +84,10 @@ class FuncAction(argparse.Action):
         self,
         parser: configargparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: str,
+        values: Union[str, Sequence[Any], None],
         option_string=None,
     ):
+        """Set destination attribute in namespace to output of performing func on given values."""
         setattr(namespace, self.dest, self.func(values))
 
 
@@ -114,10 +113,11 @@ class ConfigArgument:
     >>> c.args
     ('one', 2, 'three')
     >>> c.kwargs
-    {"a": "b", "c": "d"}
+    {'a': 'b', 'c': 'd'}
     """
 
     def __init__(self, *args, **kwargs):
+        """Set ``args`` to given args, and ``kwargs`` to given kwargs."""
         self.args: Tuple[Any] = args
         self.kwargs: Dict[str, Any] = kwargs
 
@@ -150,12 +150,14 @@ class Config:
     """
 
     def __init__(self, tool_name: str):
+        """Create param namespace, pull global parser and create sub-group for arguments."""
         self.params: argparse.Namespace = argparse.Namespace()
         self.parser: configargparse.ArgumentParser = configargparse.get_argument_parser()
         self.group = self.parser.add_argument_group(tool_name)
         self.env_to_params: Dict[str, str] = dict()
 
     def __getattr__(self, attr):
+        """If given ``attr`` doesn't already exist in instance, try to pull from ``params``."""
         return getattr(self.params, attr, None)
 
     def get_env(self) -> Mapping[str, str]:
@@ -186,8 +188,9 @@ class Config:
         Populate args into the parser from the given list of config arguments.
 
         Parameters
-        -----------
+        ----------
         args : list of :py:class:`~snafu.config.ConfigArgument`
+            Arguments to populate into the parser
         """
 
         for arg in args:
@@ -198,7 +201,7 @@ class Config:
         Parse arguments and store them in the ``params`` attribute.
 
         Parameters
-        -----------
+        ----------
         args : list of str, optional
             List of arguments to be passed manually to the parser for parsing.
         """

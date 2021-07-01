@@ -87,7 +87,7 @@ class LiveProcess:
     """
 
     def __init__(self, cmd: Union[str, List[str]], timeout: Optional[int] = None, **kwargs):
-        """Create instance attributes with None for defaults as needed."""
+        """Create instance attributes with None for defaults as needed and check pipe arguments in kwargs."""
         self.cmd: Union[str, List[str]] = cmd
         self.timeout: Optional[int] = timeout
         self.kwargs: Mapping[str, Any] = kwargs
@@ -102,6 +102,8 @@ class LiveProcess:
         self._stdout: bytes = b""
         self._stderr: bytes = b""
         self._threads: Optional[List[threading.Thread]] = None
+
+        self._check_pipes(self.kwargs)
 
     @staticmethod
     def _check_pipes(kwargs):
@@ -123,7 +125,6 @@ class LiveProcess:
     def start(self):
         """Start the subprocess and create threads for capturing output."""
 
-        self._check_pipes(self.kwargs)
         self.start_time = datetime.datetime.utcnow()
         self.process = subprocess.Popen(self.cmd, **self.kwargs)  # pylint: disable=R1732
         self._threads = [

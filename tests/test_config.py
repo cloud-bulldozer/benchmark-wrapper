@@ -28,3 +28,21 @@ def test_check_file_returns_bool_as_expected(tmpdir):
             assert snafu.config.check_file(test_file_path, perms=check) is False
             test_file.chmod(perm)
             assert snafu.config.check_file(test_file_path, perms=check) is True
+
+
+def test_none_or_type_function():
+    """Test that the none_or_type function returns function that casts values only when they aren't None."""
+
+    tests = (
+        (int, 1),
+        (int, "1"),
+        (str, "hey"),
+        (str, 2),
+        (dict, (("a", 1), ("b", 2))),
+    )
+
+    for expected_type, value in tests:
+        wrapped = snafu.config.none_or_type(expected_type)
+        assert wrapped(None) is None
+        assert wrapped(value) == expected_type(value)
+        assert isinstance(wrapped(value), expected_type)

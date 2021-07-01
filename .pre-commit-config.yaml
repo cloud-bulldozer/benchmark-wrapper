@@ -27,7 +27,6 @@ repos:
       - id: isort
         args:
         - --profile=black
-        - --no-sections
         - --color
         - --line-length=110
 

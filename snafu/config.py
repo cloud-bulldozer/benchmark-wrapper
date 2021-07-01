@@ -167,8 +167,14 @@ class Config:
         Will add in environment variables from the OS environment.
         """
 
-        env = {env_var: str(getattr(self.params, dest)) for env_var, dest in self.env_to_params.items()}
+        env: Dict[str, str] = dict()
         env.update(os.environ)
+        for env_var, dest in self.env_to_params.items():
+            try:
+                env[env_var] = str(getattr(self.params, dest))
+            except AttributeError:
+                pass
+
         return env
 
     def add_argument(self, *args, **kwargs) -> None:

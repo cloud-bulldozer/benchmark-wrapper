@@ -18,6 +18,7 @@ class ProcessRun:
     stdout: Optional[str] = None
     stderr: Optional[str] = None
     time_seconds: Optional[float] = None
+    hit_timeout: Optional[bool] = None
 
 
 @dataclasses.dataclass
@@ -27,7 +28,7 @@ class ProcessSample:
     expected_rc: Optional[int] = None
     success: Optional[bool] = None
     attempts: Optional[int] = None
-    timeout: Optional[bool] = None
+    timeout: Optional[int] = None
     failed: List[ProcessRun] = dataclasses.field(default_factory=list)
     successful: ProcessRun = ProcessRun()
 
@@ -154,7 +155,9 @@ class LiveProcess:
             if self.timeout is not None:
                 try:
                     self.process.wait(timeout=self.timeout)
+                    self.attempt.hit_timeout = False
                 except subprocess.TimeoutExpired:
+                    self.attempt.hit_timeout = True
                     self.process.kill()
                     self.process.wait()
             else:
@@ -183,12 +186,40 @@ def get_process_sample(
     timeout: Optional[int] = None,
     **kwargs,
 ) -> ProcessSample:
-    """Run the given command as a subprocess."""
+    """
+    Run the given command as a subprocess, retrying if the command fails.
 
-    logger.debug(f"Running command with timeout of {timeout}: {cmd}")
+    Essentially just a wrapper around :py:class:`~snafu.process.LiveProcess` that will retry running a
+    subprocess if it fails, returning a :py:class:`~snafu.process.ProcessSample` detailing the results.
+
+    This function expects a logger because it is expected that it will be used by benchmarks, which should
+    be logging their progress anyways.
+
+    Parameters
+    ----------
+    cmd : str or list of str
+        Command to run. Can be string or list of strings if using :py:mod:`shlex`
+    logger : logging.Logger
+        Logger to use in order to log progress.
+    retries : int
+        Number of retries to perform. Defaults to zero, which means that the function will run the process
+        once, not retrying on failure.
+    expected_rc : int
+        Expected return code of the process. Will be used to determine if the process ran successfully or not.
+    timeout : int
+        Time in seconds to wait for process to complete before killing it.
+    kwargs
+        Extra kwargs will be passed to :py:class:`~snafu.process.LiveProcess`
+
+    Returns
+    -------
+    ProcessSample
+    """
+
+    logger.debug(f"Running command: {cmd}")
     logger.debug(f"Using args: {kwargs}")
 
-    result = ProcessSample(expected_rc=expected_rc)
+    result = ProcessSample(expected_rc=expected_rc, timeout=timeout)
     tries: int = 0
     tries_plural: str = ""
 
@@ -196,7 +227,7 @@ def get_process_sample(
         tries += 1
         logger.debug(f"On try {tries}")
 
-        with LiveProcess(cmd, timeout, **kwargs) as proc:
+        with LiveProcess(cmd, timeout=timeout, **kwargs) as proc:
             proc.cleanup()
             attempt: ProcessRun = proc.attempt
 

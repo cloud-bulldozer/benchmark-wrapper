@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Test functionality in the config module."""
+import argparse
 import os
 import stat
 
@@ -46,3 +47,21 @@ def test_none_or_type_function():
         assert wrapped(None) is None
         assert wrapped(value) == expected_type(value)
         assert isinstance(wrapped(value), expected_type)
+
+
+def test_func_action_class_calls_func_before_saving():
+    """Test that the FuncAction argparse action will call func on value before saving to namespace."""
+
+    class MyAction(snafu.config.FuncAction):
+        """Action to append string stored at `my_value' to parameter value."""
+
+        my_value = "my-func-worked"
+
+        def func(self, arg: str) -> str:
+            """Append my_value to arg."""
+            return arg + self.my_value
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("test", action=MyAction)
+    args = parser.parse_args(["an-input"])
+    assert args.test == "an-input" + MyAction.my_value

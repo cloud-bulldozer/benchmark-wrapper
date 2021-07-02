@@ -39,3 +39,7 @@ jobs:
         run: pip install snafu[testsci]
       - name: Run Tox
         run: tox
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v1
+        files: ./.coverage*
+        flags: ${{ matrix.python-version }}

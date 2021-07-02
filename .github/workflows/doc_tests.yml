@@ -1,11 +1,11 @@
-name: Benchmark-Wrapper CI Tests
+name: Documentation Build Test
 
 on:
   - push
   - pull_request
 
 jobs:
-  lint:
+  build_docs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -13,20 +13,7 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Run pre-commit
-        uses: pre-commit/action@v2.0.3
-  unit_tests:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install apt dependencies
+      - name: Install build dependencies
         run: sudo apt-get install -y pandoc
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
@@ -39,9 +26,4 @@ jobs:
       - name: Install test dependencies
         run: pip install snafu[testsci]
       - name: Run Tox
-        run: tox
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v1
-        with:
-          files: ./.coverage*
-          flags: ${{ matrix.python-version }}
+        run: tox -e docs

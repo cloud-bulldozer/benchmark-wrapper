@@ -1,25 +1,30 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Wrapper for running the uperf benchmark. See http://uperf.org/ for more information."""
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
-import re
-import datetime
 import dataclasses
+import datetime
+import re
 import shlex
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+
 from snafu.benchmarks import Benchmark, BenchmarkResult
 from snafu.config import Config, ConfigArgument, FuncAction, check_file, none_or_type
-from snafu.process import sample_process, ProcessSample
+from snafu.process import sample_process
 
 
 class ParseRangeAction(FuncAction):
     """Parses node_range and density_range attributes."""
 
-    def func(self, arg: str) -> List[int]:
+    @staticmethod
+    def func(arg: str) -> List[int]:
+        """Take the input argument, split by '-' and cast non-empty results into ints."""
         return [int(x) for x in arg.split("-") if x != ""]
 
 
 @dataclasses.dataclass
 class RawUperfStat:
+    """Represents a raw Uperf statistic outputted through stdout."""
+
     timestamp: float
     bytes: int
     ops: int
@@ -27,6 +32,15 @@ class RawUperfStat:
 
 @dataclasses.dataclass
 class UperfStdout:
+    """
+    Represents stdout from a Uperf benchmark run.
+
+    Note that some attributes are included which may not appear in all stdout of Uperf. Within the
+    cloud-bulldozer organization, we use benchmark-wrapper with specific profile names that have
+    the following format: ``test-proto-wsize-rsize-nthr``. Uperf prints the profile name to stdout, which
+    we parse within the benchmark wrapper and store in this class.
+    """
+
     results: Tuple[RawUperfStat, ...]
     duration: int
     test_type: Optional[str] = None
@@ -38,6 +52,8 @@ class UperfStdout:
 
 @dataclasses.dataclass
 class UperfConfig:
+    """Container for common configuration options that are passed to Uperf."""
+
     test_type: Optional[str] = None
     protocol: Optional[str] = None
     message_size: Optional[int] = None
@@ -64,6 +80,8 @@ class UperfConfig:
 
     @classmethod
     def new(cls, stdout: UperfStdout, config: Config):
+        """Create a new instance given instances of :py:mod:`~snafu.config.Config` and UperfStdout."""
+
         kwargs: Dict[str, Any] = dict()
         for fields in dataclasses.fields(cls):
             val = getattr(stdout, fields.name, None)
@@ -75,6 +93,8 @@ class UperfConfig:
 
 @dataclasses.dataclass
 class UperfStat:
+    """Parsed Uperf Statistic."""
+
     uperf_ts: str
     bytes: int
     norm_byte: int
@@ -85,9 +105,7 @@ class UperfStat:
 
 
 class Uperf(Benchmark):
-    """
-    Wrapper for the uperf benchmark.
-    """
+    """Wrapper for the uperf benchmark."""
 
     tool_name = "uperf"
     args = (
@@ -156,7 +174,18 @@ class Uperf(Benchmark):
     )
 
     def parse_stdout(self, stdout: str) -> UperfStdout:
-        """Return parsed stdout of Uperf sample."""
+        """
+        Return parsed stdout of Uperf sample.
+
+        Parameters
+        ----------
+        stdout : str
+            Raw stdout from Uperf to parse
+
+        Returns
+        -------
+        UperfStdout
+        """
 
         # This will effectivly give us:
         # <profile name="{{test}}-{{proto}}-{{wsize}}-{{rsize}}-{{nthr}}">
@@ -169,13 +198,13 @@ class Uperf(Benchmark):
             "read_message_size": int,
             "num_threads": int,
         }
-        parsed_profile_name: Dict[str, Optional[Union[str, int]]] = dict()
+        parsed_profile_name: Dict[str, Union[int, str, None]] = dict()
         if len(vals) != 5:
             self.logger.warning(
                 f"Unable to parse detected profile name: {profile_name}. Expected format of "
                 "'test_name-protocol-message_size-read_message_size-num_threads'"
             )
-            parsed_profile_name = {key: None for key in parsed_profile_name_types.keys()}
+            parsed_profile_name = {key: None for key in parsed_profile_name_types}
         else:
             overwritten: List[str] = []
             for i, (key, cast) in enumerate(parsed_profile_name_types.items()):
@@ -194,29 +223,47 @@ class Uperf(Benchmark):
         results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)", stdout)
         # We assume message_size=write_message_size to prevent breaking dependant implementations
 
-        return UperfStdout(
+        uperf_stdout = UperfStdout(
             results=tuple(
                 RawUperfStat(timestamp=float(r[0]), bytes=int(r[1]), ops=int(r[2])) for r in results
             ),
             duration=len(results),
-            **parsed_profile_name,
         )
+        for key, value in parsed_profile_name.items():
+            setattr(uperf_stdout, key, value)
 
-    def get_results_from_stdout(self, stdout: UperfStdout) -> List[UperfStat]:
-        """Return list of results given raw uperf stdout."""
+        return uperf_stdout
+
+    @staticmethod
+    def get_results_from_stdout(stdout: UperfStdout) -> List[UperfStat]:
+        """
+        Return list of results given raw uperf stdout.
+
+        Uperf will output its statistics on newlines as it runs. The goal of this method is to
+        return each of those statictics within a :py:class:`UperfStat` instance.
+
+        Parameters
+        ----------
+        stdout : UperfStdout
+            Parsed stdout from Uperf run.
+
+        Returns
+        -------
+        list of UperfStat
+        """
 
         processed: List[UperfStat] = []
         prev_bytes: int = 0
         prev_ops: int = 0
         prev_timestamp: float = 0.0
-        bytes: int = 0
+        num_bytes: int = 0
         ops: int = 0
         timestamp: float = 0.0
         norm_ops: int = 0
         norm_ltcy: float = 0.0
 
         for result in stdout.results:
-            timestamp, bytes, ops = result.timestamp, result.bytes, result.ops
+            timestamp, num_bytes, ops = result.timestamp, result.bytes, result.ops
 
             norm_ops = ops - prev_ops
             if norm_ops == 0:
@@ -226,15 +273,15 @@ class Uperf(Benchmark):
 
             datapoint = UperfStat(
                 uperf_ts=datetime.datetime.fromtimestamp(int(timestamp) / 1000).isoformat(),
-                bytes=bytes,
-                norm_byte=bytes - prev_bytes,
+                bytes=num_bytes,
+                norm_byte=num_bytes - prev_bytes,
                 ops=ops,
                 norm_ops=norm_ops,
                 norm_ltcy=norm_ltcy,
             )
 
             processed.append(datapoint)
-            prev_timestamp, prev_bytes, prev_ops = timestamp, bytes, ops
+            prev_timestamp, prev_bytes, prev_ops = timestamp, num_bytes, ops
 
         return processed
 
@@ -261,41 +308,48 @@ class Uperf(Benchmark):
         """
 
         cmd = shlex.split(f"uperf -v -a -R -i 1 -m {self.config.workload}")
+        _plural = "s" if self.config.sample > 1 else ""
+        self.logger.info(f"Collecting {self.config.sample} sample{_plural} of Uperf")
 
-        for sample_num in range(1, self.config.sample + 1):
-            self.logger.info(f"Starting Uperf sample number {sample_num}")
-            sample: ProcessSample = sample_process(
-                cmd, self.logger, retries=2, expected_rc=0, env=self.config.get_env(),
-            )
+        samples = sample_process(
+            cmd,
+            self.logger,
+            num_samples=self.config.sample,
+            retries=2,
+            expected_rc=0,
+            env=self.config.get_env(),
+        )
 
+        for sample_num, sample in enumerate(samples):
             if not sample.success:
                 self.logger.critical(f"Uperf failed to run! Got results: {sample}")
                 return
-            else:
-                self.logger.info(f"Finished collecting sample {sample_num}")
-                self.logger.debug(f"Got sample: {sample}")
 
-                if sample.successful.stdout is None:
-                    self.logger.critical(
-                        f"Uperf ran successfully, but didn't get stdout. Got results: {sample}"
-                    )
-                    return
+            self.logger.info(f"Finished collecting sample {sample_num}")
+            self.logger.debug(f"Got sample: {sample}")
 
-                stdout: UperfStdout = self.parse_stdout(sample.successful.stdout)
-                result_data: List[UperfStat] = self.get_results_from_stdout(stdout)
-                config: UperfConfig = UperfConfig.new(stdout, self.config)
+            if sample.successful.stdout is None:
+                self.logger.critical(f"Uperf ran successfully, but didn't get stdout. Got results: {sample}")
+                return
 
-                for result_datapoint in result_data:
-                    result_datapoint.iteration = sample_num
-                    result: BenchmarkResult = self.create_new_result(
-                        data=dataclasses.asdict(result_datapoint),
-                        config=dataclasses.asdict(config),
-                        tag="results",
-                    )
-                    self.logger.debug(f"Got sample result: {result}")
-                    yield result
+            stdout: UperfStdout = self.parse_stdout(sample.successful.stdout)
+            result_data: List[UperfStat] = self.get_results_from_stdout(stdout)
+            config: UperfConfig = UperfConfig.new(stdout, self.config)
 
-        self.logger.info(f"Successfully collected {self.config.sample} samples of Uperf.")
+            for result_datapoint in result_data:
+                result_datapoint.iteration = sample_num
+                result: BenchmarkResult = self.create_new_result(
+                    data=dataclasses.asdict(result_datapoint),
+                    config=dataclasses.asdict(config),
+                    tag="results",
+                )
+                self.logger.debug(f"Got sample result: {result}")
+                yield result
 
-    def cleanup(self) -> bool:
+        self.logger.info(f"Successfully collected {self.config.sample} sample{_plural} of Uperf.")
+
+    @staticmethod
+    def cleanup() -> bool:
+        """Uperf doesn't have any cleanup tasks, therefore this method just returns ``True``."""
+
         return True

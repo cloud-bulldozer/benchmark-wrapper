@@ -13,9 +13,9 @@ jobs:
         run: echo cf_matrix=$(ci/discover_cfs.sh) >> $GITHUB_ENV
       - name: Set matrix to discovered Containerfiles
         id: set-matrix
-        run: echo "::set-output name=matrix::${{ env.cf_matrix }}"
+        run: echo '::set-output name=matrix::${{ env.cf_matrix }}'
       - name: Echo matrix variable
-        run: echo ${{ steps.set-matrix.outputs.matrix }}
+        run: echo '${{ steps.set-matrix.outputs.matrix }}'
       - name: Parse matrix using fromJSON
         run: echo ${{ fromJSON(steps.set-matrix.outputs.matrix) }}
 

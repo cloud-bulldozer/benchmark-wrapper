@@ -23,6 +23,7 @@ containerfile_name=`echo $REL_CF_PATH | awk -F "/" '{print $NF}'`
 if [[ $containerfile_name = *.* ]]
 then
     tag_prefix=`echo $REL_CF_PATH | awk -F "." '{print $NF}'`
+    tag_prefix=$tag_prefix-
 else
     tag_prefix=""
 fi
@@ -37,4 +38,4 @@ do
 done
 
 echo export IMAGE_NAME=$image_name
-echo export IMAGE_TAG_PREFIX=$tag_prefix-
+echo export IMAGE_TAG_PREFIX=$tag_prefix

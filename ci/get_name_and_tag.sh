@@ -1,7 +1,6 @@
 #/bin/bash
 # Build the name of an image given the following environment variables:
 #
-# IMAGE_REGISTRY: URL of the image registry (e.g. quay.io)
 # IMAGE_USER: User within the image registry to publish to
 # IMAGE_REPO: User's repository witihn ithe image registry to publish to
 # REL_CF_PATH: Relative path to the container file from root of the repository
@@ -29,7 +28,7 @@ else
 fi
 
 image_name="${benchmark_name}"
-for part in "${IMAGE_REPO}" "${IMAGE_USER}" "${IMAGE_REGISTRY}"
+for part in "${IMAGE_REPO}" "${IMAGE_USER}"
 do
     if [[ ! -z $part ]]
     then

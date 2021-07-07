@@ -3,31 +3,36 @@ on:
   - push
   - pull_request
 jobs:
+  find-cfs:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set matrix to disocovered Containerfiles
+        id: set-matrix
+        run: echo "::set-output name=matrix::$(ci/discover_cfs.sh)"
+
   build:
     runs-on: ubuntu-latest
     env:
       IMAGE_REGISTRY: quay.io
       IMAGE_USER: rydrew
-      IMAGE_REPO: benchmark-wrapper
     strategy:
-      matrix:
-        containerfile:
-          - snafu/benchmarks/uperf/Dockerfile
+      matrix: ${{ fromJSON(needs.find-cfs.outputs.matrix) }}
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
-      - name: Get Image Metadata
+      - name: Echo Matrix Permutation
         run: |
-            export REL_CF_PATH=${{ matrix.containerfile }}
-            eval "$(ci/get_name_and_tag.sh)"
-            echo IMAGE_NAME=$IMAGE_NAME >> $GITHUB_ENV
-            echo IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX >> $GITHUB_ENV
+            echo "containerfile: ${{ matrix.contailerfile }}"
+            echo "image name: ${{ matrix.image_name }}"
+            echo "tag prefix: ${{ matrix.tag_prefix }}"
       - name: Build ${{ matrix.containerfile }}
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
-          image: ${{ env.IMAGE_NAME }}
-          tags: ${{ env.IMAGE_TAG_PREFIX }}${{ github.sha }}
+          image: ${{ matrix.image_name }}
+          tags: ${{ matrix.tag_prefix }}${{ github.sha }}
           dockerfiles: ${{ matrix.containerfile }}
       - name: Push to registry
         id: push-image
@@ -35,7 +40,7 @@ jobs:
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
-          registry: ${{ env.IMAGE_REGISTRY }}
+          registry: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_USER }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
       - name: Print image URL

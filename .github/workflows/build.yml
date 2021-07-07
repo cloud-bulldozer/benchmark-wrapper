@@ -1,0 +1,41 @@
+name: Build Images
+on:
+  - push
+  - pull_request
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_REGISTRY: quay.io
+      IMAGE_USER: rydrew
+      IMAGE_REPO: benchmark-wrapper
+    strategy:
+      matrix:
+        containerfile:
+          - snafu/benchmarks/uperf/Dockerfile
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get Image Metadata
+        run: |
+            source snafu/ci/get_name_and_tag.sh
+            echo IMAGE_NAME=$IMAGE_NAME >> $GITHUB_ENV
+            echo IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX >> $GITHUB_ENV
+      - name: Build ${{ matrix.containerfile }}
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ env.IMAGE_TAG_PREFIX }}${{ github.sha }}
+          dockerfiles: ${{ matrix.containerfile }}
+      - name: Push to ${{ env.IMAGE_REGISTRY }}
+        id: push-image
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: ${{ env.IMAGE_REGISTRY }}
+          username: ${{ env.IMAGE_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Print image URL
+        run: echo "Image pushed to ${{ steps.push-image.outputs.registry-paths }}"

@@ -22,6 +22,7 @@ for cf_index in "${!containerfile_list[@]}"
 do
     cf_path="${containerfile_list[$cf_index]}"
     benchmark_name=`echo $cf_path | awk -F "/" '{print $(NF-1)}'`
+    benchmark_name=${benchmark_name%_wrapper}
     containerfile_name=`echo $cf_path | awk -F "/" '{print $NF}'`
     if [[ $containerfile_name = *.* ]]
     then

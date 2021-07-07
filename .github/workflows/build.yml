@@ -11,11 +11,12 @@ jobs:
       - uses: actions/checkout@v2
       - name: Discover Containerfiles
         run: echo cf_matrix=$(ci/discover_cfs.sh) >> $GITHUB_ENV
-      - name: Set matrix to disocovered Containerfiles
+      - name: Set matrix to discovered Containerfiles
         id: set-matrix
         run: echo "::set-output name=matrix::${{ env.cf_matrix }}"
 
   build:
+    needs: find-cfs
     runs-on: ubuntu-latest
     env:
       IMAGE_REGISTRY: quay.io

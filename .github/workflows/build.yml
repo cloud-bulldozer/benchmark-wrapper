@@ -14,6 +14,10 @@ jobs:
       - name: Set matrix to discovered Containerfiles
         id: set-matrix
         run: echo "::set-output name=matrix::${{ env.cf_matrix }}"
+      - name: Pipe matrix to jq
+        run: echo ${{ env.cf_matrix }} | jq
+      - name: Parse matrix using fromJSON
+        run: echo ${{ fromJSON(steps.set-matrix.outputs.matrix) }}
 
   build:
     needs: find-cfs

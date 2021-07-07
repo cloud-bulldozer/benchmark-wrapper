@@ -60,7 +60,7 @@ class Trigger_scale:
                     rosa_version = rosa_stdout.strip().decode("utf-8")
                     logger.info("Detected ROSA version %s" % rosa_version)
                     if version.parse(rosa_stdout.strip().decode("utf-8")) < version.parse("1.0.10"):
-                        logger.error("Minimum ROSA version required: 1.0.10" % rosa_version)
+                        logger.error("Minimum ROSA version required: 1.0.10")
                         exit(1)
             self.cluster_name = args.rosa_cluster
             self.rosa_env = args.rosa_env

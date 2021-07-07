@@ -8,6 +8,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - uses: actions/checkout@v2
       - name: Set matrix to disocovered Containerfiles
         id: set-matrix
         run: echo "::set-output name=matrix::$(ci/discover_cfs.sh)"

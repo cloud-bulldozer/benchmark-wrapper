@@ -19,7 +19,7 @@ jobs:
       - name: Parse matrix using fromJSON
         run: echo ${{ fromJSON(steps.set-matrix.outputs.matrix) }}
 
-  build:
+  build-and-push:
     needs: find-cfs
     runs-on: ubuntu-latest
     env:

@@ -18,9 +18,6 @@
 output="{\"include\": ["
 containerfile_list=(`find snafu/ -name Dockerfile* -o -name Containerfile`)
 
-echo "Found the following Containerfiles:"
-echo $containerfile_list
-
 for cf_index in "${!containerfile_list[@]}"
 do
     cf_path="${containerfile_list[$cf_index]}"

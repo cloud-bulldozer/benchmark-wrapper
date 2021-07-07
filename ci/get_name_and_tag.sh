@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 # Build the name of an image given the following environment variables:
 #
 # IMAGE_USER: User within the image registry to publish to

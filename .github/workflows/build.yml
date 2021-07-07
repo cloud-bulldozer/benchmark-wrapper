@@ -29,7 +29,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ env.IMAGE_TAG_PREFIX }}${{ github.sha }}
           dockerfiles: ${{ matrix.containerfile }}
-      - name: Push to ${{ env.IMAGE_REGISTRY }}
+      - name: Push to registry
         id: push-image
         uses: redhat-actions/push-to-registry@v2
         with:

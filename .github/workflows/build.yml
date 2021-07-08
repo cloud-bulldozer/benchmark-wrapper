@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Echo Matrix Permutation
         run: |
-            echo "containerfile: ${{ matrix.contailerfile }}"
+            echo "containerfile: ${{ matrix.containerfile }}"
             echo "image name: ${{ matrix.image_name }}"
             echo "tag prefix: ${{ matrix.tag_prefix }}"
             echo "arch: ${{ matrix.arch }}"

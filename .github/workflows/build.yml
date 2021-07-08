@@ -36,6 +36,7 @@ jobs:
             echo "containerfile: ${{ matrix.contailerfile }}"
             echo "image name: ${{ matrix.image_name }}"
             echo "tag prefix: ${{ matrix.tag_prefix }}"
+            echo "arch: ${{ matrix.arch }}"
       - name: Build ${{ matrix.containerfile }}
         id: build-image
         uses: redhat-actions/buildah-build@v2

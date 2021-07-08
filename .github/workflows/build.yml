@@ -49,7 +49,6 @@ jobs:
           tags: ${{ matrix.tag_prefix }}${{ github.sha }}
           dockerfiles: ${{ matrix.containerfile }}
       - name: Push to registry
-        if: ${{ success() }}
         id: push-image
         uses: redhat-actions/push-to-registry@v2
         with:
@@ -59,5 +58,4 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
       - name: Print image URL
-        if: ${{ success() }}
         run: echo "Image pushed to ${{ steps.push-image.outputs.registry-paths }}"

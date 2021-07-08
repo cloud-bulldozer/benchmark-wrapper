@@ -17,7 +17,7 @@ done
 
 # Clone ripsaw so we can use it for testing
 rm -rf ripsaw
-git clone https://github.com/cloud-bulldozer/ripsaw.git --depth 1
+git clone -b v0.1 https://github.com/cloud-bulldozer/ripsaw.git --depth 1
 
 # Generate uuid
 NEW_UUID=$(uuidgen)

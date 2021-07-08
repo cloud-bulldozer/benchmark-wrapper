@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.find-cfs.outputs.matrix) }}
       fail-fast: false
-    name: ${{ matrix.image_name }}:${{ matrix.tag_prefix }}
+    name: ${{ matrix.image_name }} (${{ matrix.arch }})
     steps:
       - uses: actions/checkout@v2
       - name: Echo Matrix Permutation

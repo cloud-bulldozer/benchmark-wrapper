@@ -9,7 +9,8 @@
 #     {
 #       "containerfile": path to containerfile relative to repo root,
 #       "image_name": name of the image (i.e. name of directory containing the CF)}
-#       "tag_prefix": prefix of the image tag that should be used (i.e. extension of the CF)
+#       "tag_prefix": prefix of the image tag that should be used (i.e. extension of the CF with a dash)
+#       "arch": architecture that the CF should be built on (i.e. extension of the CF, default to amd64)
 #     },
 #     ...
 #   ]
@@ -24,18 +25,19 @@ do
     benchmark_name=`echo $cf_path | awk -F "/" '{print $(NF-1)}'`
     benchmark_name=${benchmark_name%_wrapper}
     containerfile_name=`echo $cf_path | awk -F "/" '{print $NF}'`
+    arch="amd64"
     if [[ $containerfile_name = *.* ]]
     then
-        tag_prefix=`echo $cf_path | awk -F "." '{print $NF}'`
-        tag_prefix=$tag_prefix-
+        arch=`echo $cf_path | awk -F "." '{print $NF}'`
+        tag_prefix=$arch-
     else
         tag_prefix=""
     fi
 
 
     output="$output{"
-    keys=(containerfile image_name tag_prefix)
-    values=("${cf_path}" "${benchmark_name}" "${tag_prefix}")
+    keys=(containerfile image_name tag_prefix arch)
+    values=("${cf_path}" "${benchmark_name}" "${tag_prefix}" "${arch}")
 
     for pair_index in "${!keys[@]}"
     do

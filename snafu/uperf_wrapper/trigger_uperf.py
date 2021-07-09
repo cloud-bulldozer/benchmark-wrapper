@@ -44,6 +44,7 @@ class Trigger_uperf:
         self.density_range = args.density_range
         self.node_range = args.node_range
         self.pod_id = args.pod_id
+        self.prom_es = args.prom_es
 
     def _json_payload(self, results, data, sample):
         processed = []
@@ -120,6 +121,10 @@ class Trigger_uperf:
                 "read_message_size": int(rsize),
                 "num_threads": int(nthr),
                 "duration": len(results),
+                "tool": "uperf",
+                "test_config": "uperf",
+                "starttime": float(results[0][0]) / 1000,
+                "endtime": float(results[-1][0]) / 1000,
             },
         )
 
@@ -144,7 +149,10 @@ class Trigger_uperf:
             documents = self._json_payload(results, data, s)
             if len(documents) > 0:
                 for document in documents:
-                    yield document, "results"
+                    if self.prom_es == "":
+                        yield document, "results"
+                    else:
+                        yield document, "get_prometheus_trigger"
             logger.info(data)
             logger.info(stdout)
             logger.info("Finished executing sample %d out of %d" % (s, self.sample))

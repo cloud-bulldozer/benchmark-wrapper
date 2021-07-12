@@ -42,11 +42,11 @@
     },
     "Ceph_Per_OSD_Throughput_Read": {
         "label": "ceph_osd_op_r_out_bytes",
-        "query": "irate(ceph_osd_op_r_out_bytes[1m]) "
+        "query": "rate(ceph_osd_op_r_out_bytes[65s]) "
     },
     "Ceph_Per_OSD_Throughput_Write": {
         "label": "ceph_osd_op_w_in_bytes",
-        "query": "irate(ceph_osd_op_w_in_bytes[1m]) "
+        "query": "rate(ceph_osd_op_w_in_bytes[65s]) "
     },
     "Ceph_Per_OSD_Throughput_Read-Modify-Write_in": {
         "label": "ceph_osd_op_rw_in_bytes",

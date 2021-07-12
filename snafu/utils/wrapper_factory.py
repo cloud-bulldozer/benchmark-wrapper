@@ -4,7 +4,6 @@ from snafu.smallfile_wrapper.smallfile_wrapper import smallfile_wrapper
 from snafu.uperf_wrapper.uperf_wrapper import uperf_wrapper
 from snafu.pgbench_wrapper.pgbench_wrapper import pgbench_wrapper
 from snafu.fs_drift_wrapper.fs_drift_wrapper import fs_drift_wrapper
-from snafu.cluster_loader.cluster_loader import cluster_loader_wrapper
 from snafu.hammerdb.hammerdb_wrapper import hammerdb_wrapper
 from snafu.ycsb_wrapper.ycsb_wrapper import ycsb_wrapper
 from snafu.scale_openshift_wrapper.scale_openshift_wrapper import scale_openshift_wrapper
@@ -28,7 +27,6 @@ wrapper_dict = {
     "fio": fio_wrapper,
     "smallfile": smallfile_wrapper,
     "fs-drift": fs_drift_wrapper,
-    "cl": cluster_loader_wrapper,
     "hammerdb": hammerdb_wrapper,
     "ycsb": ycsb_wrapper,
     "uperf": uperf_wrapper,

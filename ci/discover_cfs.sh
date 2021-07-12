@@ -8,7 +8,9 @@
 #   "include": [
 #     {
 #       "containerfile": path to containerfile relative to repo root,
-#       "image_name": name of the image (i.e. name of directory containing the CF)}
+#       "image_name": name of the image (i.e. name of directory containing the CF)
+#       "benchmark": name of the benchmark (i.e. name of directory containing the CF)
+#       "env_var": environment variable where image URL will be stored (i.e. <BENCHMARK>_IMAGE)
 #       "tag_prefix": prefix of the image tag that should be used (i.e. extension of the CF with a dash)
 #       "arch": architecture that the CF should be built on (i.e. extension of the CF, default to amd64)
 #     },
@@ -33,11 +35,12 @@ do
     else
         tag_prefix=""
     fi
+    env_var=${benchmark_name^^}_IMAGE
 
 
     output="$output{"
-    keys=(containerfile image_name tag_prefix arch)
-    values=("${cf_path}" "${benchmark_name}" "${tag_prefix}" "${arch}")
+    keys=(benchmark containerfile image_name tag_prefix arch env_var)
+    values=("${benchmark_name}" "${cf_path}" "${benchmark_name}" "${tag_prefix}" "${arch}" "${env_var}")
 
     for pair_index in "${!keys[@]}"
     do

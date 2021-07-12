@@ -2,6 +2,9 @@ name: Build Images
 on:
   - push
   - pull_request
+env:
+  IMAGE_REGISTRY: quay.io
+  IMAGE_USER: rydrew
 jobs:
   find-cfs:
     runs-on: ubuntu-latest
@@ -19,16 +22,13 @@ jobs:
       - name: Parse matrix using fromJSON
         run: echo ${{ fromJSON(steps.set-matrix.outputs.matrix) }}
 
-  build-and-push:
+  build-push-test:
     needs: find-cfs
     runs-on: ubuntu-latest
-    env:
-      IMAGE_REGISTRY: quay.io
-      IMAGE_USER: rydrew
     strategy:
       matrix: ${{ fromJSON(needs.find-cfs.outputs.matrix) }}
       fail-fast: false
-    name: ${{ matrix.image_name }} (${{ matrix.arch }})
+    name: ${{ matrix.benchmark }} (${{ matrix.arch }})
     steps:
       - uses: actions/checkout@v2
       - name: Echo origin URL and current branch
@@ -37,10 +37,7 @@ jobs:
             echo "Origin URL(s): `git remote get-url origin`"
       - name: Echo Matrix Permutation
         run: |
-            echo "Containerfile: ${{ matrix.containerfile }}"
-            echo "Image Name: ${{ matrix.image_name }}"
-            echo "Tag Prefix: ${{ matrix.tag_prefix }}"
-            echo "Arch: ${{ matrix.arch }}"
+            echo ${{ toJSON(matrix) }}
       - name: Build ${{ matrix.containerfile }}
         id: build-image
         uses: redhat-actions/buildah-build@v2
@@ -59,3 +56,5 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
       - name: Print image URL
         run: echo "Image pushed to ${{ steps.push-image.outputs.registry-paths }}"
+      - name: Set benchmark image environment variable
+        run: echo ${{ matrix.env_var }}=${{ steps.push-image.outputs.registry-paths }} >> $GITHUB_ENV

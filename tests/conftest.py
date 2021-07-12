@@ -8,6 +8,22 @@ import subprocess
 import pytest
 
 COMPOSE_FILENAME = "docker-compose.yml"
+COMPOSE_COMMAND = "podman-compose"
+
+
+def pytest_addoption(parser):
+    """Add options for default compose filename and default compose command."""
+
+    parser.addoption(
+        "--compose-filename",
+        default=COMPOSE_FILENAME,
+        help=f"Filename for compose files. Defaults to {COMPOSE_FILENAME}",
+    )
+    parser.addoption(
+        "--compose-command",
+        default=COMPOSE_COMMAND,
+        help=f"Name of compose command. Defaults to {COMPOSE_COMMAND}",
+    )
 
 
 @pytest.fixture(scope="package")
@@ -23,14 +39,14 @@ def get_compose_file(request):
     """
 
     package_directory = os.path.dirname(request.fspath)
-    compose_file = os.path.join(package_directory, COMPOSE_FILENAME)
+    compose_file = os.path.join(package_directory, request.config.getoption("--compose-filename"))
     if os.access(compose_file, os.F_OK | os.R_OK):
         return package_directory, compose_file
     return package_directory, None
 
 
 @pytest.fixture(scope="package")
-def compose(get_compose_file):  # pylint: disable=W0621
+def compose(request, get_compose_file):  # pylint: disable=W0621
     """
     Run the compose file found within test's package and cleanup after all tests in package finish.
 
@@ -54,7 +70,8 @@ def compose(get_compose_file):  # pylint: disable=W0621
             f"Unable to find compose file within directory the test was collected from: {project_dir}"
         )
 
-    base_cmd = f"docker-compose --file {compose_file} --project-directory {project_dir}"
+    compose_cmd = request.config.getoption("--compose-command")
+    base_cmd = f"{compose_cmd} --file {compose_file} --project-directory {project_dir}"
     start_cmd = shlex.split(f"{base_cmd} up -d")
     try:
         subprocess.run(start_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)

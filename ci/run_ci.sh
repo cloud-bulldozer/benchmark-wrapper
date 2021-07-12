@@ -63,7 +63,7 @@ if [[ ${test_choice} != '' ]]; then
   test_list=${test_choice}
 elif [[ `echo "${diff_list}" | grep -cv /` -gt 0 || `echo ${diff_list} | grep -E "(ci|utils|image_resources)/|snafu/run_snafu\.py|requirements\.txt"` ]]; then
   echo "Running full test"
-  test_list=`find * -maxdepth 2 -name ci_test.sh -type f -exec dirname {} \;`
+  test_list=`find * -maxdepth 3 -name ci_test.sh -type f -exec dirname {} \;`
 else
   echo "Running specific tests"
   echo $diff_list

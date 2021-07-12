@@ -36,6 +36,7 @@ pip-delete-this-directory.txt
 
 # Sphinx documentation
 docs/_build/
+*.ipynb_checkpoints
 
 # Environments
 .env

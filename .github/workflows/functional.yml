@@ -24,20 +24,24 @@ jobs:
 
   build-push-test:
     needs: find-cfs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix: ${{ fromJSON(needs.find-cfs.outputs.matrix) }}
       fail-fast: false
     name: ${{ matrix.benchmark }} (${{ matrix.arch }})
     steps:
       - uses: actions/checkout@v2
+      - name: Install podman
+        run: sudo apt install -y podman
       - name: Echo origin URL and current branch
         run: |
             echo "Current branch: `git branch --show-current`"
             echo "Origin URL(s): `git remote get-url origin`"
       - name: Echo Matrix Permutation
         run: |
-            echo ${{ toJSON(matrix) }}
+            cat << EOF
+            ${{ toJSON(matrix) }}
+            EOF
       - name: Build ${{ matrix.containerfile }}
         id: build-image
         uses: redhat-actions/buildah-build@v2

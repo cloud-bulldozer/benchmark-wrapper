@@ -2,11 +2,28 @@
 # -*- coding: utf-8 -*-
 """pytest conftest module for test configuration and fixtures."""
 import os
+import pathlib
 import subprocess
 
 import pytest
 
 MANIFEST_FILENAME = "deploy.yaml"
+
+
+def pytest_collection_modifyitems(config, items):
+    """Modify functional tests by marking them with the benchmark name."""
+
+    root_dir = pathlib.Path(config.rootdir)
+    for item in items:
+        # tests/functional/benchmark/...
+        rel_path = pathlib.Path(item.fspath).relative_to(root_dir)
+        test_type = rel_path.parts[1]
+        benchmark_name = rel_path.parts[2]
+        if test_type == "functional":
+            # need to add custom marker, otherwise will get a warning
+            config.addinivalue_line("markers", benchmark_name)
+            mark = getattr(pytest.mark, benchmark_name)
+            item.add_marker(mark)
 
 
 def sub_env_in_file(file_path: str) -> str:

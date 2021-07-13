@@ -5,7 +5,7 @@ import shlex
 import subprocess
 
 
-def test_basic_run_of_uperf(compose):
+def test_basic_run_of_uperf(manifest):
     """
     Test that we can run a command within the 'uperf' container.
 
@@ -14,7 +14,7 @@ def test_basic_run_of_uperf(compose):
     """
 
     result = subprocess.run(
-        shlex.split(compose + " exec uperf echo 'Hello World'"),
+        shlex.split(f"{manifest.format(container='uperf-test-pod-uperf')} echo 'Hello World'"),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=True,

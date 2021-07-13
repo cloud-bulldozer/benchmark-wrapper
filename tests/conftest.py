@@ -2,90 +2,102 @@
 # -*- coding: utf-8 -*-
 """pytest conftest module for test configuration and fixtures."""
 import os
-import shlex
 import subprocess
 
 import pytest
 
-COMPOSE_FILENAME = "docker-compose.yml"
-COMPOSE_COMMAND = "podman-compose"
+MANIFEST_FILENAME = "deploy.yaml"
 
 
-def pytest_addoption(parser):
-    """Add options for default compose filename and default compose command."""
+def sub_env_in_file(file_path: str) -> str:
+    """
+    Given path to a file, return contents of the file with environment variable substitution performed.
 
-    parser.addoption(
-        "--compose-filename",
-        default=COMPOSE_FILENAME,
-        help=f"Filename for compose files. Defaults to {COMPOSE_FILENAME}",
-    )
-    parser.addoption(
-        "--compose-command",
-        default=COMPOSE_COMMAND,
-        help=f"Name of compose command. Defaults to {COMPOSE_COMMAND}",
-    )
+    If running these manifests manually, please feel free to use the ``envsubst`` command. This functional
+    is only implementend because it is compatible on images that may not have such a helpful command
+    available.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to the file to substitute environment variables in
+
+    Returns
+    -------
+    str
+        Contents of the file with environment variables substituted for their values.
+
+    Raises
+    ------
+    CalledProcessError
+    """
+
+    sub_cmd = f'eval "echo \\"$(cat {file_path})\\""'
+    proc = subprocess.run(sub_cmd, stdout=subprocess.PIPE, shell=True, check=True, env=os.environ)
+    return proc.stdout.decode("utf-8")
 
 
 @pytest.fixture(scope="package")
-def get_compose_file(request):
+def get_manifest(request):
     """
-    Determine the directory of invoked test and look for a compose file within.
+    Determine the directory of invoked test and look for a manifest file within.
 
     Returns
     -------
     tuple or None
         First item is the path to the directory that the test is located within. The second item
-        is the path to the compose file, if one was found that is readable, otherwise ``None``.
+        is the path to the manifest file, if one was found that is readable, otherwise ``None``. The
+        third item is the content of the manifest file with environment variable substitution perfomed.
     """
 
     package_directory = os.path.dirname(request.fspath)
-    compose_file = os.path.join(package_directory, request.config.getoption("--compose-filename"))
-    if os.access(compose_file, os.F_OK | os.R_OK):
-        return package_directory, compose_file
-    return package_directory, None
+    manifest_file = os.path.join(package_directory, MANIFEST_FILENAME)
+    if os.access(manifest_file, os.F_OK | os.R_OK):
+        return package_directory, manifest_file, sub_env_in_file(manifest_file)
+    return package_directory, None, None
 
 
 @pytest.fixture(scope="package")
-def compose(request, get_compose_file):  # pylint: disable=W0621
+def manifest(get_manifest):  # pylint: disable=W0621
     """
-    Run the compose file found within test's package and cleanup after all tests in package finish.
+    Start the manifest file found within test's package and cleanup after all tests in package finish.
+
+    Expected format for the manifest file is a kubernetes definition that creates a pod or deployment.
+    Will manage using ``podman play kube``. Expects pods created to be labeled with "test=snafu".
+    If the label doesn't exist, then cleanup will not occur.
 
     Raises
     ------
     RuntimeError
-        If an error occurs while trying to start or stop docker-compose.
+        If an error occurs while trying to start or stop the manifest
 
     Returns
     -------
     str
-        Base docker-compose command that can be used by tests in order to exec into containers.
-        For instance the string "docker-compose --file ... --project-directory ..." could be returned,
-        which a test can then append " exec container_name echo 'hello world'" to, in order to run an echo
-        command within the container with the name "container_name".
     """
 
-    project_dir, compose_file = get_compose_file
-    if compose_file is None:
+    project_dir, manifest_file, manifest_content = get_manifest
+    if manifest_file is None:
         raise RuntimeError(
-            f"Unable to find compose file within directory the test was collected from: {project_dir}"
+            f"Unable to find manifest file within directory the test was collected from: {project_dir}"
         )
 
-    compose_cmd = request.config.getoption("--compose-command")
-    base_cmd = f"{compose_cmd} --file {compose_file} --project-directory {project_dir}"
-    start_cmd = shlex.split(f"{base_cmd} up -d")
+    start_cmd = f'echo "{manifest_content}" | podman play kube -'
     try:
-        subprocess.run(start_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)
+        proc = subprocess.run(
+            start_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True, shell=True
+        )
+        print(proc.stdout)
+        yield "podman exec {container}"
     except subprocess.CalledProcessError as proc_error:
         raise RuntimeError(
-            f"Unable to start compose file {compose_file}: {proc_error} Output: {proc_error.stdout}"
+            f"Unable to create manifest file {manifest_file}: {proc_error} Output: {proc_error.stdout}"
         ) from proc_error
-
-    yield base_cmd
-
-    end_cmd = shlex.split(f"{base_cmd} down --volumes")
-    try:
-        subprocess.run(end_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)
-    except subprocess.CalledProcessError as proc_error:
-        raise RuntimeError(
-            f"Unable to stop compose file {compose_file}: {proc_error} Output: {proc_error.stdout}"
-        ) from proc_error
+    finally:
+        end_cmd = 'podman pod ps --format "{{.ID}}" --filter label=test=snafu | xargs podman pod rm -f'
+        try:
+            subprocess.run(end_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True, shell=True)
+        except subprocess.CalledProcessError as proc_error:
+            raise RuntimeError(
+                f"Unable to cleanup manifest file {manifest_file}: {proc_error} Output: {proc_error.stdout}"
+            ) from proc_error

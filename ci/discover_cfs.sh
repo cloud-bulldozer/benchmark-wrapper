@@ -10,7 +10,7 @@
 #       "containerfile": path to containerfile relative to repo root,
 #       "image_name": name of the image (i.e. name of directory containing the CF)
 #       "benchmark": name of the benchmark (i.e. name of directory containing the CF)
-#       "env_var": environment variable where image URL will be stored (i.e. <BENCHMARK>_IMAGE)
+#       "env_var": environment variable where image URL will be stored (i.e. <BENCHMARK>_<ARCH>_IMAGE)
 #       "tag_prefix": prefix of the image tag that should be used (i.e. extension of the CF with a dash)
 #       "arch": architecture that the CF should be built on (i.e. extension of the CF, default to amd64)
 #     },
@@ -35,7 +35,7 @@ do
     else
         tag_prefix=""
     fi
-    env_var=${benchmark_name^^}_IMAGE
+    env_var=${benchmark_name^^}_${arch^^}_IMAGE
 
 
     output="$output{"

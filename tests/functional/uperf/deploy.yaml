@@ -11,10 +11,10 @@ spec:
     ports:
     - containerPort: 9200
   - name: uperf_server
-    image: "${UPERF_IMAGE}"
+    image: "${UPERF_AMD64_IMAGE}"
     container_name: uperfserver
     command: ["uperf", "-s"]
   - name: uperf
-    image: ${UPERF_IMAGE}
+    image: ${UPERF_AMD64_IMAGE}
     container_name: uperf
     command: ["tail", "-f", "/dev/null"]

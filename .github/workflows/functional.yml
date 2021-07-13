@@ -22,9 +22,9 @@ jobs:
       - name: Parse matrix using fromJSON
         run: echo ${{ fromJSON(steps.set-matrix.outputs.matrix) }}
 
-  build-push:
+  build-push-test:
     needs: find-cfs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix: ${{ fromJSON(needs.find-cfs.outputs.matrix) }}
       fail-fast: false
@@ -40,6 +40,18 @@ jobs:
             cat << EOF
             ${{ toJSON(matrix) }}
             EOF
+      - name: Install podman
+        run: sudo apt install -y podman
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Upgrade pip and setuptools
+        run: python -m pip install --upgrade pip setuptools
+      - name: Install benchmark-wrapper
+        run: pip install .
+      - name: Install test dependencies
+        run: pip install snafu[testci]
       - name: Build ${{ matrix.containerfile }}
         id: build-image
         uses: redhat-actions/buildah-build@v2
@@ -61,28 +73,5 @@ jobs:
         run: echo "Image pushed to ${{ steps.push-image.outputs.registry-paths }}"
       - name: Set benchmark image environment variable
         run: echo ${{ matrix.env_var }}=${{ steps.push-image.outputs.registry-paths[0] }} >> $GITHUB_ENV
-  test:
-    needs:
-      - find-cfs
-      - build-push
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix: ${{ fromJSON(needs.find-cfs.outputs.matrix) }}
-      fail-fast: false
-    name: Test ${{ matrix.benchmark }} (${{ matrix.arch }})
-    steps:
-      - name: Install podman
-        run: sudo apt install -y podman
-      - uses: actions/checkout@v2
-      - name: Setup Python 3.8
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - name: Upgrade pip and setuptools
-        run: python -m pip install --upgrade pip setuptools
-      - name: Install benchmark-wrapper
-        run: pip install .
-      - name: Install test dependencies
-        run: pip install snafu[testci]
-      - name: Run functional tests for benchmark
+      - name: Run functional tests
         run: tox -e functional -- -m ${{ matrix.benchmark }}

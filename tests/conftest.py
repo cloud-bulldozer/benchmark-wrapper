@@ -18,8 +18,8 @@ def pytest_collection_modifyitems(config, items):
         # tests/functional/benchmark/...
         rel_path = pathlib.Path(item.fspath).relative_to(root_dir)
         test_type = rel_path.parts[1]
-        benchmark_name = rel_path.parts[2]
         if test_type == "functional":
+            benchmark_name = rel_path.parts[2]
             # need to add custom marker, otherwise will get a warning
             config.addinivalue_line("markers", benchmark_name)
             mark = getattr(pytest.mark, benchmark_name)

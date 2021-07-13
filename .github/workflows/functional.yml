@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.find-cfs.outputs.matrix) }}
       fail-fast: false
-    name: Build ${{ matrix.benchmark }} (${{ matrix.arch }})
+    name: ${{ matrix.benchmark }} (${{ matrix.arch }})
     steps:
       - uses: actions/checkout@v2
       - name: Echo origin URL and current branch
@@ -51,7 +51,7 @@ jobs:
       - name: Install benchmark-wrapper
         run: pip install .
       - name: Install test dependencies
-        run: pip install snafu[testci]
+        run: pip install snafu[testsci]
       - name: Build ${{ matrix.containerfile }}
         id: build-image
         uses: redhat-actions/buildah-build@v2

@@ -46,6 +46,7 @@ jobs:
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
+          arch: ${{ matrix.arch }}
           image: ${{ matrix.image_name }}
           tags: ${{ matrix.tag_prefix }}${{ github.sha }}
           dockerfiles: ${{ matrix.containerfile }}

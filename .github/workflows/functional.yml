@@ -22,17 +22,15 @@ jobs:
       - name: Parse matrix using fromJSON
         run: echo ${{ fromJSON(steps.set-matrix.outputs.matrix) }}
 
-  build-push-test:
+  build-push:
     needs: find-cfs
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJSON(needs.find-cfs.outputs.matrix) }}
       fail-fast: false
-    name: ${{ matrix.benchmark }} (${{ matrix.arch }})
+    name: Build ${{ matrix.benchmark }} (${{ matrix.arch }})
     steps:
       - uses: actions/checkout@v2
-      - name: Install podman
-        run: sudo apt install -y podman
       - name: Echo origin URL and current branch
         run: |
             echo "Current branch: `git branch --show-current`"
@@ -63,5 +61,28 @@ jobs:
         run: echo "Image pushed to ${{ steps.push-image.outputs.registry-paths }}"
       - name: Set benchmark image environment variable
         run: echo ${{ matrix.env_var }}=${{ steps.push-image.outputs.registry-paths }} >> $GITHUB_ENV
+  test:
+    needs:
+      - find-cfs
+      - build-push
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix: ${{ fromJSON(needs.find-cfs.outputs.matrix) }}
+      fail-fast: false
+    name: Test ${{ matrix.benchmark }} (${{ matrix.arch }})
+    steps:
+      - name: Install podman
+        run: sudo apt install -y podman
+      - uses: actions/checkout@v2
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Upgrade pip and setuptools
+        run: python -m pip install --upgrade pip setuptools
+      - name: Install benchmark-wrapper
+        run: pip install .
+      - name: Install test dependencies
+        run: pip install snafu[testci]
       - name: Run functional tests for benchmark
         run: tox -e functional -- -m ${{ matrix.benchmark }}

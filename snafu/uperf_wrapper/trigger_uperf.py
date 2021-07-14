@@ -109,7 +109,10 @@ class Trigger_uperf:
         # This will yeild us this structure :
         #     timestamp, number of bytes, number of operations
         # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
-        results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)", stdout)
+        if test_type == 'connect':
+            results = re.findall(r"timestamp_ms:(.*) name:Txn1 nr_bytes:(.*) nr_ops:(.*)", stdout)
+        else:
+            results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)", stdout)
         # We assume message_size=write_message_size to prevent breaking dependant implementations
         return (
             results,

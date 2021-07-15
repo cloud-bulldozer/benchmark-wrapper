@@ -19,15 +19,13 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+        uses: actions/checkout@v2
       - name: Echo manual trigger params
         if: github.event_name == 'workflow_dispatch'
         run: echo "${{ toJSON(github.event.inputs) }}"
       - name: Fetch upstream branch
         if: github.event_name == 'workflow_dispatch'
         run: git fetch origin ${{ github.event.inputs.diff_branch }}
-      - name: Fetch pushed branch
-        if: github.event_name != 'workflow_dispatch'
-        uses: actions/checkout@v2
       - name: Fetch master branch
         if: github.event_name != 'workflow_dispatch'
         run: git fetch origin master

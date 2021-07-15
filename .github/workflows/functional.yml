@@ -37,7 +37,7 @@ jobs:
         run: |
             echo "Current branch: `git branch --show-current`"
             echo "Origin URL(s): `git remote get-url origin`"
-            echo "Changes: `git diff origin/master --name-only`"
+            echo "Changes: `git diff origin/${{ env.UPSTREAM_BRANCH }} --name-only`"
       - name: Discover Containerfiles
         run: echo cf_matrix=$(ci/discover_cfs.sh ${{ env.UPSTREAM_BRANCH }}) >> $GITHUB_ENV
       - name: Filter container files with no changes

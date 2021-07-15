@@ -13,6 +13,7 @@
 #       "env_var": environment variable where image URL will be stored (i.e. <BENCHMARK>_<ARCH>_IMAGE)
 #       "tag_prefix": prefix of the image tag that should be used (i.e. extension of the CF with a dash)
 #       "arch": architecture that the CF should be built on (i.e. extension of the CF, default to amd64)
+#       "changed": whether or not changes have been made which require the benchmark to be tested
 #     },
 #     ...
 #   ]
@@ -20,12 +21,33 @@
 #
 output="{\"include\": ["
 containerfile_list=(`find snafu/ -name Dockerfile* -o -name Containerfile`)
+diff_list=`git diff origin/master --name-only`
+# last item is anything on TLD
+bones=(\
+    "ci/" \
+    ".github/workflows" \
+    "MANIFEST.in" \
+    "setup*" \
+    "snafu/benchmarks/_*.py" \
+    "snafu/*.py" \
+    "tox.ini" \
+    "version.txt" \
+)
+bones_changed=false
+for bone in "${bones[@]}"
+do
+    if [[ -n "`echo $diff_list | grep -E \"${bone}\"`" ]]
+    then
+        bones_changed=true
+        break
+    fi
+done
 
 for cf_index in "${!containerfile_list[@]}"
 do
     cf_path="${containerfile_list[$cf_index]}"
-    benchmark_name=`echo $cf_path | awk -F "/" '{print $(NF-1)}'`
-    benchmark_name=${benchmark_name%_wrapper}
+    benchmark_dir_name=`echo $cf_path | awk -F "/" '{print $(NF-1)}'`
+    benchmark_name=${benchmark_dir_name%_wrapper}
     containerfile_name=`echo $cf_path | awk -F "/" '{print $NF}'`
     arch="amd64"
     if [[ $containerfile_name = *.* ]]
@@ -37,10 +59,41 @@ do
     fi
     env_var=${benchmark_name^^}_${arch^^}_IMAGE
 
+    if $bones_changed
+    then
+        changed=true
+    else
+        # List of files under snafu/benchmark that aren't container files
+        changed_bench_files=`echo \
+            "$diff_list" | sed '/Dockerfile\|Containerfile/d' | grep "/${benchmark_dir_name}/"`
+        # The only containerfile that we care about changing is the one at $cf_path
+        if [[ -n `echo $diff_list | grep $cf_path` ]] || [[ -n "${changed_bench_files}" ]]
+        then
+            changed=true
+        else
+            changed=false
+        fi
+    fi
 
     output="$output{"
-    keys=(benchmark containerfile image_name tag_prefix arch env_var)
-    values=("${benchmark_name}" "${cf_path}" "${benchmark_name}" "${tag_prefix}" "${arch}" "${env_var}")
+    keys=(\
+        benchmark \
+        containerfile \
+        image_name \
+        tag_prefix \
+        arch \
+        env_var \
+        changed \
+    )
+    values=(\
+        "${benchmark_name}" \
+        "${cf_path}" \
+        "${benchmark_name}" \
+        "${tag_prefix}" \
+        "${arch}" \
+        "${env_var}" \
+        "${changed}" \
+    )
 
     for pair_index in "${!keys[@]}"
     do

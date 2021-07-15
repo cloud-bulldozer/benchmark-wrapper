@@ -9,7 +9,7 @@ on:
         default: 'master'
       run_all:
         description: 'If true, will run all benchmark tests'
-        default: false
+        default: 'false'
 env:
   IMAGE_REGISTRY: quay.io
   IMAGE_USER: rydrew

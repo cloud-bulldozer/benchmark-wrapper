@@ -44,8 +44,9 @@ jobs:
         if: >-
             github.event_name != 'workflow_dispatch' ||
             (github.event_name == 'workflow_dispatch' && github.event.inputs.run_all == 'false')
-        run: |
-            echo cf_matrix=`echo "$cf_matrix" | jq '.include[].changed=true'` >> $GITHUB_ENV
+        run: >-
+            echo cf_matrix=`echo "$cf_matrix" | jq -c
+            '{"include": .include | map(select(.changed == "true"))}'` >> $GITHUB_ENV
       - name: Set matrix to containerfiles that need to be tested
         id: set-matrix
         run: echo '::set-output name=matrix::${{ env.cf_matrix }}'

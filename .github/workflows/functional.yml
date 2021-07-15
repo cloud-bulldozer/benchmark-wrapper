@@ -21,10 +21,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Fetch master branch
-        if: ${{ github.event != "workflow_dispatch"}}
+        if: ${{ github.event != 'workflow_dispatch' }}
         run: git fetch origin master
       - name: Fetch upstream branch
-        if: ${{ github.event == "workflow_dispatch" }}
+        if: ${{ github.event == 'workflow_dispatch' }}
         run: git fetch origin ${{ github.event.inputs.diff_branch }}
       - name: Echo git information
         run: |
@@ -35,8 +35,8 @@ jobs:
         run: echo cf_matrix=$(ci/discover_cfs.sh) >> $GITHUB_ENV
       - name: Filter container files with no changes
         if: >-
-            ${{ github.event != "workflow_dispatch" ||
-            (github.event == "workflow_dispatch" && !(toJSON(github.event.inputs.run_all))) }}
+            ${{ github.event != 'workflow_dispatch' ||
+            (github.event == 'workflow_dispatch' && !(toJSON(github.event.inputs.run_all))) }}
         run: |
             echo cf_matrix=`echo "$cf_matrix" | jq '.include[].changed=true'` >> $GITHUB_ENV
       - name: Set matrix to containerfiles that need to be tested

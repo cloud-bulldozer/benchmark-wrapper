@@ -32,14 +32,14 @@ jobs:
                 echo UPSTREAM_BRANCH=master >> $GITHUB_ENV
             fi
       - name: Fetch upstream branch
-        run: git fetch origin ${{ github.env.UPSTREAM_BRANCH }}
+        run: git fetch origin ${{ env.UPSTREAM_BRANCH }}
       - name: Echo git information
         run: |
             echo "Current branch: `git branch --show-current`"
             echo "Origin URL(s): `git remote get-url origin`"
             echo "Changes: `git diff origin/master --name-only`"
       - name: Discover Containerfiles
-        run: echo cf_matrix=$(ci/discover_cfs.sh ${{ github.env.UPSTREAM_BRANCH }}) >> $GITHUB_ENV
+        run: echo cf_matrix=$(ci/discover_cfs.sh ${{ env.UPSTREAM_BRANCH }}) >> $GITHUB_ENV
       - name: Filter container files with no changes
         if: >-
             github.event_name != 'workflow_dispatch' ||

@@ -34,7 +34,7 @@
 #
 set -e
 output="{\"include\": ["
-containerfile_list=(`find snafu/ -name Dockerfile* -o -name Containerfile`)
+containerfile_list=(`find snafu/ -name Dockerfile* -o -name Containerfile*`)
 diff_list=`git diff origin/${1:-master} --name-only`
 # last item is anything on TLD
 bones=(\

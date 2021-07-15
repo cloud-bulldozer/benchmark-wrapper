@@ -2,6 +2,19 @@
 # Discover all of the Containerfiles within the repository and create a JSON output
 # that can be used to configure a GitHub actions matrix for building each Containerfile
 #
+# Expects one optional input as the first positional argument. This is the upstream branch name, which
+# the current working tree will be compared against in order to understand if a benchmark should
+# be labeled as changed or not. If this input is not given, then "master" will be used.
+#
+# A benchmark will be labeled as changed if any of the following conditions are met:
+# * A core component of benchmark-wrapper has changed, known as a 'bone'. Please see $bones for a list of
+#   regex searches.
+# * Any of the files underneath the benchmark's module path
+#
+# Note that an exception has been built in for benchmarks that have containerfiles with multiple
+# architectures. For instance, if the ppc64le containerfile changes, then only the ppc64le containerfile
+# will be rebuilt.
+#
 # The JSON output looks like this:
 #
 # {
@@ -19,9 +32,10 @@
 #   ]
 # }
 #
+set -e
 output="{\"include\": ["
 containerfile_list=(`find snafu/ -name Dockerfile* -o -name Containerfile`)
-diff_list=`git diff origin/master --name-only`
+diff_list=`git diff origin/${1:-master} --name-only`
 # last item is anything on TLD
 bones=(\
     "ci/" \

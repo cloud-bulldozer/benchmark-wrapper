@@ -18,8 +18,11 @@ jobs:
             echo "Origin URL(s): `git remote get-url origin`"
             echo "Changes: `git diff origin/master --name-only`"
       - name: Discover Containerfiles
-        run: echo cf_matrix=$(ci/discover_cfs.sh) >> $GITHUB_ENV
-      - name: Set matrix to discovered Containerfiles
+        run: echo cf_matrix_all=$(ci/discover_cfs.sh) >> $GITHUB_ENV
+      - name: Filter container files with no changes
+        run: |
+            echo cf_matrix=`echo "$cf_matrix" | jq '.[] | .[] | .changed=true'` >> $GITHUB_ENV
+      - name: Set matrix to containerfiles that need to be tested
         id: set-matrix
         run: echo '::set-output name=matrix::${{ env.cf_matrix }}'
       - name: Echo matrix variable
@@ -36,7 +39,6 @@ jobs:
     name: ${{ matrix.benchmark }} (${{ matrix.arch }})
     steps:
       - uses: actions/checkout@v2
-        if: ${{ fromJSON(matrix.changed) }}
       - name: Echo Matrix Permutation
         run: |
             cat << EOF

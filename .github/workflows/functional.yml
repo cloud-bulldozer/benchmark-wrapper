@@ -12,6 +12,8 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v2
+      - name: Fetch master branch
+        run: git fetch origin master
       - name: Echo git information
         run: |
             echo "Current branch: `git branch --show-current`"

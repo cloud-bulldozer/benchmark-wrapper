@@ -12,6 +12,11 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v2
+      - name: Echo git information
+        run: |
+            echo "Current branch: `git branch --show-current`"
+            echo "Origin URL(s): `git remote get-url origin`"
+            echo "Changes: `git diff origin/master --name-only`"
       - name: Discover Containerfiles
         run: echo cf_matrix=$(ci/discover_cfs.sh) >> $GITHUB_ENV
       - name: Set matrix to discovered Containerfiles
@@ -32,10 +37,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         if: ${{ fromJSON(matrix.changed) }}
-      - name: Echo origin URL and current branch
-        run: |
-            echo "Current branch: `git branch --show-current`"
-            echo "Origin URL(s): `git remote get-url origin`"
       - name: Echo Matrix Permutation
         run: |
             cat << EOF

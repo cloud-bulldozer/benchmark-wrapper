@@ -29,9 +29,9 @@ jobs:
       matrix: ${{ fromJSON(needs.find-cfs.outputs.matrix) }}
       fail-fast: false
     name: ${{ matrix.benchmark }} (${{ matrix.arch }})
-    if: ${{ fromJSON(matrix.changed) }}
     steps:
       - uses: actions/checkout@v2
+        if: ${{ fromJSON(matrix.changed) }}
       - name: Echo origin URL and current branch
         run: |
             echo "Current branch: `git branch --show-current`"

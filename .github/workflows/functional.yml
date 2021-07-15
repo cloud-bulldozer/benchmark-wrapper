@@ -4,9 +4,6 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      target_branch:
-        description: 'Downstream branch to test'
-        required: true
       diff_branch:
         description: 'Upstream branch for determining changes'
         default: 'master'
@@ -25,11 +22,6 @@ jobs:
       - name: Echo manual trigger params
         if: github.event_name == 'workflow_dispatch'
         run: echo "${{ toJSON(github.event.inputs) }}"
-      - name: Fetch downstream branch
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.inputs.target_branch }}
       - name: Fetch upstream branch
         if: github.event_name == 'workflow_dispatch'
         run: git fetch origin ${{ github.event.inputs.diff_branch }}

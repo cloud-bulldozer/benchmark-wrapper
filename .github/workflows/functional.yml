@@ -89,6 +89,7 @@ jobs:
           image: ${{ matrix.image_name }}
           tags: ${{ matrix.tag_prefix }}${{ github.sha }}
           dockerfiles: ${{ matrix.containerfile }}
+          build-args: ARCH=${{ matrix.arch }}
       - name: Push to registry
         id: push-image
         uses: redhat-actions/push-to-registry@v2

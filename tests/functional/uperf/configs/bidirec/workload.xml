@@ -1,0 +1,23 @@
+<?xml version=1.0?>
+  <profile name="bidirec-tcp-1024-1024-2">
+    <group nthreads="2">
+      <transaction iterations="1">
+        <flowop type="connect" options="remotehost=$h protocol=tcp"/>
+      </transaction>
+      <transaction duration="2">
+        <flowop type=write options="count=16 size=1024"/>
+      <transaction iterations="1">
+        <flowop type=disconnect />
+      </transaction>
+     </group>
+     <group nthreads="2">
+       <transaction iterations="1">
+         <flowop type="connect" options="remotehost=$h protocol=tcp"/>
+       </transaction>
+       <transaction duration="2">
+         <flowop type=read options="count=16 size=1024"/>
+       <transaction iterations="1">
+         <flowop type=disconnect />
+       </transaction>
+      </group>
+  </profile>

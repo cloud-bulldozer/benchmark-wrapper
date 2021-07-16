@@ -1,0 +1,14 @@
+# Test options
+test-type: bidirec
+workload: /root/configs/bidirec/workload.xml
+sample: 2
+proto: tcp
+nthr: 2
+wsize: 1024
+rsize: 1024
+# Common options
+labels: test=snafu
+user: pytest
+uuid: 1234
+resourcetype: pod
+remoteip: localhost

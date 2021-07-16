@@ -1,0 +1,13 @@
+<?xml version=1.0?>
+  <profile name="stream-udp-1024-1024-2">
+    <group nthreads="2">
+      <transaction iterations="1">
+        <flowop type="connect" options="remotehost=$h protocol=udp"/>
+      </transaction>
+      <transaction duration="2">
+        <flowop type=write options="size=1024"/>
+      <transaction iterations="1">
+        <flowop type=disconnect />
+      </transaction>
+     </group>
+  </profile>

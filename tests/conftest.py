@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 """pytest conftest module for test configuration and fixtures."""
 import datetime
+import json
 import os
 import pathlib
+import shlex
 import subprocess
 import time
 from typing import List, Union
@@ -11,6 +13,17 @@ from typing import List, Union
 import pytest
 
 MANIFEST_FILENAME = "deploy.yaml"
+
+
+def pytest_addoption(parser):
+    """Add options to pytest to control the manifest fixture."""
+
+    parser.addoption(
+        "--keep-pods", action="store_true", help="Don't clean deployed manifests after tests complete",
+    )
+    parser.addoption(
+        "--use-existing-pods", action="store_true", help="Don't deploy manifests before tests start"
+    )
 
 
 def pytest_collection_modifyitems(config, items):
@@ -78,13 +91,21 @@ def get_manifest(request):
 
 
 @pytest.fixture(scope="package")
-def manifest(get_manifest):  # pylint: disable=W0621
+def manifest(request, get_manifest):  # pylint: disable=W0621
     """
     Start the manifest file found within test's package and cleanup after all tests in package finish.
 
     Expected format for the manifest file is a kubernetes definition that creates a pod or deployment.
     Will manage using ``podman play kube``. Expects pods created to be labeled with "test=snafu".
     If the label doesn't exist, then cleanup will not occur.
+
+    In order to pass config files from the host into containers, one option is to use a hostPath volume
+    mount. Note that this option requires the configuration files and/or directory to be labeled with the
+    type ``container_file_t`` or ``container_ro_file_t``, otherwise the container will not have permission
+    to use the mounted files. See https://www.mankier.com/8/container_selinux for more info.
+
+    Another method is to disable SELinux within the container which is mounting the config files. See
+    https://github.com/containers/podman/pull/5307#issuecomment-590830455 for more information.
 
     Raises
     ------
@@ -102,25 +123,31 @@ def manifest(get_manifest):  # pylint: disable=W0621
             f"Unable to find manifest file within directory the test was collected from: {project_dir}"
         )
 
-    start_cmd = f'echo "{manifest_content}" | podman play kube -'
+    exec_prefix = "podman exec {container}"
     try:
-        proc = subprocess.run(
-            start_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True, shell=True
-        )
-        print(proc.stdout)
-        yield "podman exec {container}"
+        if not request.config.getoption("--use-existing-pods"):
+            start_cmd = f'echo "{manifest_content}" | podman play kube -'
+            proc = subprocess.run(
+                start_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True, shell=True
+            )
+            print(proc.stdout)
+        yield exec_prefix
     except subprocess.CalledProcessError as proc_error:
         raise RuntimeError(
             f"Unable to create manifest file {manifest_file}: {proc_error} Output: {proc_error.stdout}"
         ) from proc_error
     finally:
-        end_cmd = 'podman pod ps --format "{{.ID}}" --filter label=test=snafu | xargs podman pod rm -f'
-        try:
-            subprocess.run(end_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True, shell=True)
-        except subprocess.CalledProcessError as proc_error:
-            raise RuntimeError(
-                f"Unable to cleanup manifest file {manifest_file}: {proc_error} Output: {proc_error.stdout}"
-            ) from proc_error
+        if not request.config.getoption("--keep-pods"):
+            end_cmd = 'podman pod ps --format "{{.ID}}" --filter label=test=snafu | xargs podman pod rm -f'
+            try:
+                subprocess.run(
+                    end_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True, shell=True
+                )
+            except subprocess.CalledProcessError as proc_error:
+                raise RuntimeError(
+                    f"Unable to cleanup manifest file {manifest_file}: {proc_error} Output: "
+                    f"{proc_error.stdout}"
+                ) from proc_error
 
 
 @pytest.fixture
@@ -170,3 +197,54 @@ def command_poll():
         return None
 
     return _command_poll
+
+
+@pytest.fixture
+def wait_for_es(command_poll):  # pylint: disable=W0621
+    """
+    Return function that waits for elasticsearch instance to be up and running within a container.
+
+    Assumes that the container has curl available. Will wait for cluster to be in the given status or any
+    status healthier than the given status.
+
+    Below is information for returned function:
+
+    Arguments
+    ---------
+    exec_prefix : str
+        Prefix that our health check command will be appendend to. Should be used in order to have
+        a container execute the health check. For instance: "podman exec benchmark-test-pod-client"
+    es_url : str
+        URL to ES endpoint
+    timeout : int
+        Timeout value to pass to the heath-check query (seconds)
+    wait : int
+        Time inbetween queries to health check (seconds)
+    status : str
+        Status to wait for ES to be in. Must be one of "green", "yellow", "red".
+
+    Returns
+    -------
+    bool
+        True if ES is available within given timeout, otherwise False
+    """
+
+    def _wait_for_es(exec_prefix: str, es_url: str, timeout: int, wait: int, status: str) -> bool:
+        status_values = ("red", "yellow", "green")
+        if status not in status_values:
+            raise ValueError(f"Expected green, yellow or red for status, got: {status}")
+        status_index = status_values.index(status)
+        accepted_status_values = status_values[status_index:]
+
+        if not es_url.endswith("/"):
+            es_url += "/"
+        api_url = f"{es_url}_cluster/health?wait_for_status={status}&timeout={timeout}s"
+        command = shlex.split(f"{exec_prefix} curl -s {api_url}")
+        result_stdout = command_poll(command, timeout, wait)
+
+        if result_stdout is not None:
+            result_json = json.loads(result_stdout)
+            return result_json["status"] in accepted_status_values
+        return False
+
+    return _wait_for_es

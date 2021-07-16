@@ -13,6 +13,7 @@ spec:
     env:
     - name: discovery.type
       value: single-node
+    - name:
   - name: uperf_server
     image: "${UPERF_AMD64_IMAGE}"
     container_name: uperfserver
@@ -21,3 +22,20 @@ spec:
     image: ${UPERF_AMD64_IMAGE}
     container_name: uperf
     command: ["tail", "-f", "/dev/null"]
+    env:
+      - name: es
+        value: http://localhost:9200
+      - name: es_verify_cert
+        value: false
+    volumeMounts:
+    - mountPath: /root/configs
+      name: config-mount
+      readOnly: true
+    securityContext:
+      seLinuxOptions:
+        type: spc_t
+  volumes:
+  - name: config-mount
+    hostPath:
+      path: tests/functional/uperf/configs
+      type: Directory

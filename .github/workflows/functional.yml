@@ -69,6 +69,8 @@ jobs:
             cat << EOF
             ${{ toJSON(matrix) }}
             EOF
+      - name: Update apt cache
+        run: sudo apt update
       - name: Install podman and qemu-user-static
         run: sudo apt install -y podman qemu-user-static
       - name: Setup Python 3.8

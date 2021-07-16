@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """pytest conftest module for test configuration and fixtures."""
+import datetime
 import os
 import pathlib
 import subprocess
+import time
+from typing import List, Union
 
 import pytest
 
@@ -118,3 +121,52 @@ def manifest(get_manifest):  # pylint: disable=W0621
             raise RuntimeError(
                 f"Unable to cleanup manifest file {manifest_file}: {proc_error} Output: {proc_error.stdout}"
             ) from proc_error
+
+
+@pytest.fixture
+def command_poll():
+    """
+    Return function which polls the given command until success.
+
+    Below is information for the returned function:
+
+    Arguments
+    ---------
+    command : str or list of str
+        Command to execute and wait for success on
+    timeout : int
+        Number of total seconds to wait before giving up
+    wait : int
+        Number of seconds to wait inbetween attempts
+    shell : bool, optional
+        If True, will run command inside shell (i.e. set the shell option to true in subprocess.run).
+        Defaults to False
+
+    Returns
+    -------
+    str or None
+        stdout and stderr of successful command, otherwise None
+    """
+
+    def _command_poll(
+        command: Union[str, List[str]], timeout: int, wait: int, shell: bool = False
+    ) -> Union[str, None]:
+        """Execute given command until success or timeout is hit."""
+
+        start = datetime.datetime.now()
+        success = False
+        while (datetime.datetime.now() - start).total_seconds() < timeout:
+            try:
+                proc = subprocess.run(
+                    command, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True
+                )
+                success = True
+                break
+            except subprocess.CalledProcessError:
+                time.sleep(wait)
+
+        if success:
+            return proc.stdout.decode("utf-8")
+        return None
+
+    return _command_poll

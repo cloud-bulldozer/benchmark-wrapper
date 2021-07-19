@@ -102,7 +102,7 @@ jobs:
       - name: Save Image as Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.image_name }}:${{ env.IMAGE_TAG }}
+          name: ${{ matrix.image_name }}.${{ env.IMAGE_TAG }}
           path: ${{ matrix.image_name }}.${{ env.IMAGE_TAG }}.tar
           retention-days: 10
       - name: Set benchmark image environment variable

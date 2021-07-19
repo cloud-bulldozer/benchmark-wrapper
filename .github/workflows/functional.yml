@@ -10,9 +10,6 @@ on:
       run_all:
         description: 'Run all tests regardless of changes?'
         default: 'false'
-env:
-  IMAGE_REGISTRY: quay.io
-  IMAGE_USER: ${{ secrets.REGISTRY_USER }}
 jobs:
   find-cfs:
     if: >-

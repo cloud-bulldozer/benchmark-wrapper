@@ -12,7 +12,7 @@ on:
         default: 'false'
 env:
   IMAGE_REGISTRY: quay.io
-  IMAGE_USER: cloud-bulldozer
+  IMAGE_USER: ${{ secrets.REGISTRY_USER }}
 jobs:
   find-cfs:
     if: >-
@@ -102,7 +102,7 @@ jobs:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
           registry: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_USER }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
+          username: ${{ secrets.REGISTRY_AUTH_USER }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
       - name: Print image URL
         run: echo "Image pushed to ${{ steps.push-image.outputs.registry-paths }}"

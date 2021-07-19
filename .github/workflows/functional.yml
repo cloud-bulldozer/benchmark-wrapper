@@ -103,7 +103,7 @@ jobs:
             podman save --outout ${{ matrix.image_name }}.${{ matrix.arch }}.tar
             ${{ steps.build-image.outputs.image }}:${{ env.IMAGE_TAG }}
       - name: Save Image as Artifact
-      - uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v2
         with:
           name: image-builds
           path: ${{ matrix.image_name }}.${{ matrix.arch }}.${{ env.IMAGE_TAG }}.tar

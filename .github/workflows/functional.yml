@@ -107,6 +107,7 @@ jobs:
         with:
           name: ${{ matrix.image_name }}:${{ env.IMAGE_TAG }}
           path: ${{ matrix.image_name }}.${{ env.IMAGE_TAG }}.tar
+          retention-days: 10
       - name: Set benchmark image environment variable
         run: echo ${{ matrix.env_var }}=${{ steps.build-image.outputs.image }}:${{ env.IMAGE_TAG }} >> $GITHUB_ENV
       - name: Run functional tests

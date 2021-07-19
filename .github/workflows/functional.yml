@@ -1,6 +1,8 @@
 name: Build Images
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
   pull_request:
   workflow_dispatch:
     inputs:

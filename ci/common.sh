@@ -2,7 +2,7 @@
 
 es_server=${ES_SERVER:-http://foo.esserver.com:9200}
 
-default_operator_image="quay.io/benchmark-operator/benchmark-operator:master"
+default_operator_image="quay.io/cloud-bulldozer/benchmark-operator:master"
 
 default_ripsaw_image_prefix="quay.io/cloud-bulldozer"
 image_location=${RIPSAW_CI_IMAGE_LOCATION:-quay.io}

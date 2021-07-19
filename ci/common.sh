@@ -48,7 +48,7 @@ function update_operator_image() {
 }
 
 function wait_clean {
-  kubectl delete namespace benchmark-operator --wait=true --ignore-not-found
+  echo "skip"
 }
 
 # Takes 2 argumentes. $1 is the Dockerfile path and $2 is the image name

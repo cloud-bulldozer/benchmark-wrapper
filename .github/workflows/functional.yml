@@ -12,7 +12,7 @@ on:
         default: 'false'
 env:
   IMAGE_REGISTRY: quay.io
-  IMAGE_USER: rydrew
+  IMAGE_USER: cloud-bulldozer
 jobs:
   find-cfs:
     if: >-

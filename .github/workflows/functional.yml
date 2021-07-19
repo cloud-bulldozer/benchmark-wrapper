@@ -58,7 +58,7 @@ jobs:
       - name: Parse matrix using fromJSON
         run: echo ${{ fromJSON(steps.set-matrix.outputs.matrix) }}
 
-  build-push-test:
+  build-save-test:
     needs: find-cfs
     runs-on: ubuntu-20.04
     strategy:
@@ -86,27 +86,28 @@ jobs:
         run: pip install .
       - name: Install test dependencies
         run: pip install snafu[testsci]
+      - name: Set image tag
+        run: |
+            echo IMAGE_TAG=${{ matrix.tag_prefix }}${{ github.sha }} >> $GITHUB_ENV
       - name: Build ${{ matrix.containerfile }}
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
           arch: ${{ matrix.arch }}
           image: ${{ matrix.image_name }}
-          tags: ${{ matrix.tag_prefix }}${{ github.sha }}
+          tags: ${{ env.IMAGE_TAG }}
           dockerfiles: ${{ matrix.containerfile }}
           build-args: ARCH=${{ matrix.arch }}
-      - name: Push to registry
-        id: push-image
-        uses: redhat-actions/push-to-registry@v2
+      - name: Export image to archive
+        run: >-
+            podman save --outout ${{ matrix.image_name }}.${{ matrix.arch }}.tar
+            ${{ steps.build-image.outputs.image }}:${{ env.IMAGE_TAG }}
+      - name: Save Image as Artifact
+      - uses: actions/upload-artifact@v2
         with:
-          image: ${{ steps.build-image.outputs.image }}
-          tags: ${{ steps.build-image.outputs.tags }}
-          registry: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_USER }}
-          username: ${{ secrets.REGISTRY_AUTH_USER }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-      - name: Print image URL
-        run: echo "Image pushed to ${{ steps.push-image.outputs.registry-paths }}"
+          name: image-builds
+          path: ${{ matrix.image_name }}.${{ matrix.arch }}.${{ env.IMAGE_TAG }}.tar
       - name: Set benchmark image environment variable
-        run: echo ${{ matrix.env_var }}=${{ fromJSON(steps.push-image.outputs.registry-paths)[0] }} >> $GITHUB_ENV
+        run: echo ${{ matrix.env_var }}=${{ steps.build-image.outputs.image }}:${{ env.IMAGE_TAG }} >> $GITHUB_ENV
       - name: Run functional tests
         run: tox -e functional -- -m ${{ matrix.benchmark }}

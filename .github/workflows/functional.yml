@@ -16,7 +16,9 @@ env:
   IMAGE_USER: rydrew
 jobs:
   find-cfs:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: >-
+        github.event_name != 'workflow_run' ||
+        github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}

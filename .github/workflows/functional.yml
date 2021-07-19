@@ -100,7 +100,7 @@ jobs:
           build-args: ARCH=${{ matrix.arch }}
       - name: Export image to archive
         run: >-
-            podman save --outout ${{ matrix.image_name }}.${{ matrix.arch }}.tar
+            podman save --output ${{ matrix.image_name }}.${{ matrix.arch }}.${{ env.IMAGE_TAG }}.tar
             ${{ steps.build-image.outputs.image }}:${{ env.IMAGE_TAG }}
       - name: Save Image as Artifact
         uses: actions/upload-artifact@v2

@@ -1,9 +1,8 @@
 name: Build Images
 on:
-  push:
-    paths-ignore:
-      - 'docs/**'
-  pull_request:
+  workflow_run:
+    workflow: ["Unit Tests"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       diff_branch:
@@ -17,6 +16,7 @@ env:
   IMAGE_USER: rydrew
 jobs:
   find-cfs:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}

@@ -1,8 +1,10 @@
 name: Unit Tests
 on:
-  - push
-  - pull_request
-  - workflow_dispatch
+  push:
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+  workflow_dispatch:
 
 jobs:
 

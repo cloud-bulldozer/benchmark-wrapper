@@ -12,14 +12,9 @@ import math
 from random import SystemRandom
 from collections import Counter, deque
 
-try:
-    from elasticsearch1 import VERSION as es_VERSION, helpers, exceptions as es_excs
+from elasticsearch import VERSION as es_VERSION, helpers, exceptions as es_excs
 
-    _es_logger = "elasticsearch1"
-except ImportError:
-    from elasticsearch import VERSION as es_VERSION, helpers, exceptions as es_excs
-
-    _es_logger = "elasticsearch"
+_es_logger = "elasticsearch"
 
 logger = logging.getLogger("snafu")
 logger.debug("elasticsearch module version: %d.%d.%d" % es_VERSION)

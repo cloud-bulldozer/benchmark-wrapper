@@ -1,0 +1,30 @@
+name: Push Test Images
+on:
+  workflow_run:
+    workflows: ["Build Images"]
+    types: [completed]
+jobs:
+  push-cfs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install podman
+        run: apt update && apt install -y podman
+      - name: Download all built images
+        id: download
+        uses: actions/download-artifact@v2
+      - name: Display directory structure
+        run: echo ${{ steps.download.outputs.download-path }}
+      - name: Login to quay.io
+        run: >-
+            podman login --password ${{ secrets.REGISTRY_PASSWORD }}
+            --username ${{ secrets.REGISTRY_AUTH_USER }} quay.io
+      - name: Load and push images
+        run: |
+            image_archives=(`find ${{ steps.download.outputs.download-path }} -name '*.tar'`)
+
+            for image in ${image_archives[*]}
+            do
+                image_name=`echo $image | awk -F "/" '{print $(NF-1)}'`
+                podman load -i $image
+                podman image push quay.io/${{ secrets.REGISTRY_USER }}/$image_name
+            done

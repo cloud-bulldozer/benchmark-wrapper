@@ -16,7 +16,6 @@ jobs:
         uses: actions/github-script@v4.0.2
         with:
             script: |
-                var filesize = require('filesize');
                 var fs = require('fs');
                 var artifacts = github.actions.listWorkflowRunArtifacts({
                     owner: context.repo.owner,
@@ -25,8 +24,9 @@ jobs:
                 });
                 const num_artifacts = artifacts.data.artifacts.length;
                 artifacts.data.artifacts.forEach((artifact) => {
-                    const size = filesize(artifact.size_in_bytes, { base: 10 })
-                    console.log(`===> Downloading: ${artifact.name}.zip (${size})`)
+                    console.log(
+                        `===> Downloading: ${artifact.name}.zip (${artifact.size_in_bytes} bytes)`
+                    )
 
                     var download = github.actions.downlodArtifact({
                         owner: context.repo.owner,

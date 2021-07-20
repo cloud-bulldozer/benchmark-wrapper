@@ -5,6 +5,7 @@ on:
     types: [completed]
 jobs:
   push-cfs:
+    if: github.event.workflow_run.conclusion != 'cancelled'
     runs-on: ubuntu-latest
     steps:
       - name: Install podman

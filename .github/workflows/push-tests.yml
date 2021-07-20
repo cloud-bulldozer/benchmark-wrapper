@@ -22,10 +22,9 @@ jobs:
                     repo: context.repo.repo,
                     run_id: ${{ github.event.workflow_run.id }},
                 });
-                const num_artifacts = artifacts.length;
-                artifacts.forEach((artifact) => {
+                for (const artifact of artifacts) {
                     console.log(
-                        `===> Downloading: ${artifact.name}.zip (${artifact.size_in_bytes} bytes)`
+                        `==> Downloading: ${artifact.name}.zip (${artifact.size_in_bytes} bytes)`
                     )
 
                     var download = github.actions.downlodArtifact({
@@ -35,11 +34,11 @@ jobs:
                         archive_format: 'zip',
                     });
                     const path = `${{ env.DOWNLOAD_PATH }}/${artifact.name}.zip`
-                    console.log(`    Saving to ${path}.`)
+                    console.log(`   Saving to ${path}.`)
                     fs.writeFileSync(path, Buffer.from(download.data));
-                    console.log(`    Done.`)
-                })
-                console.log(`Successfully downloaded ${num_artifacts}! 😅`)
+                    console.log(`   Done.`)
+                }
+                console.log(`Successfully downloaded ${artifacts.length}! 😅`)
       - name: Display directory structure
         run: |
             ls -R ${{ env.DOWNLOAD_PATH }}

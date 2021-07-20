@@ -18,7 +18,7 @@ spec:
     image: ${UPERF_IMAGE}
     container_name: uperfserver
     command: ["uperf", "-s"]
-  - name: uperf`
+  - name: uperf
     image: ${UPERF_IMAGE}
     container_name: uperf
     command: ["tail", "-f", "/dev/null"]

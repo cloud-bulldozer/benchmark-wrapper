@@ -8,12 +8,38 @@ jobs:
     if: github.event.workflow_run.conclusion != 'cancelled'
     runs-on: ubuntu-latest
     env:
-        DOWNLOAD_PATH: artifacts
+        DOWNLOAD_PATH: ${{ github.workspace }}/artifacts
     steps:
       - name: Install podman
         run: sudo apt update && sudo apt install -y podman
       - name: Download all built images
-        uses: dawidd6/action-download-artifact@v2
+        uses: actions/github-script@v4.0.2
+        with:
+            script: |
+                var filesize = require('filesize');
+                var fs = require('fs');
+                var artifacts = await github.actions.listWorkflowRunArtifacts({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    run_id: ${{ github.event.workflow_run.id }},
+                });
+                const num_artifacts = artifacts.data.artifacts.length;
+                artifacts.data.artifacts.forEach((artifact) => {
+                    const size = filesize(artifact.size_in_bytes, { base: 10 })
+                    console.log(`===> Downloading: ${artifact.name}.zip (${size})`)
+
+                    var download = await github.actions.downlodArtifact({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        artifact_id: artifact.id,
+                        archive_format: 'zip',
+                    });
+                    const path = `${{ env.DOWNLOAD_PATH }}/${artifact.name}.zip`
+                    console.log(`    Saving to ${path}.`)
+                    fs.writeFileSync(path, Buffer.from(download.data));
+                    console.log(`    Done.`)
+                })
+                console.log(`Successfully downloaded ${num_artifacts}! 😅`)
         with:
           workflow: functional.yml
           workflow_conclusion: neutral
@@ -28,14 +54,16 @@ jobs:
             --username ${{ secrets.REGISTRY_AUTH_USER }} quay.io
       - name: Load and push images
         run: |
-            image_archives=(`find ${{ env.DOWNLOAD_PATH }} -name '*.tar'`)
+            image_zips=(`find ${{ env.DOWNLOAD_PATH }} -name '*.zip'`)
 
-            for image in ${image_archives[*]}
+            for image_zip_path in ${image_zips[*]}
             do
-                image_archive_name=`echo $image | awk -F "/" '{print $(NF-1)}'`
+                unzip $image_zip_path -q ${{ env.DOWNLOAD_PATH }}
+                image_tar_path="${image_zip_path%%zip}tar"
                 image_name=`echo $image_archive_name | cut -d'.' -f1`
                 image_tag=`echo $image_archive_name | cut -d'.' -f2`
-                podman load -i $image
+
+                podman load -i $image_tar_path
                 podman image push quay.io/${{ secrets.REGISTRY_USER }}/$image_name:$image_tag
                 echo "Pushed ${image_name}:${image_tag}!"
             done

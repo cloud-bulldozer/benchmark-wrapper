@@ -30,4 +30,5 @@ jobs:
                 image_tag=`echo $image_archive_name | cut -d'.' -f2`
                 podman load -i $image
                 podman image push quay.io/${{ secrets.REGISTRY_USER }}/$image_name:$image_tag
+                echo "Pushed ${image_name}:${image_tag}!"
             done

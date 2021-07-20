@@ -40,11 +40,6 @@ jobs:
                     console.log(`    Done.`)
                 })
                 console.log(`Successfully downloaded ${num_artifacts}! 😅`)
-        with:
-          workflow: functional.yml
-          workflow_conclusion: neutral
-          run_id: ${{ github.event.workflow_run.id }}
-          path: ${{ env.DOWNLOAD_PATH }}
       - name: Display directory structure
         run: |
             ls -R ${{ env.DOWNLOAD_PATH }}

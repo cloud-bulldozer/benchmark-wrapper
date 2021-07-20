@@ -18,7 +18,7 @@ jobs:
             script: |
                 var filesize = require('filesize');
                 var fs = require('fs');
-                var artifacts = await github.actions.listWorkflowRunArtifacts({
+                var artifacts = github.actions.listWorkflowRunArtifacts({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     run_id: ${{ github.event.workflow_run.id }},
@@ -28,7 +28,7 @@ jobs:
                     const size = filesize(artifact.size_in_bytes, { base: 10 })
                     console.log(`===> Downloading: ${artifact.name}.zip (${size})`)
 
-                    var download = await github.actions.downlodArtifact({
+                    var download = github.actions.downlodArtifact({
                         owner: context.repo.owner,
                         repo: context.repo.repo,
                         artifact_id: artifact.id,

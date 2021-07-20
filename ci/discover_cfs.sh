@@ -23,19 +23,21 @@
 #       "containerfile": path to containerfile relative to repo root,
 #       "image_name": name of the image (i.e. name of directory containing the CF)
 #       "benchmark": name of the benchmark (i.e. name of directory containing the CF)
-#       "env_var": environment variable where image URL will be stored (i.e. <BENCHMARK>_<ARCH>_IMAGE)
+#       "env_var": environment variable where image URL will be stored (i.e. <BENCHMARK>_IMAGE)
 #       "tag_prefix": prefix of the image tag that should be used (i.e. arch of the CF with a dash)
 #       "arch": architecture that the CF should be built on (i.e. extension of the CF, default to amd64)
 #       "changed": whether or not changes have been made which require the benchmark to be tested
+#       "ignore": whether or not to skip building the CF
 #     },
 #     ...
 #   ]
 # }
 #
-output="{\"include\": ["
+NO_MULTI_ARCH=true
+
 containerfile_list=(`find snafu/ -name Dockerfile* -o -name Containerfile*`)
 diff_list=`git diff origin/${1:-master} --name-only`
-# last item is anything on TLD
+
 bones=(\
     "ci/" \
     ".github/workflows" \
@@ -56,19 +58,28 @@ do
     fi
 done
 
+output="{\"include\": ["
+
 for cf_index in "${!containerfile_list[@]}"
 do
     cf_path="${containerfile_list[$cf_index]}"
     benchmark_dir_name=`echo $cf_path | awk -F "/" '{print $(NF-1)}'`
     benchmark_name=${benchmark_dir_name%_wrapper}
     containerfile_name=`echo $cf_path | awk -F "/" '{print $NF}'`
-    arch="amd64"
+
+    arch="amd64"  # assume that no extension means x86_64
+    ignore="false"
     if [[ $containerfile_name = *.* ]]
     then
         arch=`echo $cf_path | awk -F "." '{print $NF}'`
+        if $NO_MULTI_ARCH
+        then
+            ignore="true"
+        fi
     fi
+
     tag_prefix=$arch-
-    env_var=${benchmark_name^^}_${arch^^}_IMAGE
+    env_var=${benchmark_name^^}_IMAGE
 
     if $bones_changed
     then
@@ -95,6 +106,7 @@ do
         arch \
         env_var \
         changed \
+        ignore \
     )
     values=(\
         "${benchmark_name}" \
@@ -104,6 +116,7 @@ do
         "${arch}" \
         "${env_var}" \
         "${changed}" \
+        "${ignore}" \
     )
 
     for pair_index in "${!keys[@]}"

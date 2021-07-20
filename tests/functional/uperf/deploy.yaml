@@ -15,11 +15,11 @@ spec:
       value: single-node
     - name:
   - name: uperf_server
-    image: "${UPERF_AMD64_IMAGE}"
+    image: ${UPERF_IMAGE}
     container_name: uperfserver
     command: ["uperf", "-s"]
-  - name: uperf
-    image: ${UPERF_AMD64_IMAGE}
+  - name: uperf`
+    image: ${UPERF_IMAGE}
     container_name: uperf
     command: ["tail", "-f", "/dev/null"]
     env:

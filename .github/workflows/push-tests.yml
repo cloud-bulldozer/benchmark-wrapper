@@ -22,8 +22,8 @@ jobs:
                     repo: context.repo.repo,
                     run_id: ${{ github.event.workflow_run.id }},
                 });
-                const num_artifacts = artifacts.data.artifacts.length;
-                artifacts.data.artifacts.forEach((artifact) => {
+                const num_artifacts = artifacts.length;
+                artifacts.forEach((artifact) => {
                     console.log(
                         `===> Downloading: ${artifact.name}.zip (${artifact.size_in_bytes} bytes)`
                     )

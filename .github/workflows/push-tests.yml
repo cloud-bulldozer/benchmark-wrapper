@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install podman
-        run: apt update && apt install -y podman
+        run: sudo apt update && sudo apt install -y podman
       - name: Download all built images
         id: download
         uses: actions/download-artifact@v2

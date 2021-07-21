@@ -67,6 +67,7 @@ class get_prometheus_data:
                 filename = tool_include_file
             else:
                 filename = os.path.join(include_file_dir, "included_labels.json")
+            logger.info("using prometheus metric include file %s" % filename)
 
             # open tools include file and loop through all
             with open(filename, "r") as f:
@@ -84,6 +85,8 @@ class get_prometheus_data:
                     response = self.pc.custom_query_range(query, self.start, self.end, step, None)
 
                 except Exception as e:
+                    # response undefined at this point, we want to skip next for loop
+                    response = []
                     logger.info(query)
                     logger.warn("failure to get metric results %s" % e)
 

@@ -85,6 +85,8 @@ class get_prometheus_data:
                     response = self.pc.custom_query_range(query, self.start, self.end, step, None)
 
                 except Exception as e:
+                    # response undefined at this point, we want to skip next for loop
+                    response = []
                     logger.info(query)
                     logger.warn("failure to get metric results %s" % e)
 

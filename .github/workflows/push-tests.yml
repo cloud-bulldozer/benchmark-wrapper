@@ -8,37 +8,39 @@ jobs:
     if: github.event.workflow_run.conclusion != 'cancelled'
     runs-on: ubuntu-latest
     env:
-        DOWNLOAD_PATH: ${{ github.workspace }}/artifacts
+      DOWNLOAD_PATH: ${{ github.workspace }}/artifacts
     steps:
       - name: Install podman
         run: sudo apt update && sudo apt install -y podman
       - name: Download all built images
         uses: actions/github-script@v4.0.2
         with:
-            script: |
-                var fs = require('fs');
-                var artifacts = github.actions.listWorkflowRunArtifacts({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    run_id: ${{ github.event.workflow_run.id }},
-                });
-                for (const artifact of artifacts) {
-                    console.log(
-                        `==> Downloading: ${artifact.name}.zip (${artifact.size_in_bytes} bytes)`
-                    )
+          script: |
+              var fs = require('fs');
+              github.paginate(github.actions.listWorkflowRunArtifacts, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  run_id: ${{ github.event.workflow_run.id }}
+              })
+              .then((artifacts) => {
+                  for (const artifact of artifacts) {
+                      console.log(
+                          `==> Downloading: ${artifact.name}.zip (${artifact.size_in_bytes} bytes)`
+                      )
 
-                    var download = github.actions.downlodArtifact({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        artifact_id: artifact.id,
-                        archive_format: 'zip',
-                    });
-                    const path = `${{ env.DOWNLOAD_PATH }}/${artifact.name}.zip`
-                    console.log(`   Saving to ${path}.`)
-                    fs.writeFileSync(path, Buffer.from(download.data));
-                    console.log(`   Done.`)
-                }
-                console.log(`Successfully downloaded ${artifacts.length}! 😅`)
+                      var download = github.actions.downlodArtifact({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          artifact_id: artifact.id,
+                          archive_format: 'zip',
+                      });
+                      const path = `${{ env.DOWNLOAD_PATH }}/${artifact.name}.zip`
+                      console.log(`   Saving to ${path}.`)
+                      fs.writeFileSync(path, Buffer.from(download.data));
+                      console.log(`   Done.`)
+                  }
+                  console.log(`Successfully downloaded ${artifacts.length}! 😅`)
+              });
       - name: Display directory structure
         run: |
             ls -R ${{ env.DOWNLOAD_PATH }}

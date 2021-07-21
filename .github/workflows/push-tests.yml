@@ -7,8 +7,6 @@ jobs:
   push-cfs:
     if: github.event.workflow_run.conclusion != 'cancelled'
     runs-on: ubuntu-latest
-    env:
-      DOWNLOAD_PATH: ${{ github.workspace }}/artifacts
     steps:
       - name: Install podman
         run: sudo apt update && sudo apt install -y podman
@@ -17,28 +15,38 @@ jobs:
         with:
           script: |
               var fs = require('fs');
-              github.paginate(github.actions.listWorkflowRunArtifacts, {
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  run_id: ${{ github.event.workflow_run.id }}
-              })
+              var https = require('https');
+              github.paginate(
+                  github.actions.listWorkflowRunArtifacts,
+                  {
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      run_id: ${{ github.event.workflow_run.id }}
+                  }
+              )
               .then((artifacts) => {
                   for (const artifact of artifacts) {
+                      const path = `${{ github.workspace }}/${artifact.name}.zip`;
+
                       console.log(
                           `==> Downloading: ${artifact.name}.zip (${artifact.size_in_bytes} bytes)`
-                      )
+                      );
+                      console.log(
+                          `    Using URL: ${artifact.archive_download_url}`
+                      );
+                      console.log(`    Saving to ${path}.`);
 
-                      var download = github.actions.downloadArtifact({
-                          owner: context.repo.owner,
-                          repo: context.repo.repo,
-                          artifact_id: artifact.id,
-                          archive_format: 'zip',
+                      https.get(artifact.archive_download_url, (res) => {
+                          const stream = fs.createWriteStream(path);
+                          res.pipe(stream);
+                          stream.on('finish', () => {
+                              stream.close();
+                              console.log(`    Done.`);
+                          });
                       });
-                      const path = `${{ env.DOWNLOAD_PATH }}/${artifact.name}.zip`
-                      console.log(`   Saving to ${path}.`)
-                      fs.writeFileSync(path, Buffer.from(download.data));
-                      console.log(`   Done.`)
+
                   }
+
                   console.log(`Successfully downloaded ${artifacts.length}! 😅`)
               });
       - name: Display directory structure

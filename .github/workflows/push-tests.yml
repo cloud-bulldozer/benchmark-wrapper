@@ -11,44 +11,36 @@ jobs:
       - name: Install podman
         run: sudo apt update && sudo apt install -y podman
       - name: Download all built images
-        uses: actions/github-script@v4.0.2
-        with:
-          script: |
-              var fs = require('fs');
-              var https = require('https');
-              github.paginate(
-                  github.actions.listWorkflowRunArtifacts,
-                  {
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      run_id: ${{ github.event.workflow_run.id }}
-                  }
-              )
-              .then((artifacts) => {
-                  for (const artifact of artifacts) {
-                      const path = `${{ github.workspace }}/${artifact.name}.zip`;
+        run: |
+            base_url="https://api.github.com/repos"
+            token_header="authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"
+            repo="${{ github.repository_owner }}/${{ github.repository }}"
+            run_id="${{ github.event.workflow_run.id }}"
+            list_artifact_url="${base_url}/${repo}/actions/runs/${run_id}/artifacts"
 
-                      console.log(
-                          `==> Downloading: ${artifact.name}.zip (${artifact.size_in_bytes} bytes)`
-                      );
-                      console.log(
-                          `    Using URL: ${artifact.archive_download_url}`
-                      );
-                      console.log(`    Saving to ${path}.`);
+            echo "Downloading artifacts for run with ID: ${run_id}"
 
-                      https.get(artifact.archive_download_url, (res) => {
-                          const stream = fs.createWriteStream(path);
-                          res.pipe(stream);
-                          stream.on('finish', () => {
-                              stream.close();
-                              console.log(`    Done.`);
-                          });
-                      });
+            # List artifacts from the run
+            artifacts=`curl -q -H "${token_header}" "${list_artifact_url}" \
+                       | jq -c '.artifacts[] | [.id,.name]'`
 
-                  }
+            for artifact in ${artifacts[@]}
+            do
+                id=`echo ${artifact} | jq -rc '.[0]'`
+                name=`echo ${artifact} | jq -rc '.[1]'`
+                echo "Downloading ${name} (ID: ${id})"
 
-                  console.log(`Successfully downloaded ${artifacts.length}! 😅`)
-              });
+                # Get download_url, which is in the location header
+                download_url=`curl -s -I -X GET -H "${token_header}" \
+                              "${base_url}/${repo}/actions/artifacts/${id}/zip" \
+                              | grep "location: " | sed 's/location: //'`
+                # Remove carriage returns
+                download_url="${download_url%$'\r'}"
+
+                echo "Downloading from '${download_url}'"
+                curl --output "${{ github.workspace }}/${name}.zip" "$download_url"
+            done
+            echo "Finished"
       - name: Display directory structure
         run: |
             ls -R ${{ env.DOWNLOAD_PATH }}

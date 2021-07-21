@@ -28,7 +28,7 @@ jobs:
                           `==> Downloading: ${artifact.name}.zip (${artifact.size_in_bytes} bytes)`
                       )
 
-                      var download = github.actions.downlodArtifact({
+                      var download = github.actions.downloadArtifact({
                           owner: context.repo.owner,
                           repo: context.repo.repo,
                           artifact_id: artifact.id,

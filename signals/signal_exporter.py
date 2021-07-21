@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict
+import redis
 import random
 import platform
-
 
 @dataclass
 class Signal:
@@ -30,21 +30,20 @@ class Signal:
             print(f"Event {self.event} not one of legal events: {legal_events}")
             exit(1)
 
-    def to_jsonable(self) -> Dict[str, Any]:
+    def to_json_str(self) -> Dict[str, Any]:
         result: Dict[str, Any] = {
             k: v
             for k, v in self.__dict__.items()
             if not (k.startswith("__") and k.endswith("__"))
         }
-        return result
+        return str(result)
 
 class SignalExporter:
-    def __init__(self, benchmark_name) -> None:
+    def __init__(self, benchmark_name, redis_host="localhost", redis_port=6379) -> None:
         self.subs = []
         self.bench_name = benchmark_name
         self.bench_id = benchmark_name + datetime.now().strftime(f'%m%d%Y%H%M%Sr{random.randint(1000,9999)}')
-        #CONNECT TO REDIS
-        #CREATE OR BECOME PUBLISHER FOR REDIS CHANNEL
+        self.redis = redis.Redis(host=redis_host, port=redis_port, db=0)
 
     def _fetch_responders(self):
         #Check for responses to initialization
@@ -81,6 +80,7 @@ class SignalExporter:
         sig.sample_no = sample if sample >= 0 else sig.sample_no
 
         # publish
+        self.redis.publish(channel="benchmark-signal-pubsub", message=sig.to_json_str())
 
         if event == "initialization":
             subscribers = self._fetch_responders()

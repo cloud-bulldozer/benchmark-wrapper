@@ -117,6 +117,6 @@ jobs:
         run: echo "Image pushed to ${{ steps.push-image.outputs.registry-paths }}"
       - name: Set benchmark image environment variable
         run: |
-            echo ${{ matrix.env_var }}=${{ fromJSON(steps.push-image.outputs.registry-paths[0] }} >> $GITHUB_ENV
+            echo ${{ matrix.env_var }}=${{ fromJSON(steps.push-image.outputs.registry-paths[0]) }} >> $GITHUB_ENV
       - name: Run functional tests
         run: tox -e functional -- -m ${{ matrix.benchmark }}

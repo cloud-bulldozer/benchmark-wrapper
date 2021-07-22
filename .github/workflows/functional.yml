@@ -62,7 +62,10 @@ jobs:
         id: set-matrix
         run: echo '::set-output name=matrix::${{ env.cf_matrix }}'
       - name: Echo matrix variable
-        run: echo '${{ steps.set-matrix.outputs.matrix }}'
+        run: |
+            cat << EOF
+            ${{ steps.set-matrix.outputs.matrix }}
+            EOF
       - name: Parse matrix using fromJSON
         run: echo ${{ fromJSON(steps.set-matrix.outputs.matrix) }}
 

@@ -99,6 +99,7 @@ jobs:
             echo IMAGE_TAG=${{ matrix.tag_prefix }}${{ github.sha }} >> $GITHUB_ENV
       - name: Build ${{ matrix.containerfile }}
         id: build-image
+        uses: redhat-actions/buildah-build@v2
         with:
           arch: ${{ matrix.arch }}
           image: ${{ matrix.image }}

@@ -7,6 +7,8 @@ jobs:
   push-cfs:
     if: github.event.workflow_run.conclusion != 'cancelled'
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
     steps:
       - name: Install podman
         run: sudo apt update && sudo apt install -y podman
@@ -21,7 +23,7 @@ jobs:
             echo "Downloading artifacts for run with ID: ${run_id}"
 
             # List artifacts from the run
-            artifacts=`curl -q -H "${token_header}" "${list_artifact_url}" \
+            artifacts=`curl -s -H "${token_header}" "${list_artifact_url}" \
                        | jq -c '.artifacts[] | [.id,.name]'`
 
             for artifact in ${artifacts[@]}

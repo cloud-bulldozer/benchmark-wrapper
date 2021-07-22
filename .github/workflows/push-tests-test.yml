@@ -14,15 +14,16 @@ jobs:
             set -x
             base_url="https://api.github.com/repos"
             token_header="authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"
-            repo="${{ github.repository_owner }}/${{ github.repository }}"
+            repo="${{ github.repository }}"
             run_id="1056706962"
             list_artifact_url="${base_url}/${repo}/actions/runs/${run_id}/artifacts"
 
             echo "Downloading artifacts for run with ID: ${run_id}"
-            curl -s -H "${token_header}" "${list_artifact_url}"
             # List artifacts from the run
-            artifacts=`curl -s -H "${token_header}" "${list_artifact_url}" \
-                       | jq -c '.artifacts[] | [.id,.name]'`
+            artifact_json=`curl -s -H "${token_header}" "${list_artifact_url}"`
+            echo "Got response: ${artifact_json"
+            artifacts=`echo $artifact_json | jq -c '.artifacts[] | [.id,.name]'`
+            echo "Got artifacts: $(echo $artifacts | jq)"
 
             for artifact in ${artifacts[@]}
             do

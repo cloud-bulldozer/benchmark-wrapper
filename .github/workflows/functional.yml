@@ -102,7 +102,7 @@ jobs:
         uses: redhat-actions/buildah-build@v2
         with:
           arch: ${{ matrix.arch }}
-          image: ${{ matrix.image }}
+          image: ${{ matrix.image_name }}
           tags: ${{ env.IMAGE_TAG }}
           dockerfiles: ${{ matrix.containerfile }}
       - name: Push ${{ matrix.containerfile }}

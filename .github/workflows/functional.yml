@@ -1,7 +1,8 @@
-name: Build Images
+name: Functional Tests
 on:
-  push:
-  pull_request:
+  workflow_run:
+    workflows: ["Unit Tests"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       diff_branch:
@@ -96,26 +97,25 @@ jobs:
       - name: Set image tag
         run: |
             echo IMAGE_TAG=${{ matrix.tag_prefix }}${{ github.sha }} >> $GITHUB_ENV
-      - name: Set artifact name
-        run: |
-            echo ARTIFACT_NAME=${{ matrix.image_name }}.${{ env.IMAGE_TAG }} >> $GITHUB_ENV
       - name: Build ${{ matrix.containerfile }}
         id: build-image
-        run: >-
-            podman build . -t ${{ matrix.image_name }}:${{ env.IMAGE_TAG }}
-            -f ${{ matrix.containerfile }} --arch ${{ matrix.arch }}
-      - name: Export image to archive
-        run: >-
-            podman save --output ${{ env.ARTIFACT_NAME }}.tar
-            localhost/${{ matrix.image_name }}:${{ env.IMAGE_TAG }}
-      - name: Save Image as Artifact
-        uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: ${{ env.ARTIFACT_NAME }}.tar
-          retention-days: 10
+          arch: ${{ matrix.arch }}
+          image: ${{ matrix.image }}
+          tags: ${{ env.IMAGE_TAG }}
+          dockerfiles: ${{ matrix.containerfile }}
+      - name: Push ${{ matrix.containerfile }}
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: quay.io/${{ secrets.REGISTRY_USER }}
+          username: ${{ secrets.REGISTRY_AUTH_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Print image URL
+        run: echo "Image pushed to ${{ steps.push-image.outputs.registry-paths }}"
       - name: Set benchmark image environment variable
         run: |
-            echo ${{ matrix.env_var }}=localhost/${{ matrix.image_name }}:${{ env.IMAGE_TAG }} >> $GITHUB_ENV
+            echo ${{ matrix.env_var }}=${{ fromJSON(steps.push-image.outputs.registry-paths[0] }} >> $GITHUB_ENV
       - name: Run functional tests
         run: tox -e functional -- -m ${{ matrix.benchmark }}

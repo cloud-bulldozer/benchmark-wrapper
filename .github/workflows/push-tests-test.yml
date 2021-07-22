@@ -19,7 +19,7 @@ jobs:
             list_artifact_url="${base_url}/${repo}/actions/runs/${run_id}/artifacts"
 
             echo "Downloading artifacts for run with ID: ${run_id}"
-
+            curl -s -H "${token_header}" "${list_artifact_url}"
             # List artifacts from the run
             artifacts=`curl -s -H "${token_header}" "${list_artifact_url}" \
                        | jq -c '.artifacts[] | [.id,.name]'`

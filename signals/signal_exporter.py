@@ -4,6 +4,9 @@ from typing import Any, Dict
 import redis
 import random
 import platform
+import threading
+import json
+
 
 @dataclass
 class Signal:
@@ -17,7 +20,9 @@ class Signal:
     def __post_init__(self):
         for (name, field_type) in self.__annotations__.items():
             if not isinstance(self.__dict__[name], field_type):
-                raise TypeError(f"The field {name} should be type {field_type}, not {type(self.__dict__[name])}")
+                raise TypeError(
+                    f"The field {name} should be type {field_type}, not {type(self.__dict__[name])}"
+                )
 
         legal_events = [
             "initialization",
@@ -36,27 +41,67 @@ class Signal:
             for k, v in self.__dict__.items()
             if not (k.startswith("__") and k.endswith("__"))
         }
-        return str(result)
+        return json.dumps(result)
+
 
 class SignalExporter:
     def __init__(self, benchmark_name, redis_host="localhost", redis_port=6379) -> None:
         self.subs = []
         self.bench_name = benchmark_name
-        self.bench_id = benchmark_name + datetime.now().strftime(f'%m%d%Y%H%M%Sr{random.randint(1000,9999)}')
+        self.bench_id = benchmark_name + datetime.now().strftime(
+            f"%m%d%Y%H%M%Sr{random.randint(1000,9999)}"
+        )
         self.redis = redis.Redis(host=redis_host, port=redis_port, db=0)
+        self.init_listener = None
+
+    def _get_data_dict(self, response):
+        if not "data" in response:
+            print("No data in this response message")
+            return None
+        if isinstance(response["data"], int):
+            return None
+        data = json.loads(response["data"])
+        if "tool_id" not in data or "benchmark_id" not in data or "event" not in data:
+            print("Malformed response data found")
+            return None
+        return data
 
     def _fetch_responders(self):
-        #Check for responses to initialization
-        return []
+        # Check for responses to initialization
+        subscriber = self.redis.pubsub()
+        subscriber.subscribe("benchmark-signal-response")
+
+        def _init_listen():
+            for item in subscriber.listen():
+                data = self._get_data_dict(item)
+                if (
+                    data
+                    and data["event"] == "initialization"
+                    and data["benchmark_id"] == self.bench_id
+                ):
+                    self.subs.append(data["tool_id"])
+
+        self.init_listener = threading.Thread(target=_init_listen)
+        self.init_listener.start()
 
     def _check_subs(self):
-        #Check responses of subscribers
+        to_check = set(self.subs)
+        subscriber = self.redis.pubsub()
+        subscriber.subscribe("benchmark-signal-response")
+        for item in subscriber.listen():
+            data = self._get_data_dict(item)
+            if data and 'ras' in data and data['ras'] == 1:
+                to_check.remove(data['tool_id'])
+            if not to_check:
+                break
         return 0
 
-    def publish_signal(self, event, runner_host=None, sample:int=-1, user=None) -> int:
+    def publish_signal(
+        self, event, runner_host=None, sample: int = -1, user=None
+    ) -> int:
         # NOTE: runner_host will be automatically populated w/ platform.node() if nothing is passed in
-        
-        #Unsure if necessary twice vvv
+
+        # Unsure if necessary twice vvv
         legal_events = [
             "initialization",
             "benchmark-start",
@@ -68,12 +113,10 @@ class SignalExporter:
         if not event in legal_events:
             print(f"Event {self.event} not one of legal events: {legal_events}")
             exit(1)
-        #End of unecessary(?) ^^^
+        # End of unecessary(?) ^^^
 
         sig = Signal(
-            benchmark_id=self.bench_id,
-            benchmark_name=self.bench_name,
-            event=event
+            benchmark_id=self.bench_id, benchmark_name=self.bench_name, event=event
         )
         sig.runner_host = runner_host if runner_host else sig.runner_host
         sig.user = user if user else sig.user
@@ -82,11 +125,22 @@ class SignalExporter:
         # publish
         self.redis.publish(channel="benchmark-signal-pubsub", message=sig.to_json_str())
 
+        """
+        RESULT CODES:
+        0 = ALL SUBS RESPONDED WELL
+        1 = SOME SUBS RESPONDED BADLY
+        2 = NOT ALL SUBS RESPONDED
+        3 = INITIALIZATION SIGNAL PUBLISHED, LISTENING
+        4 = INITIALIZATION SIGNAL NOT PUBLISHED, ALREADY LISTENING
+        """
+
         if event == "initialization":
-            subscribers = self._fetch_responders()
-            result = 3
-            for sub in subscribers:
-                self.subs.append(sub)
+            if self.init_listener and self.init_listener.is_alive():
+                print("Already published initialization signal for this benchmark")
+                result = 4
+            else:
+                self._fetch_responders()
+                result = 3
         else:
             result = self._check_subs()
         return result

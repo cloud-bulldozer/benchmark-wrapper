@@ -4,7 +4,6 @@ from typing import Any, Dict
 import redis
 import random
 import platform
-import threading
 import json
 
 
@@ -30,7 +29,7 @@ class Signal:
             "benchmark-stop",
             "sample-start",
             "sample-stop",
-            "shutdown"
+            "shutdown",
         ]
         if self.event not in legal_events:
             print(f"Event {self.event} not one of legal events: {legal_events}")
@@ -41,6 +40,44 @@ class Signal:
             k: v
             for k, v in self.__dict__.items()
             if not (k.startswith("__") and k.endswith("__"))
+        }
+        return json.dumps(result)
+
+
+@dataclass
+class Response:
+    tool_id: str
+    benchmark_id: str
+    event: str
+    ras: int
+
+    def __post_init__(self):
+        for (name, field_type) in self.__annotations__.items():
+            if not isinstance(self.__dict__[name], field_type):
+                if name == "ras" and self.ras == None:
+                    continue
+                raise TypeError(
+                    f"The field {name} should be type {field_type}, not {type(self.__dict__[name])}"
+                )
+
+        legal_events = [
+            "initialization",
+            "benchmark-start",
+            "benchmark-stop",
+            "sample-start",
+            "sample-stop",
+            "shutdown",
+        ]
+        if self.event not in legal_events:
+            print(f"Event {self.event} not one of legal events: {legal_events}")
+            exit(1)
+
+    def to_json_str(self) -> Dict[str, Any]:
+        result: Dict[str, Any] = {
+            k: v
+            for k, v in self.__dict__.items()
+            if not (k.startswith("__") and k.endswith("__"))
+            and not (k == "ras" and v == None)
         }
         return json.dumps(result)
 
@@ -84,13 +121,16 @@ class SignalExporter:
         self.init_listener = subscriber.run_in_thread()
 
     def _check_subs(self):
+        if not self.subs:
+            return 0
+
         to_check = set(self.subs)
         subscriber = self.redis.pubsub(ignore_subscribe_messages=True)
         subscriber.subscribe("benchmark-signal-response")
         for item in subscriber.listen():
             data = self._get_data_dict(item)
-            if data and 'ras' in data and data['ras'] == 1:
-                to_check.remove(data['tool_id'])
+            if data and "ras" in data and data["ras"] == 1:
+                to_check.remove(data["tool_id"])
             if not to_check:
                 break
         return 0
@@ -107,7 +147,7 @@ class SignalExporter:
             "benchmark-stop",
             "sample-start",
             "sample-stop",
-            "shutdown"
+            "shutdown",
         ]
 
         if not event in legal_events:
@@ -148,3 +188,38 @@ class SignalExporter:
         else:
             result = self._check_subs()
         return result
+
+
+class SignalResponder:
+    def __init__(self, redis_host="localhost", redis_port=6379) -> None:
+        self.redis = redis.Redis(host=redis_host, port=redis_port, db=0)
+        self.subscriber = self.redis.pubsub(ignore_subscribe_messages=True)
+        self.subscriber.subscribe("benchmark-signal-pubsub")
+        self.tool_id = platform.node() + "-resp"
+
+    def _parse_signal(self, signal):
+        data = json.loads(signal["data"])
+        # FIXME - Replace below line, maybe with dataclasses.fields()?
+        check_set = set(
+            [
+                "benchmark_id",
+                "benchmark_name",
+                "event",
+                "runner_host",
+                "sample_no",
+                "user",
+            ]
+        )
+        if set(data.keys()) == check_set:
+            return data
+        return None
+
+    def listen(self):
+        for item in self.subscriber.listen():
+            data = self._parse_signal(item)
+            if data:
+                yield data
+
+    def respond(self, benchmark_id, event, ras=None):
+        response = Response(self.tool_id, benchmark_id, event, ras)
+        self.redis.publish("benchmark-signal-response", response.to_json_str())

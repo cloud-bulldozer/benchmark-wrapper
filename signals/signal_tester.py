@@ -1,61 +1,31 @@
 from signals import signal_exporter
-import redis
-import json
 import time
-from threading import Thread
+from multiprocessing import Process
 
-redis_con = redis.Redis(host="localhost", port=6379, db=0)
-subscriber = redis_con.pubsub(ignore_subscribe_messages=True)
-subscriber.subscribe("benchmark-signal-pubsub")
+responder = signal_exporter.SignalResponder()
+def _listener():
+    for signal in responder.listen():
+        print(signal)
+        responder.respond(signal["benchmark_id"], signal["event"], 1)
+init = Process(target=_listener)
+init.start()
 
 sig_ex = signal_exporter.SignalExporter("fakemark")
-def _publish(event):
-    sig_ex.publish_signal(event)
-
 print("\nBENCHMARK INIT TEST\n")
-init = Thread(target=_publish, args=("initialization",))
-init.start()
-time.sleep(0.1)
-
-"""
-for item in subscriber.listen():
-    print(item)
-    print(item['data'])
-"""
-
-subscriber.get_message()
-message = subscriber.get_message()
-data = json.loads(message["data"])
-print(data)
-
-bench_id = data["benchmark_id"]
-event = data["event"]
-response = {'benchmark_id':bench_id, 'tool_id':'testo_id', 'event':event}
-redis_con.publish("benchmark-signal-response", json.dumps(response))
+sig_ex.publish_signal("initialization")
 time.sleep(1)
-print(sig_ex.subs)
+print("Proof of response (subs): " + str(sig_ex.subs))
+time.sleep(1)
 
 print("\nBENCHMARK START TEST\n")
-bstart = Thread(target=_publish, args=("benchmark-start",))
-bstart.start()
-time.sleep(0.1)
-message = subscriber.get_message()
-data = json.loads(message["data"])
-print(data)
-bench_id = data["benchmark_id"]
-event = data["event"]
-response = {'benchmark_id':bench_id, 'tool_id':'testo_id', 'event':event, 'ras':1}
-redis_con.publish("benchmark-signal-response", json.dumps(response))
-print("published")
-time.sleep(0.5)
-if not bstart.is_alive():
-    print("CLEARED")
+sig_ex.publish_signal("benchmark-start")
+time.sleep(1)
+print("SUBS CLEARED")
+time.sleep(1)
 
 print("\nBENCHMARK SHUTDOWN TEST\n")
-down = Thread(target=_publish, args=("shutdown",))
-down.start()
-time.sleep(0.1)
-message = subscriber.get_message()
-data = json.loads(message["data"])
-print(data)
+sig_ex.publish_signal("shutdown")
+time.sleep(1)
 print("NO LONGER LISTENING, DONE")
+
+init.terminate()

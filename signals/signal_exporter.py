@@ -30,6 +30,7 @@ class Signal:
             "benchmark-stop",
             "sample-start",
             "sample-stop",
+            "shutdown"
         ]
         if self.event not in legal_events:
             print(f"Event {self.event} not one of legal events: {legal_events}")
@@ -68,25 +69,23 @@ class SignalExporter:
 
     def _fetch_responders(self):
         # Check for responses to initialization
-        subscriber = self.redis.pubsub()
-        subscriber.subscribe("benchmark-signal-response")
+        subscriber = self.redis.pubsub(ignore_subscribe_messages=True)
 
-        def _init_listen():
-            for item in subscriber.listen():
-                data = self._get_data_dict(item)
-                if (
-                    data
-                    and data["event"] == "initialization"
-                    and data["benchmark_id"] == self.bench_id
-                ):
-                    self.subs.append(data["tool_id"])
+        def _init_handler(item):
+            data = self._get_data_dict(item)
+            if (
+                data
+                and data["event"] == "initialization"
+                and data["benchmark_id"] == self.bench_id
+            ):
+                self.subs.append(data["tool_id"])
 
-        self.init_listener = threading.Thread(target=_init_listen)
-        self.init_listener.start()
+        subscriber.subscribe(**{"benchmark-signal-response": _init_handler})
+        self.init_listener = subscriber.run_in_thread()
 
     def _check_subs(self):
         to_check = set(self.subs)
-        subscriber = self.redis.pubsub()
+        subscriber = self.redis.pubsub(ignore_subscribe_messages=True)
         subscriber.subscribe("benchmark-signal-response")
         for item in subscriber.listen():
             data = self._get_data_dict(item)
@@ -108,6 +107,7 @@ class SignalExporter:
             "benchmark-stop",
             "sample-start",
             "sample-stop",
+            "shutdown"
         ]
 
         if not event in legal_events:
@@ -132,6 +132,7 @@ class SignalExporter:
         2 = NOT ALL SUBS RESPONDED
         3 = INITIALIZATION SIGNAL PUBLISHED, LISTENING
         4 = INITIALIZATION SIGNAL NOT PUBLISHED, ALREADY LISTENING
+        5 = SHUTDOWN SIGNAL PUNISHED, NO LONGER LISTENING
         """
 
         if event == "initialization":
@@ -141,6 +142,9 @@ class SignalExporter:
             else:
                 self._fetch_responders()
                 result = 3
+        elif event == "shutdown":
+            self.init_listener.stop()
+            result = 5
         else:
             result = self._check_subs()
         return result

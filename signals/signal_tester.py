@@ -5,7 +5,7 @@ import time
 from threading import Thread
 
 redis_con = redis.Redis(host="localhost", port=6379, db=0)
-subscriber = redis_con.pubsub()
+subscriber = redis_con.pubsub(ignore_subscribe_messages=True)
 subscriber.subscribe("benchmark-signal-pubsub")
 
 sig_ex = signal_exporter.SignalExporter("fakemark")
@@ -50,3 +50,12 @@ print("published")
 time.sleep(0.5)
 if not bstart.is_alive():
     print("CLEARED")
+
+print("\nBENCHMARK SHUTDOWN TEST\n")
+down = Thread(target=_publish, args=("shutdown",))
+down.start()
+time.sleep(0.1)
+message = subscriber.get_message()
+data = json.loads(message["data"])
+print(data)
+print("NO LONGER LISTENING, DONE")

@@ -12,7 +12,7 @@ For documentation build testing, the goal is to ensure that the documentation ca
 
 Here are the main takeaways:
 
-* To write unit tests for a module, place them in ``tests/unit/test_<module>.py``.
+* To write unit tests for a module, place them in ``tests/unit/test_<module>.py`` or within docstrings for small, basic functions.
 * Use Tox to invoke pytest unit tests and documentation build tests, by choosing from the following environments: ``py{36,37,38,39}-{unit,docs}``.
 * Use coverage reports to ensure thorough code testing.
 
@@ -28,6 +28,8 @@ For instance, using ``py36-unit`` will run unit tests for Python 3.6, while ``py
 ## Writing Unit Tests
 
 Unit tests are placed under the ``tests/unit`` directory, container within individual Python modules. To keep a consistent structure, each module under this directory should correspond to one module within benchmark-wrapper. As an example, to create unit tests for ``snafu.module``, place them within ``tests/unit/test_module.py``.
+
+Tests can also live within docstrings, which will be invoked using pytest's [doctest functionality](https://docs.pytest.org/en/6.2.x/doctest.html). Docstring unit tests should be reserved for small, simple functions and/or to demonstrate example usage for users. This allows for automated regression testing and breaking change detection, as, if the example fails, then there must have been some change which will impact how the code is used. For numpy-style docstrings, docstring tests should live under the ["Examples"](https://numpydoc.readthedocs.io/en/latest/format.html#examples) section.
 
 For more information on how pytest can be leveraged to write unit tests, please check read the [pytest documentation](https://docs.pytest.org/en/6.2.x/example/index.html).
 

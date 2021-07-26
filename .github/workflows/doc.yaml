@@ -6,9 +6,6 @@ on:
 
 jobs:
   build_docs:
-    if: >-
-        github.event_name != 'pull_request' ||
-        (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ok to test'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

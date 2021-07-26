@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Counter, Dict
 import redis
 import random
 import platform
 import json
+import time
 
 
 @dataclass
@@ -130,14 +131,17 @@ class SignalExporter:
 
         to_check = set(self.subs)
         subscriber = self.redis.pubsub(ignore_subscribe_messages=True)
-        subscriber.subscribe("benchmark-signal-response")
-        for item in subscriber.listen():
+
+        def _sub_handler(item):
             data = self._get_data_dict(item)
             if data and "ras" in data and data["ras"] == 1:
                 to_check.remove(data["tool_id"])
             if not to_check:
-                break
-        return 0
+                listener.stop()
+
+        subscriber.subscribe(**{"benchmark-signal-response": _sub_handler})
+        listener = subscriber.run_in_thread()
+        return listener
 
     def publish_signal(
         self, event, runner_host=None, sample: int = -1, tag=None, metadata=None
@@ -167,8 +171,6 @@ class SignalExporter:
         sig.metadata = metadata if metadata else sig.metadata
         sig.sample_no = sample if sample >= 0 else sig.sample_no
 
-        # publish
-        self.redis.publish(channel="benchmark-signal-pubsub", message=sig.to_json_str())
         """
         RESULT CODES:
         0 = ALL SUBS RESPONDED WELL
@@ -179,11 +181,12 @@ class SignalExporter:
         5 = SHUTDOWN SIGNAL PUNISHED, NO LONGER LISTENING
         """
 
-        # FIXME - SHOULD HAVE PUBLISH BETWEEN TO PREVENT RACE CONS?
+        sub_check = None
+        result = 0
         if event == "initialization":
             if self.init_listener and self.init_listener.is_alive():
-                print("Already published initialization signal for this benchmark")
-                result = 4
+                print("Already published initialization signal for this benchmark, never shut down")
+                return 4
             else:
                 self._fetch_responders()
                 result = 3
@@ -191,7 +194,19 @@ class SignalExporter:
             self.init_listener.stop()
             result = 5
         else:
-            result = self._check_subs()
+            sub_check = self._check_subs()
+
+        self.redis.publish(channel="benchmark-signal-pubsub", message=sig.to_json_str())
+        
+        counter = 0
+        while sub_check and sub_check.is_alive():
+            time.sleep(0.1)
+            counter += 1
+            if counter >= 200:
+                print("Timeout after waiting 20 seconds for sub response")
+                result = 2
+                break
+
         return result
 
 

@@ -8,7 +8,7 @@ import dataclasses
 import shlex
 from snafu.benchmarks import Benchmark, BenchmarkResult
 from snafu.config import Config, ConfigArgument, FuncAction, check_file, none_or_type
-from snafu.process import sample_process, ProcessSample
+from snafu.process import sample_process
 
 
 class ParseRangeAction(FuncAction):
@@ -261,41 +261,45 @@ class Uperf(Benchmark):
         """
 
         cmd = shlex.split(f"uperf -v -a -R -i 1 -m {self.config.workload}")
+        _plural = "s" if self.config.sample > 1 else ""
+        self.logger.info(f"Collecting {self.config.sample} sample{_plural} of Uperf")
 
-        for sample_num in range(1, self.config.sample + 1):
-            self.logger.info(f"Starting Uperf sample number {sample_num}")
-            sample: ProcessSample = sample_process(
-                cmd, self.logger, retries=2, expected_rc=0, env=self.config.get_env(),
-            )
+        samples = sample_process(
+            cmd,
+            self.logger,
+            num_samples=self.config.sample,
+            retries=2,
+            expected_rc=0,
+            env=self.config.get_env(),
+        )
 
+        for sample_num, sample in enumerate(samples):
             if not sample.success:
                 self.logger.critical(f"Uperf failed to run! Got results: {sample}")
                 return
-            else:
-                self.logger.info(f"Finished collecting sample {sample_num}")
-                self.logger.debug(f"Got sample: {sample}")
 
-                if sample.successful.stdout is None:
-                    self.logger.critical(
-                        f"Uperf ran successfully, but didn't get stdout. Got results: {sample}"
-                    )
-                    return
+            self.logger.info(f"Finished collecting sample {sample_num}")
+            self.logger.debug(f"Got sample: {sample}")
 
-                stdout: UperfStdout = self.parse_stdout(sample.successful.stdout)
-                result_data: List[UperfStat] = self.get_results_from_stdout(stdout)
-                config: UperfConfig = UperfConfig.new(stdout, self.config)
+            if sample.successful.stdout is None:
+                self.logger.critical(f"Uperf ran successfully, but didn't get stdout. Got results: {sample}")
+                return
 
-                for result_datapoint in result_data:
-                    result_datapoint.iteration = sample_num
-                    result: BenchmarkResult = self.create_new_result(
-                        data=dataclasses.asdict(result_datapoint),
-                        config=dataclasses.asdict(config),
-                        tag="results",
-                    )
-                    self.logger.debug(f"Got sample result: {result}")
-                    yield result
+            stdout: UperfStdout = self.parse_stdout(sample.successful.stdout)
+            result_data: List[UperfStat] = self.get_results_from_stdout(stdout)
+            config: UperfConfig = UperfConfig.new(stdout, self.config)
 
-        self.logger.info(f"Successfully collected {self.config.sample} samples of Uperf.")
+            for result_datapoint in result_data:
+                result_datapoint.iteration = sample_num
+                result: BenchmarkResult = self.create_new_result(
+                    data=dataclasses.asdict(result_datapoint),
+                    config=dataclasses.asdict(config),
+                    tag="results",
+                )
+                self.logger.debug(f"Got sample result: {result}")
+                yield result
+
+        self.logger.info(f"Successfully collected {self.config.sample} sample{_plural} of Uperf.")
 
     def cleanup(self) -> bool:
         return True

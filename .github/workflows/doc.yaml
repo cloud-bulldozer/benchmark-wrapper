@@ -1,0 +1,29 @@
+name: Documentation Build Test
+on:
+  - push
+  - pull_request
+  - workflow_dispatch
+
+jobs:
+  build_docs:
+    if: >-
+        github.event_name != 'pull_request' ||
+        (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ok to test'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install build dependencies
+        run: sudo apt-get install -y pandoc
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install tox
+        run: pip install tox
+      - name: Run Tox
+        run: tox -e py36-docs,py37-docs,py38-docs

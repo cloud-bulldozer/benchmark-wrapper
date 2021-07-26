@@ -49,6 +49,10 @@ venv.bak/
 /.project
 /.pydevproject
 
+# Testing
+.tox
+.coverage*
+
 # JetBrains settings
 .idea/
 

@@ -14,11 +14,14 @@ class Signal:
     event: str
     runner_host: str = platform.node()
     sample_no: int = -1
-    user: str = "No user specified"  # Could also be "tag"
+    tag: str = "No tag specified"  # Could also be "user"
+    metadata: Dict = None
 
     def __post_init__(self):
         for (name, field_type) in self.__annotations__.items():
             if not isinstance(self.__dict__[name], field_type):
+                if name == "metadata" and self.metadata == None:
+                    continue
                 raise TypeError(
                     f"The field {name} should be type {field_type}, not {type(self.__dict__[name])}"
                 )
@@ -40,6 +43,7 @@ class Signal:
             k: v
             for k, v in self.__dict__.items()
             if not (k.startswith("__") and k.endswith("__"))
+            and not (k == "metadata" and v == None)
         }
         return json.dumps(result)
 
@@ -136,7 +140,7 @@ class SignalExporter:
         return 0
 
     def publish_signal(
-        self, event, runner_host=None, sample: int = -1, user=None
+        self, event, runner_host=None, sample: int = -1, tag=None, metadata=None
     ) -> int:
         # NOTE: runner_host will be automatically populated w/ platform.node() if nothing is passed in
 
@@ -159,12 +163,12 @@ class SignalExporter:
             benchmark_id=self.bench_id, benchmark_name=self.bench_name, event=event
         )
         sig.runner_host = runner_host if runner_host else sig.runner_host
-        sig.user = user if user else sig.user
+        sig.tag = tag if tag else sig.tag
+        sig.metadata = metadata if metadata else sig.metadata
         sig.sample_no = sample if sample >= 0 else sig.sample_no
 
         # publish
         self.redis.publish(channel="benchmark-signal-pubsub", message=sig.to_json_str())
-
         """
         RESULT CODES:
         0 = ALL SUBS RESPONDED WELL
@@ -175,6 +179,7 @@ class SignalExporter:
         5 = SHUTDOWN SIGNAL PUNISHED, NO LONGER LISTENING
         """
 
+        # FIXME - SHOULD HAVE PUBLISH BETWEEN TO PREVENT RACE CONS?
         if event == "initialization":
             if self.init_listener and self.init_listener.is_alive():
                 print("Already published initialization signal for this benchmark")
@@ -207,10 +212,11 @@ class SignalResponder:
                 "event",
                 "runner_host",
                 "sample_no",
-                "user",
+                "tag",
+                "metadata"
             ]
         )
-        if set(data.keys()) == check_set:
+        if set(data.keys()) == check_set or check_set - set(data.keys()) == {"metadata"}:
             return data
         return None
 

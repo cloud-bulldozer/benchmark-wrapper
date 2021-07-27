@@ -2,30 +2,29 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running the dnsperf benchmark.
 See https://dns-oarc.net/tools/dnsperf for more information."""
-import dataclasses
 from datetime import datetime
-from typing import Any, Dict, Iterable, Optional, Union
+from typing import Iterable, Optional, Union, Tuple
 from pathlib import Path
 
 import dateutil.parser
 from pydantic import BaseModel
 from ttp import ttp
+import toolz
 
 from snafu.benchmarks import Benchmark, BenchmarkResult
 from snafu.config import Config, ConfigArgument
 from snafu.process import ProcessSample, sample_process
 
 
-@dataclasses.dataclass
-class RawDnsperfSample:
+class RawDnsperfSample(BaseModel):
     fqdn: str
     rtt_mu_s: int
     qtype: str
-    rcode: int
+    rcode: str
 
 
 class DnsperfStdout(BaseModel):
-    data: Iterable[RawDnsperfSample]
+    data: Tuple[RawDnsperfSample, ...]
     avg_request_packet_size: int
     avg_response_packet_size: int
     sum_rtt: float
@@ -37,8 +36,7 @@ class DnsperfStdout(BaseModel):
     time_limit: float
 
 
-@dataclasses.dataclass
-class DnsperfConfig:
+class DnsperfConfig(BaseModel):
     address: str
     port: int
     query_filepath: Path
@@ -46,27 +44,19 @@ class DnsperfConfig:
     sum_rtt: float
     dnsperf_version: str
     # 0 to 10_000
-    cache_size: int
     clients: int
     # [1, +inf)
     time_limit: float
     transport_mode: str
     # [1, +inf]
-    max_allowed_load: float
-    dnsperf_version: str
-    pod_id: Optional[str] = None
+    max_allowed_load: Optional[float] = None
+    cache_size: Optional[int]
     networkpolicy: Optional[str] = None
+    pod_id: Optional[str] = None
 
     @classmethod
     def new(cls, stdout: DnsperfStdout, config: Config, load):
-        kwargs: Dict[str, Any] = dict()
-        for fields in dataclasses.fields(cls):
-            val = getattr(stdout, fields.name, None)
-            if val is None:
-                val = getattr(config, fields.name, None)
-            kwargs[fields.name] = val
-        kwargs["max_allowed_load"] = load
-        return cls(**kwargs)
+        return cls(**toolz.merge(config.params.__dict__, dict(stdout)), max_allowed_load=load)
 
 
 class Dnsperf(Benchmark):
@@ -176,7 +166,7 @@ class Dnsperf(Benchmark):
 
         stdout: DnsperfStdout = self.parse_stdout(sample.successful.stdout)
         cfg: DnsperfConfig = DnsperfConfig.new(stdout, self.config, load=load)
-        return self.create_new_result(data=stdout.dict(), config=dataclasses.asdict(cfg), tag="results")
+        return self.create_new_result(data=dict(stdout), config=dict(cfg), tag="results")
 
     def collect(self) -> Iterable[BenchmarkResult]:
         """Run the dnsperf benchmark and collect results."""

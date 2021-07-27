@@ -56,6 +56,11 @@ class DnsperfConfig(BaseModel):
 
     @classmethod
     def new(cls, stdout: DnsperfStdout, config: Config, load):
+        """
+        Merge attributes parsed from stdout and config.
+        """
+        # merge dictionaries (right-most dictionary takes precedence)
+        # then, unpack merged dictionary
         return cls(**toolz.merge(config.params.__dict__, dict(stdout)), max_allowed_load=load)
 
 

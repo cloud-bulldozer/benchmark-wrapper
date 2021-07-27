@@ -1,0 +1,29 @@
+<group name="config">
+DNS Performance Testing Tool
+Version {{ dnsperf_version }}
+
+[Status] Command line: {{ ignore | ORPHRASE }}
+[Status] Sending queries (to {{ ignore }}:{{ ignore }})
+[Status] Started at: {{ start_time | ORPHRASE }}
+[Status] Stopping after {{ time_limit | to_float }} seconds
+</group>
+<group name="data">
+&gt; {{ rcode }} {{ fqdn }} {{ qtype }} {{ rtt_mu_s | to_float }}
+</group>
+<group name="stats">
+[Status] Testing complete (time limit)
+
+Statistics:
+
+  Queries sent:         {{ queries_sent | to_int }}
+  Queries completed:    {{ queries_completed | to_int }} ({{ ignore }}%)
+  Queries lost:         {{ ignore }} ({{ ignore }}%)
+
+  Response codes:       {{ ignore }}
+  Average packet size:  request {{ avg_request_packet_size | to_int }}, response {{ avg_response_packet_size | to_int }}
+  Run time (s):         {{ sum_rtt | to_float }}
+  Queries per second:   {{ throughput | to_float }}
+
+  Average Latency (s):  {{ ORPHRASE }}
+  Latency StdDev (s):   {{ ignore }}
+</group>

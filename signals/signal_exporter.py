@@ -63,13 +63,25 @@ class Response:
 
 
 class SignalExporter:
-    def __init__(self, process_name, redis_host="localhost", redis_port=6379) -> None:
+    def __init__(
+        self, process_name, redis_host="localhost", redis_port=6379, runner_host=None
+    ) -> None:
+        # NOTE: runner_host will be automatically populated w/ platform.node() if nothing is passed in
         self.subs = []
         self.proc_name = process_name
+        self.runner_host = runner_host
         self.pub_id = process_name + "-" + str(uuid.uuid4())
         self.redis = redis.Redis(host=redis_host, port=redis_port, db=0)
         self.init_listener = None
         self.legal_events = None
+
+    def _sig_builder(self, event, sample=-1, tag=None, metadata=None):
+        sig = Signal(publisher_id=self.pub_id, process_name=self.proc_name, event=event)
+        sig.runner_host = self.runner_host if self.runner_host else sig.runner_host
+        sig.tag = tag if tag else sig.tag
+        sig.metadata = metadata if metadata else sig.metadata
+        sig.sample_no = sample if sample >= 0 else sig.sample_no
+        return sig
 
     def _get_data_dict(self, response):
         if not "data" in response:
@@ -125,14 +137,12 @@ class SignalExporter:
             and all(isinstance(event, str) for event in events)
         )
 
-    def publish_signal(
-        self, event, runner_host=None, sample: int = -1, tag=None, metadata=None
-    ) -> int:
-        # NOTE: runner_host will be automatically populated w/ platform.node() if nothing is passed in
-
+    def publish_signal(self, event, sample: int = -1, tag=None, metadata=None) -> int:
         skip_check = False
         if not self.init_listener or not self.init_listener.is_alive():
-            print("WARNING: Exporter is not initialized, not accepting subscribers and no event checking")
+            print(
+                "WARNING: Exporter is not initialized, not accepting subscribers and no event checking"
+            )
             skip_check = True
 
         """
@@ -159,12 +169,7 @@ class SignalExporter:
             print(f"Event {self.event} not one of legal events: {self.legal_events}")
             return 3
 
-        sig = Signal(publisher_id=self.pub_id, process_name=self.proc_name, event=event)
-        sig.runner_host = runner_host if runner_host else sig.runner_host
-        sig.tag = tag if tag else sig.tag
-        sig.metadata = metadata if metadata else sig.metadata
-        sig.sample_no = sample if sample >= 0 else sig.sample_no
-
+        sig = self._sig_builder(event=event, sample=sample, tag=tag, metadata=metadata)
         result = 0
         sub_check = self._check_subs()
 
@@ -181,23 +186,17 @@ class SignalExporter:
 
         return result
 
-    def initialize(self, legal_events, tag=None, runner_host=None):
-        # NOTE: runner_host will be automatically populated w/ platform.node() if nothing is passed in
+    def initialize(self, legal_events, tag=None):
         if not self._valid_event_list(legal_events):
             print("'legal_events' arg must be a list of strings")
 
         self.legal_events = legal_events
-        sig = Signal(self.pub_id, self.proc_name, "initialization")
-        sig.tag = tag if tag else sig.tag
-        sig.runner_host = runner_host if runner_host else sig.runner_host
-
+        sig = self._sig_builder(event="initialization", tag=tag)
         self._fetch_responders()
         self.redis.publish(channel="event-signal-pubsub", message=sig.to_json_str())
 
-    def shutdown(self, tag=None, runner_host=None):
-        sig = Signal(self.pub_id, self.proc_name, "initialization")
-        sig.tag = tag if tag else sig.tag
-
+    def shutdown(self, tag=None):
+        sig = self._sig_builder(event="shutdown", tag=tag)
         self.init_listener.stop()
         self.subs = []
         self.redis.publish(channel="event-signal-pubsub", message=sig.to_json_str())

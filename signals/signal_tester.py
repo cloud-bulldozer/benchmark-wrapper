@@ -24,8 +24,10 @@ print("SUBS CLEARED")
 time.sleep(1)
 
 print("\nBENCHMARK SHUTDOWN TEST\n")
+print("Listening: " + str(sig_ex.init_listener.is_alive()))
 sig_ex.shutdown()
 time.sleep(1)
+print("Listening: " + str(sig_ex.init_listener.is_alive()))
 print("NO LONGER LISTENING, DONE")
 
 init.terminate()

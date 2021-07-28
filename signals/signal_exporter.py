@@ -26,18 +26,6 @@ class Signal:
                     f"The field {name} should be type {field_type}, not {type(self.__dict__[name])}"
                 )
 
-        legal_events = [
-            "initialization",
-            "benchmark-start",
-            "benchmark-stop",
-            "sample-start",
-            "sample-stop",
-            "shutdown",
-        ]
-        if self.event not in legal_events:
-            print(f"Event {self.event} not one of legal events: {legal_events}")
-            exit(1)
-
     def to_json_str(self) -> Dict[str, Any]:
         result: Dict[str, Any] = {
             k: v
@@ -64,18 +52,6 @@ class Response:
                     f"The field {name} should be type {field_type}, not {type(self.__dict__[name])}"
                 )
 
-        legal_events = [
-            "initialization",
-            "benchmark-start",
-            "benchmark-stop",
-            "sample-start",
-            "sample-stop",
-            "shutdown",
-        ]
-        if self.event not in legal_events:
-            print(f"Event {self.event} not one of legal events: {legal_events}")
-            exit(1)
-
     def to_json_str(self) -> Dict[str, Any]:
         result: Dict[str, Any] = {
             k: v
@@ -93,6 +69,7 @@ class SignalExporter:
         self.pub_id = process_name + "-" + str(uuid.uuid4())
         self.redis = redis.Redis(host=redis_host, port=redis_port, db=0)
         self.init_listener = None
+        self.legal_events = None
 
     def _get_data_dict(self, response):
         if not "data" in response:
@@ -141,25 +118,46 @@ class SignalExporter:
         listener = subscriber.run_in_thread()
         return listener
 
+    def _valid_event_list(self, events):
+        return (
+            bool(events)
+            and isinstance(events, list)
+            and all(isinstance(event, str) for event in events)
+        )
+
     def publish_signal(
         self, event, runner_host=None, sample: int = -1, tag=None, metadata=None
     ) -> int:
         # NOTE: runner_host will be automatically populated w/ platform.node() if nothing is passed in
 
-        # Unsure if necessary twice vvv
-        legal_events = [
-            "initialization",
-            "benchmark-start",
-            "benchmark-stop",
-            "sample-start",
-            "sample-stop",
-            "shutdown",
-        ]
+        skip_check = False
+        if not self.init_listener or not self.init_listener.is_alive():
+            print("WARNING: Exporter is not initialized, not accepting subscribers and no event checking")
+            skip_check = True
 
-        if not event in legal_events:
-            print(f"Event {self.event} not one of legal events: {legal_events}")
-            exit(1)
-        # End of unecessary(?) ^^^
+        """
+        RESULT CODES:
+        0 = ALL SUBS RESPONDED WELL
+        1 = SOME SUBS RESPONDED BADLY
+        2 = NOT ALL SUBS RESPONDED
+        3 = ILLEGAL EVENT NAME PASSED IN
+        4 = INITIALIZATION SIGNAL ATTEMPTED, BAD
+        5 = SHUTDOWN SIGNAL ATTEMPTED, BAD
+        """
+
+        if event == "initialization":
+            print(
+                "ERROR: Please use the 'initialize()' method for publishing initialization signals"
+            )
+            return 4
+
+        if event == "shutdown":
+            print("ERROR: Please use the 'shutdown()' method for shutdown signals")
+            return 5
+
+        if not skip_check and not event in self.legal_events:
+            print(f"Event {self.event} not one of legal events: {self.legal_events}")
+            return 3
 
         sig = Signal(publisher_id=self.pub_id, process_name=self.proc_name, event=event)
         sig.runner_host = runner_host if runner_host else sig.runner_host
@@ -167,32 +165,8 @@ class SignalExporter:
         sig.metadata = metadata if metadata else sig.metadata
         sig.sample_no = sample if sample >= 0 else sig.sample_no
 
-        """
-        RESULT CODES:
-        0 = ALL SUBS RESPONDED WELL
-        1 = SOME SUBS RESPONDED BADLY
-        2 = NOT ALL SUBS RESPONDED
-        3 = INITIALIZATION SIGNAL PUBLISHED, LISTENING
-        4 = INITIALIZATION SIGNAL NOT PUBLISHED, ALREADY LISTENING
-        5 = SHUTDOWN SIGNAL PUNISHED, NO LONGER LISTENING
-        """
-
-        sub_check = None
         result = 0
-        if event == "initialization":
-            if self.init_listener and self.init_listener.is_alive():
-                print(
-                    "Already published initialization signal for this exporter, never shut down"
-                )
-                return 4
-            else:
-                self._fetch_responders()
-                result = 3
-        elif event == "shutdown":
-            self.init_listener.stop()
-            result = 5
-        else:
-            sub_check = self._check_subs()
+        sub_check = self._check_subs()
 
         self.redis.publish(channel="event-signal-pubsub", message=sig.to_json_str())
 
@@ -206,6 +180,27 @@ class SignalExporter:
                 break
 
         return result
+
+    def initialize(self, legal_events, tag=None, runner_host=None):
+        # NOTE: runner_host will be automatically populated w/ platform.node() if nothing is passed in
+        if not self._valid_event_list(legal_events):
+            print("'legal_events' arg must be a list of strings")
+
+        self.legal_events = legal_events
+        sig = Signal(self.pub_id, self.proc_name, "initialization")
+        sig.tag = tag if tag else sig.tag
+        sig.runner_host = runner_host if runner_host else sig.runner_host
+
+        self._fetch_responders()
+        self.redis.publish(channel="event-signal-pubsub", message=sig.to_json_str())
+
+    def shutdown(self, tag=None, runner_host=None):
+        sig = Signal(self.pub_id, self.proc_name, "initialization")
+        sig.tag = tag if tag else sig.tag
+
+        self.init_listener.stop()
+        self.subs = []
+        self.redis.publish(channel="event-signal-pubsub", message=sig.to_json_str())
 
 
 class SignalResponder:

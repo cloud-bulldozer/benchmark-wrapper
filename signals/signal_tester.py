@@ -12,7 +12,7 @@ init.start()
 
 sig_ex = signal_exporter.SignalExporter("fakemark")
 print("\nBENCHMARK INIT TEST\n")
-sig_ex.publish_signal("initialization")
+sig_ex.initialize(legal_events=["benchmark-start", "benchmark-stop"])
 time.sleep(1)
 print("Proof of response (subs): " + str(sig_ex.subs))
 time.sleep(1)
@@ -24,7 +24,7 @@ print("SUBS CLEARED")
 time.sleep(1)
 
 print("\nBENCHMARK SHUTDOWN TEST\n")
-sig_ex.publish_signal("shutdown")
+sig_ex.shutdown()
 time.sleep(1)
 print("NO LONGER LISTENING, DONE")
 

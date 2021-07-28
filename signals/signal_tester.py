@@ -6,7 +6,7 @@ responder = signal_exporter.SignalResponder()
 def _listener():
     for signal in responder.listen():
         print(signal)
-        responder.respond(signal["benchmark_id"], signal["event"], 1)
+        responder.respond(signal["publisher_id"], signal["event"], 1)
 init = Process(target=_listener)
 init.start()
 

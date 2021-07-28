@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Any, Dict
 import redis
 import platform
@@ -10,8 +9,8 @@ import uuid
 
 @dataclass
 class Signal:
-    benchmark_id: str
-    benchmark_name: str
+    publisher_id: str
+    process_name: str
     event: str
     runner_host: str = platform.node()
     sample_no: int = -1
@@ -52,7 +51,7 @@ class Signal:
 @dataclass
 class Response:
     tool_id: str
-    benchmark_id: str
+    publisher_id: str
     event: str
     ras: int
 
@@ -88,10 +87,10 @@ class Response:
 
 
 class SignalExporter:
-    def __init__(self, benchmark_name, redis_host="localhost", redis_port=6379) -> None:
+    def __init__(self, process_name, redis_host="localhost", redis_port=6379) -> None:
         self.subs = []
-        self.bench_name = benchmark_name
-        self.bench_id = benchmark_name + "-" + str(uuid.uuid4())
+        self.proc_name = process_name
+        self.pub_id = process_name + "-" + str(uuid.uuid4())
         self.redis = redis.Redis(host=redis_host, port=redis_port, db=0)
         self.init_listener = None
 
@@ -102,7 +101,7 @@ class SignalExporter:
         if isinstance(response["data"], int):
             return None
         data = json.loads(response["data"])
-        if "tool_id" not in data or "benchmark_id" not in data or "event" not in data:
+        if "tool_id" not in data or "publisher_id" not in data or "event" not in data:
             print("Malformed response data found")
             return None
         return data
@@ -116,11 +115,11 @@ class SignalExporter:
             if (
                 data
                 and data["event"] == "initialization"
-                and data["benchmark_id"] == self.bench_id
+                and data["publisher_id"] == self.pub_id
             ):
                 self.subs.append(data["tool_id"])
 
-        subscriber.subscribe(**{"benchmark-signal-response": _init_handler})
+        subscriber.subscribe(**{"event-signal-response": _init_handler})
         self.init_listener = subscriber.run_in_thread()
 
     def _check_subs(self):
@@ -132,12 +131,13 @@ class SignalExporter:
 
         def _sub_handler(item):
             data = self._get_data_dict(item)
+            # FIXME - Needs more checks (publisher ID, event)
             if data and "ras" in data and data["ras"] == 1:
                 to_check.remove(data["tool_id"])
             if not to_check:
                 listener.stop()
 
-        subscriber.subscribe(**{"benchmark-signal-response": _sub_handler})
+        subscriber.subscribe(**{"event-signal-response": _sub_handler})
         listener = subscriber.run_in_thread()
         return listener
 
@@ -161,9 +161,7 @@ class SignalExporter:
             exit(1)
         # End of unecessary(?) ^^^
 
-        sig = Signal(
-            benchmark_id=self.bench_id, benchmark_name=self.bench_name, event=event
-        )
+        sig = Signal(publisher_id=self.pub_id, process_name=self.proc_name, event=event)
         sig.runner_host = runner_host if runner_host else sig.runner_host
         sig.tag = tag if tag else sig.tag
         sig.metadata = metadata if metadata else sig.metadata
@@ -183,7 +181,9 @@ class SignalExporter:
         result = 0
         if event == "initialization":
             if self.init_listener and self.init_listener.is_alive():
-                print("Already published initialization signal for this benchmark, never shut down")
+                print(
+                    "Already published initialization signal for this exporter, never shut down"
+                )
                 return 4
             else:
                 self._fetch_responders()
@@ -194,8 +194,8 @@ class SignalExporter:
         else:
             sub_check = self._check_subs()
 
-        self.redis.publish(channel="benchmark-signal-pubsub", message=sig.to_json_str())
-        
+        self.redis.publish(channel="event-signal-pubsub", message=sig.to_json_str())
+
         counter = 0
         while sub_check and sub_check.is_alive():
             time.sleep(0.1)
@@ -212,24 +212,26 @@ class SignalResponder:
     def __init__(self, redis_host="localhost", redis_port=6379) -> None:
         self.redis = redis.Redis(host=redis_host, port=redis_port, db=0)
         self.subscriber = self.redis.pubsub(ignore_subscribe_messages=True)
-        self.subscriber.subscribe("benchmark-signal-pubsub")
-        self.tool_id = platform.node() + "-resp"
+        self.subscriber.subscribe("event-signal-pubsub")
+        self.tool_id = platform.node() + "-resp"  # ADD UUID HERE?
 
     def _parse_signal(self, signal):
         data = json.loads(signal["data"])
         # FIXME - Replace below line, maybe with dataclasses.fields()?
         check_set = set(
             [
-                "benchmark_id",
-                "benchmark_name",
+                "publisher_id",
+                "process_name",
                 "event",
                 "runner_host",
                 "sample_no",
                 "tag",
-                "metadata"
+                "metadata",
             ]
         )
-        if set(data.keys()) == check_set or check_set - set(data.keys()) == {"metadata"}:
+        if set(data.keys()) == check_set or check_set - set(data.keys()) == {
+            "metadata"
+        }:
             return data
         return None
 
@@ -239,6 +241,6 @@ class SignalResponder:
             if data:
                 yield data
 
-    def respond(self, benchmark_id, event, ras=None):
-        response = Response(self.tool_id, benchmark_id, event, ras)
-        self.redis.publish("benchmark-signal-response", response.to_json_str())
+    def respond(self, publisher_id, event, ras=None):
+        response = Response(self.tool_id, publisher_id, event, ras)
+        self.redis.publish("event-signal-response", response.to_json_str())

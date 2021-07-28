@@ -7,8 +7,8 @@ Version {{ dnsperf_version }}
 [Status] Started at: {{ start_time | ORPHRASE }}
 [Status] Stopping after {{ time_limit | to_float }} seconds
 </group>
-<group name="data">
-&gt; {{ rcode }} {{ fqdn }} {{ qtype }} {{ rtt_mu_s | to_float }}
+<group name="data*">
+&gt; {{ rcode }} {{ fqdn }} {{ qtype }} {{ rtt_s | to_float }}
 </group>
 <group name="stats">
 [Status] Testing complete (time limit)

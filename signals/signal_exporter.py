@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Counter, Dict
+from typing import Any, Dict
 import redis
-import random
 import platform
 import json
 import time
+import uuid
 
 
 @dataclass
@@ -91,9 +91,7 @@ class SignalExporter:
     def __init__(self, benchmark_name, redis_host="localhost", redis_port=6379) -> None:
         self.subs = []
         self.bench_name = benchmark_name
-        self.bench_id = benchmark_name + datetime.now().strftime(
-            f"%m%d%Y%H%M%Sr{random.randint(1000,9999)}"
-        )
+        self.bench_id = benchmark_name + "-" + str(uuid.uuid4())
         self.redis = redis.Redis(host=redis_host, port=redis_port, db=0)
         self.init_listener = None
 

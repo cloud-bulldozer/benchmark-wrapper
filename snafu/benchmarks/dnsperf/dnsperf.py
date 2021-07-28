@@ -78,10 +78,11 @@ class Dnsperf(Benchmark):
             "-q",
             "--queries",
             dest="query_filepath",
-            env_var="QUERIES",
+            env_var="queries",
             required=True,
             help="filepath to a list of DNS queries",
         ),
+        ConfigArgument("--load-sequence", dest="load_sequence", type=int, nargs="+", default=None),
         ConfigArgument(
             "-a",
             "--address",
@@ -101,14 +102,14 @@ class Dnsperf(Benchmark):
             "-s",
             "--cache-size",
             dest="cache_size",
-            env_var="CACHE_SIZE",
+            env_var="cache_size",
             help="Quantity of entries allowed in cache",
         ),
         ConfigArgument(
             "-l",
             "--time-limit",
             dest="time_limit",
-            env_var="TIME_LIMIT",
+            env_var="time_limit",
             help="Time window size for test",
             default=".01",
         ),
@@ -121,13 +122,13 @@ class Dnsperf(Benchmark):
         ),
         ConfigArgument("--network-policy", dest="networkpolicy", env_var="networkpolicy"),
         ConfigArgument("--pod-id", dest="pod_id", env_var="my_pod_idx", default=None),
-        ConfigArgument("--steps", dest="steps", default=5),
     )
 
     def setup(self) -> bool:
         """Setup dnsperf benchmark."""
         self.logger.info("Setting up dnsperf benchmark.")
         self.config.parse_args()
+        self.config.load_sequence.append(None)
         return True
 
     def cleanup(self) -> bool:
@@ -177,14 +178,46 @@ class Dnsperf(Benchmark):
         """Run the dnsperf benchmark and collect results."""
 
         self.logger.info("Starting dnsperf")
-        first_result: BenchmarkResult = self._one_trial()
-        yield first_result
+        for load in self.config.load_sequence:
+            cmd = [
+                "dnsperf",
+                "-v",  # print latency information for each query
+                "-s",
+                self.config.address,
+                "-p",
+                self.config.port,
+                "-d",
+                self.config.query_filepath,
+                "-c",
+                self.config.clients,
+                "-l",
+                self.config.time_limit,
+                "-m",
+                self.config.transport_mode,
+            ]
 
-        if first_result is not None:
-            max_qps = first_result.data["throughput"]
-            allowed_loads = (int(max_qps * step / self.config.steps) for step in range(1, self.config.steps))
-            for load in allowed_loads:
-                yield self._one_trial(load)
+            if load:
+                cmd = [*cmd, "-Q", str(load)]
+
+            sample: ProcessSample = sample_process(
+                cmd, self.logger,
+            )
+
+            if not sample.success:
+                self.logger.critical(f"dnsperf failed to complete! Got results: {sample}\n")
+                return None
+            elif sample.successful.stdout is None:
+                self.logger.critical(
+                    (
+                        "dnsperf ran successfully, but did not get output on stdout.\n"
+                        f"Got results: {sample}\n"
+                    )
+                )
+                return None
+
+            stdout: DnsperfStdout = self.parse_stdout(sample.successful.stdout)
+            cfg: DnsperfConfig = DnsperfConfig.new(stdout, self.config, load=load)
+            yield self.create_new_result(data=dict(stdout), config=dict(cfg), tag="results")
 
     def parse_stdout(self, stdout: str) -> DnsperfStdout:
         """Return parsed stdout of Dnsperf sample."""

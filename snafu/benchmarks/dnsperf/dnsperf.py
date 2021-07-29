@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running the dnsperf benchmark.
 See https://dns-oarc.net/tools/dnsperf for more information."""
+import dataclasses
 from datetime import datetime
 from typing import Iterable, Optional, Tuple
 from pathlib import Path
@@ -16,14 +17,17 @@ from snafu.config import Config, ConfigArgument
 from snafu.process import ProcessSample, sample_process
 
 
-class RawDnsperfSample(BaseModel):
+@dataclasses.dataclass
+class RawDnsperfSample:
     fqdn: str
     rtt_mu_s: int
     qtype: str
     rcode: str
+    iteration: Optional[int]
 
 
-class DnsperfStdout(BaseModel):
+@dataclasses.dataclass
+class DnsperfStdout:
     avg_request_packet_size: int
     avg_response_packet_size: int
     sum_rtt: float
@@ -33,7 +37,7 @@ class DnsperfStdout(BaseModel):
     start_time: datetime
     dnsperf_version: str
     time_limit: float
-    data: Optional[RawDnsperfSample]
+    data: Optional[RawDnsperfSample] = None
 
 
 class DnsperfConfig(BaseModel):
@@ -50,7 +54,7 @@ class DnsperfConfig(BaseModel):
     transport_mode: str
     # [1, +inf]
     max_allowed_load: Optional[float] = None
-    cache_size: Optional[int]
+    cache_size: Optional[int] = None
     networkpolicy: Optional[str] = None
     pod_id: Optional[str] = None
 
@@ -61,7 +65,7 @@ class DnsperfConfig(BaseModel):
         """
         # merge dictionaries (right-most dictionary takes precedence)
         # then, unpack merged dictionary
-        return cls(**toolz.merge(config.params.__dict__, dict(stdout)), max_allowed_load=load)
+        return cls(**toolz.merge(config.params.__dict__, dataclasses.asdict(stdout)), max_allowed_load=load)
 
 
 class Dnsperf(Benchmark):
@@ -178,16 +182,22 @@ class Dnsperf(Benchmark):
                 return None
 
             stdout: DnsperfStdout
-            samples: Tuple[RawDnsperfSample, ...]
-            stdout, samples = self.parse_stdout(sample.successful.stdout)
+            data_points: Tuple[RawDnsperfSample, ...]
+            stdout, data_points = self.parse_process_output(sample.successful.stdout)
             cfg: DnsperfConfig = DnsperfConfig.new(stdout, self.config, load=load)
-            for sample in samples:
-                sample: RawDnsperfSample
-                stdout.data = sample
-                yield self.create_new_result(data=dict(stdout), config=dict(cfg), tag="results")
 
-    def parse_stdout(self, stdout: str) -> Tuple[DnsperfStdout, Tuple[RawDnsperfSample, ...]]:
-        """Return parsed stdout of Dnsperf sample."""
+            for i, data_point in enumerate(data_points):
+                stdout.data = RawDnsperfSample(
+                    rtt_mu_s=int(data_point["rtt_s"] * 1_000_000),
+                    iteration=i,
+                    fqdn=data_point["fqdn"],
+                    qtype=data_point["qtype"],
+                    rcode=data_point["rcode"],
+                )
+                yield self.create_new_result(data=dataclasses.asdict(stdout), config=dict(cfg), tag="results")
+
+    def parse_process_output(self, stdout: str) -> Tuple[DnsperfStdout, Tuple[RawDnsperfSample, ...]]:
+        """Parse string output from the dnsperf benchmark."""
 
         output_parser = ttp(data=stdout, template=self.output_template)
         output_parser.parse()

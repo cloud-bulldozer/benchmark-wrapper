@@ -117,19 +117,24 @@ class SignalExporter:
 
         to_check = set(self.subs)
         subscriber = self.redis.pubsub(ignore_subscribe_messages=True)
+        result_box = [0]
 
         def _sub_handler(item):
             data = self._get_data_dict(item)
-            # FIXME - Needs more checks (publisher ID, event)
             if data and data["publisher_id"] == self.pub_id and data["event"] == event:
-                if "ras" in data and data["ras"] == 1:
+                if "ras" in data:
                     to_check.remove(data["tool_id"])
+                    if data["ras"] != 1:
+                        print(
+                            f"WARNING: Tool '{data['tool_id']}' returned bad response for event '{event}', ras: {data['ras']}"
+                        )
+                        result_box[0] = 1
             if not to_check:
                 listener.stop()
 
         subscriber.subscribe(**{"event-signal-response": _sub_handler})
         listener = subscriber.run_in_thread()
-        return listener
+        return listener, result_box
 
     def _valid_event_list(self, events):
         return (
@@ -171,8 +176,7 @@ class SignalExporter:
             return 3
 
         sig = self._sig_builder(event=event, sample=sample, tag=tag, metadata=metadata)
-        result = 0
-        sub_check = self._check_subs(event)
+        sub_check, result_box = self._check_subs(event)
 
         self.redis.publish(channel="event-signal-pubsub", message=sig.to_json_str())
 
@@ -182,10 +186,9 @@ class SignalExporter:
             counter += 1
             if counter >= 200:
                 print("Timeout after waiting 20 seconds for sub response")
-                result = 2
-                break
+                return 2
 
-        return result
+        return result_box[0]
 
     def initialize(self, legal_events, tag=None):
         if not self._valid_event_list(legal_events):

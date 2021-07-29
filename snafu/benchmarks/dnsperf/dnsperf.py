@@ -24,7 +24,6 @@ class RawDnsperfSample(BaseModel):
 
 
 class DnsperfStdout(BaseModel):
-    data: Tuple[RawDnsperfSample, ...]
     avg_request_packet_size: int
     avg_response_packet_size: int
     sum_rtt: float
@@ -34,6 +33,7 @@ class DnsperfStdout(BaseModel):
     start_time: datetime
     dnsperf_version: str
     time_limit: float
+    data: Optional[RawDnsperfSample]
 
 
 class DnsperfConfig(BaseModel):
@@ -215,27 +215,20 @@ class Dnsperf(Benchmark):
                 )
                 return None
 
-            stdout: DnsperfStdout = self.parse_stdout(sample.successful.stdout)
+            stdout: DnsperfStdout
+            samples: Tuple[RawDnsperfSample, ...]
+            stdout, samples = self.parse_stdout(sample.successful.stdout)
             cfg: DnsperfConfig = DnsperfConfig.new(stdout, self.config, load=load)
-            yield self.create_new_result(data=dict(stdout), config=dict(cfg), tag="results")
+            for sample in samples:
+                sample: RawDnsperfSample
+                stdout.data = sample
+                yield self.create_new_result(data=dict(stdout), config=dict(cfg), tag="results")
 
-    def parse_stdout(self, stdout: str) -> DnsperfStdout:
+    def parse_stdout(self, stdout: str) -> Tuple[DnsperfStdout, Tuple[RawDnsperfSample, ...]]:
         """Return parsed stdout of Dnsperf sample."""
 
         output_parser = ttp(data=stdout, template=self.output_template)
         output_parser.parse()
         result = output_parser.result()[0][0]
         result["config"]["start_time"] = dateutil.parser.parse(result["config"]["start_time"])
-        return DnsperfStdout(
-            data=[
-                RawDnsperfSample(
-                    fqdn=item["fqdn"],
-                    qtype=item["qtype"],
-                    rcode=item["rcode"],
-                    rtt_mu_s=item["rtt_s"] * 1_000_000,
-                )
-                for item in result["data"]
-            ],
-            **result["stats"],
-            **result["config"],
-        )
+        return DnsperfStdout(**result["stats"], **result["config"]), result["data"]

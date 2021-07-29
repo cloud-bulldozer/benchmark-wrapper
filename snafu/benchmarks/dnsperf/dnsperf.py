@@ -3,7 +3,7 @@
 """Wrapper for running the dnsperf benchmark.
 See https://dns-oarc.net/tools/dnsperf for more information."""
 from datetime import datetime
-from typing import Iterable, Optional, Union, Tuple
+from typing import Iterable, Optional, Tuple
 from pathlib import Path
 
 import dateutil.parser
@@ -135,44 +135,6 @@ class Dnsperf(Benchmark):
         """Clean up artifacts from the dnsperf benchmark."""
         self.logger.info("Cleaning up dnsperf benchmark.")
         return True
-
-    def _one_trial(self, load: float = None) -> Union[BenchmarkResult, None]:
-        cmd = [
-            "dnsperf",
-            "-v",  # print latency information for each query
-            "-s",
-            self.config.address,
-            "-p",
-            self.config.port,
-            "-d",
-            self.config.query_filepath,
-            "-c",
-            self.config.clients,
-            "-l",
-            self.config.time_limit,
-            "-m",
-            self.config.transport_mode,
-        ]
-
-        if load:
-            cmd = [*cmd, "-Q", str(load)]
-
-        sample: ProcessSample = sample_process(
-            cmd, self.logger,
-        )
-
-        if not sample.success:
-            self.logger.critical(f"dnsperf failed to complete! Got results: {sample}\n")
-            return None
-        elif sample.successful.stdout is None:
-            self.logger.critical(
-                ("dnsperf ran successfully, but did not get output on stdout.\n" f"Got results: {sample}\n")
-            )
-            return None
-
-        stdout: DnsperfStdout = self.parse_stdout(sample.successful.stdout)
-        cfg: DnsperfConfig = DnsperfConfig.new(stdout, self.config, load=load)
-        return self.create_new_result(data=dict(stdout), config=dict(cfg), tag="results")
 
     def collect(self) -> Iterable[BenchmarkResult]:
         """Run the dnsperf benchmark and collect results."""

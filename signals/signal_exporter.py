@@ -111,7 +111,7 @@ class SignalExporter:
         subscriber.subscribe(**{"event-signal-response": _init_handler})
         self.init_listener = subscriber.run_in_thread()
 
-    def _check_subs(self):
+    def _check_subs(self, event):
         if not self.subs:
             return 0
 
@@ -121,8 +121,9 @@ class SignalExporter:
         def _sub_handler(item):
             data = self._get_data_dict(item)
             # FIXME - Needs more checks (publisher ID, event)
-            if data and "ras" in data and data["ras"] == 1:
-                to_check.remove(data["tool_id"])
+            if data and data["publisher_id"] == self.pub_id and data["event"] == event:
+                if "ras" in data and data["ras"] == 1:
+                    to_check.remove(data["tool_id"])
             if not to_check:
                 listener.stop()
 
@@ -171,7 +172,7 @@ class SignalExporter:
 
         sig = self._sig_builder(event=event, sample=sample, tag=tag, metadata=metadata)
         result = 0
-        sub_check = self._check_subs()
+        sub_check = self._check_subs(event)
 
         self.redis.publish(channel="event-signal-pubsub", message=sig.to_json_str())
 

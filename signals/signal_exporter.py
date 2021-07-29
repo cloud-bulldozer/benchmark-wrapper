@@ -136,11 +136,11 @@ class SignalExporter:
         listener = subscriber.run_in_thread()
         return listener, result_box
 
-    def _valid_event_list(self, events):
+    def _valid_str_list(self, names):
         return (
-            bool(events)
-            and isinstance(events, list)
-            and all(isinstance(event, str) for event in events)
+            bool(names)
+            and isinstance(names, list)
+            and all(isinstance(event, str) for event in names)
         )
 
     def publish_signal(self, event, sample: int = -1, tag=None, metadata=None) -> int:
@@ -190,9 +190,17 @@ class SignalExporter:
 
         return result_box[0]
 
-    def initialize(self, legal_events, tag=None):
-        if not self._valid_event_list(legal_events):
-            print("'legal_events' arg must be a list of strings")
+    def initialize(self, legal_events, tag=None, expected_hosts=None):
+        if not self._valid_str_list(legal_events):
+            print("ERROR: 'legal_events' arg must be a list of string event names")
+            return
+
+        if expected_hosts:
+            if not self._valid_str_list(expected_hosts):
+                print("ERROR: 'expected_hosts' arg must be a list of string hostnames")
+                return
+            for host in expected_hosts:
+                self.subs.append(host + "-resp")
 
         self.legal_events = legal_events
         sig = self._sig_builder(event="initialization", tag=tag)

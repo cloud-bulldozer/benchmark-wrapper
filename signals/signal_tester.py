@@ -6,7 +6,11 @@ responder = signal_exporter.SignalResponder()
 def _listener():
     for signal in responder.listen():
         print(signal)
-        responder.respond(signal["publisher_id"], signal["event"], 1)
+        if "tag" in signal and signal["tag"] == "bad":
+            ras = 0
+        else:
+            ras = 1
+        responder.respond(signal["publisher_id"], signal["event"], ras)
 init = Process(target=_listener)
 init.start()
 
@@ -19,6 +23,12 @@ time.sleep(1)
 
 print("\nBENCHMARK START TEST\n")
 result = sig_ex.publish_signal("benchmark-start", metadata={"something": "cool info"})
+time.sleep(1)
+print(f"SUBS CLEARED! Result code: {result}")
+time.sleep(1)
+
+print("\nBENCHMARK STOP TEST\n")
+result = sig_ex.publish_signal("benchmark-stop", metadata={"tool": "give bad resp"}, tag="bad")
 time.sleep(1)
 print(f"SUBS CLEARED! Result code: {result}")
 time.sleep(1)

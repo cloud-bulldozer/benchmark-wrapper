@@ -1,0 +1,23 @@
+[MASTER]
+jobs=0
+ignore-paths=
+    snafu\/utils\/,
+    snafu\/.*_wrapper\/,
+    snafu\/.*\/trigger.*\.py,
+    snafu\/.*\/.*wrapper\.py,
+    snafu\/run_snafu.py,
+    snafu\/vfs_stat.py,
+    setup.py,
+    docs\/source\/conf.py,
+
+[MESSAGES CONTROL]
+disable=
+    duplicate-code,
+    import-error,
+    too-few-public-methods,
+    too-many-arguments,
+    too-many-instance-attributes,
+    fixme
+
+[FORMAT]
+max-line-length=110

@@ -9,4 +9,3 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 COPY . /opt/snafu
 RUN pip3 install --upgrade # benchmark-wrapper fails to install otherwise
 RUN pip3 install -e /opt/snafu/
-

@@ -1,7 +1,5 @@
 FROM registry.centos.org/centos:8
 
-COPY snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
-
 RUN dnf -y install --nodocs \
         epel-release \
         openssl-devel \

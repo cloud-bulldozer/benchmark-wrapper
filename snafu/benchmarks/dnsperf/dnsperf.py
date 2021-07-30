@@ -36,8 +36,7 @@ class DnsperfStdout:
     throughput: float
     start_time: datetime
     dnsperf_version: str
-    time_limit: float
-    data: Optional[RawDnsperfSample] = None
+    time_window_size: float
 
 
 class DnsperfConfig(BaseModel):
@@ -50,7 +49,7 @@ class DnsperfConfig(BaseModel):
     # 0 to 10_000
     clients: int
     # [1, +inf)
-    time_limit: float
+    time_window_size: float
     transport_mode: str
     # [1, +inf]
     max_allowed_load: Optional[float] = None
@@ -110,10 +109,10 @@ class Dnsperf(Benchmark):
             help="Quantity of entries allowed in cache",
         ),
         ConfigArgument(
-            "-l",
-            "--time-limit",
-            dest="time_limit",
-            env_var="time_limit",
+            "-w",
+            "--time-window-size",
+            dest="time_window_size",
+            env_var="time_window_size",
             help="Time window size for test",
             default=".01",
         ),
@@ -157,7 +156,7 @@ class Dnsperf(Benchmark):
                 "-c",
                 self.config.clients,
                 "-l",
-                self.config.time_limit,
+                self.config.time_window_size,
                 "-m",
                 self.config.transport_mode,
             ]
@@ -187,14 +186,18 @@ class Dnsperf(Benchmark):
             cfg: DnsperfConfig = DnsperfConfig.new(stdout, self.config, load=load)
 
             for i, data_point in enumerate(data_points):
-                stdout.data = RawDnsperfSample(
+                dnsperf_sample: RawDnsperfSample = RawDnsperfSample(
                     rtt_mu_s=int(data_point["rtt_s"] * 1_000_000),
                     iteration=i,
                     fqdn=data_point["fqdn"],
                     qtype=data_point["qtype"],
                     rcode=data_point["rcode"],
                 )
-                yield self.create_new_result(data=dataclasses.asdict(stdout), config=dict(cfg), tag="results")
+                yield self.create_new_result(
+                    data=toolz.merge(dataclasses.asdict(stdout), dataclasses.asdict(dnsperf_sample)),
+                    config=dict(cfg),
+                    tag="results",
+                )
 
     def parse_process_output(self, stdout: str) -> Tuple[DnsperfStdout, Tuple[RawDnsperfSample, ...]]:
         """Parse string output from the dnsperf benchmark."""

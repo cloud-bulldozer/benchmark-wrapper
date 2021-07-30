@@ -87,9 +87,10 @@ class SignalExporter:
         if not "data" in response:
             print("No data in this response message")
             return None
-        if isinstance(response["data"], int):
+        try:
+            data = json.loads(response["data"])
+        except ValueError:
             return None
-        data = json.loads(response["data"])
         if "tool_id" not in data or "publisher_id" not in data or "event" not in data:
             print("Malformed response data found")
             return None
@@ -113,7 +114,7 @@ class SignalExporter:
 
     def _check_subs(self, event):
         if not self.subs:
-            return 0
+            return None, [0]
 
         to_check = set(self.subs)
         subscriber = self.redis.pubsub(ignore_subscribe_messages=True)
@@ -220,9 +221,14 @@ class SignalResponder:
         self.subscriber = self.redis.pubsub(ignore_subscribe_messages=True)
         self.subscriber.subscribe("event-signal-pubsub")
         self.tool_id = platform.node() + "-resp"  # ADD UUID HERE?
+        self.locked_id = None
+        self.locked_tag = None
 
     def _parse_signal(self, signal):
-        data = json.loads(signal["data"])
+        try:
+            data = json.loads(signal["data"])
+        except ValueError:
+            return None
         # FIXME - Replace below line, maybe with dataclasses.fields()?
         check_set = set(
             [
@@ -238,7 +244,10 @@ class SignalResponder:
         if set(data.keys()) == check_set or check_set - set(data.keys()) == {
             "metadata"
         }:
-            return data
+            if (not self.locked_id or self.locked_id == data["publisher_id"]) and (
+                not self.locked_tag or self.locked_tag == data["tag"]
+            ):
+                return data
         return None
 
     def listen(self):
@@ -250,3 +259,15 @@ class SignalResponder:
     def respond(self, publisher_id, event, ras=None):
         response = Response(self.tool_id, publisher_id, event, ras)
         self.redis.publish("event-signal-response", response.to_json_str())
+
+    def lock_id(self, publisher_id: str):
+        if isinstance(publisher_id, str):
+            self.locked_id == publisher_id
+        else:
+            print("Unsuccessful lock, 'publisher_id' must be type str")
+
+    def lock_tag(self, tag: str):
+        if isinstance(tag, str):
+            self.locked_tag == tag
+        else:
+            print("Unsuccessful lock, 'tag' must be type str")

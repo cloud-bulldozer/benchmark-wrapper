@@ -40,8 +40,8 @@ class TestLiveProcess:
         monkeypatch.setattr("snafu.process.LiveProcess.cleanup", monkey_cleanup)
 
         with snafu.process.LiveProcess("") as proc:
-            assert proc.monkey_start is True
-        assert proc.monkey_cleanup is True
+            assert proc.monkey_start is True  # pylint: disable=no-member
+        assert proc.monkey_cleanup is True  # pylint: disable=no-member
 
     @staticmethod
     def test_live_process_runs_a_command_and_gives_output():

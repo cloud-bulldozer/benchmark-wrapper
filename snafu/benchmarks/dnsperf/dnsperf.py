@@ -56,6 +56,7 @@ class DnsperfConfig(BaseModel):
     cache_size: Optional[int] = None
     networkpolicy: Optional[str] = None
     pod_id: Optional[str] = None
+    node_id: Optional[str] = None
 
     @classmethod
     def new(cls, stdout: DnsperfStdout, config: Config, load):

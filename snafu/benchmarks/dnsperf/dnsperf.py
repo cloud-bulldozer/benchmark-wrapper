@@ -42,7 +42,7 @@ class DnsperfStdout:
 class DnsperfConfig(BaseModel):
     address: str
     port: int
-    query_filepath: Path
+    query_filepath: str
     start_time: datetime
     sum_rtt: float
     dnsperf_version: str

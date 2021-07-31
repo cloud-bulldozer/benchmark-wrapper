@@ -86,7 +86,7 @@ class Dnsperf(Benchmark):
             required=True,
             help="filepath to a list of DNS queries",
         ),
-        ConfigArgument("--load-sequence", dest="load_sequence", type=int, nargs="+", default=None),
+        ConfigArgument("-l", "--load-sequence", dest="load_sequence", type=int, nargs="+", default=None),
         ConfigArgument(
             "-a",
             "--address",
@@ -125,7 +125,8 @@ class Dnsperf(Benchmark):
             default="udp",
         ),
         ConfigArgument("--network-policy", dest="networkpolicy", env_var="networkpolicy"),
-        ConfigArgument("--pod-id", dest="pod_id", env_var="my_pod_idx", default=None),
+        ConfigArgument("--pod-id", dest="pod_id", default=None),
+        ConfigArgument("--node-id", dest="node_id", default=None),
     )
 
     def setup(self) -> bool:

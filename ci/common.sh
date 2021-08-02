@@ -45,6 +45,7 @@ function update_operator_image() {
     fi
   done
   sed -i "s|image: $default_operator_image|image: $image_spec|g" resources/operator.yaml
+  export BENCHMARK_OPERATOR_IMAGE=$image_spec
 }
 
 function wait_clean {

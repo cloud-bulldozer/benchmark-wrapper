@@ -4,7 +4,7 @@ benchmark-wrapper uses [tox](https://pypi.org/project/tox/) and [pytest](https:/
 
 As a quick reminder, unit testing is defined as follows by [STF](https://softwaretestingfundamentals.com/unit-testing/):
 
-> UNIT TESTING, also known as COMPONENT TESTING,  is a level of software testing where individual units / components of a software are tested. The purpose is to validate that each unit of the software performs as designed.
+> UNIT TESTING, also known as COMPONENT TESTING, is a level of software testing where individual units / components of a software are tested. The purpose is to validate that each unit of the software performs as designed.
 
 The goal for unit testing within benchmark-wrapper specifically is to ensure that all shared units (common modules and functionality) behave as expected, in order to create a solid foundation that all benchmarks may be based upon.
 

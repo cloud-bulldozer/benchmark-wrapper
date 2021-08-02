@@ -51,6 +51,7 @@ class DnsperfConfig(BaseModel):
     # [1, +inf)
     time_window_size: float
     transport_mode: str
+    timeout_len: float
     # [1, +inf]
     max_allowed_load: Optional[float] = None
     cache_size: Optional[int] = None
@@ -117,6 +118,7 @@ class Dnsperf(Benchmark):
             help="Time window size for test",
             default=".01",
         ),
+        ConfigArgument("--timeout", help="Length of timeout in seconds", dest="timeout_len", default="5"),
         ConfigArgument(
             "-m",
             "--transport-mode",
@@ -134,6 +136,15 @@ class Dnsperf(Benchmark):
         self.logger.info("Setting up dnsperf benchmark.")
         self.config.parse_args()
         self.config.load_sequence.append(None)
+        # dynamically set timeout length for template parser
+        self.output_template = (
+            self.output_template + "\n"
+            "<vars>"
+            "default_values = {"
+            f"'rtt_s': {self.config.timeout_len}"
+            "}"
+            "</vars>\n"
+        )
         return True
 
     def cleanup(self) -> bool:
@@ -159,6 +170,8 @@ class Dnsperf(Benchmark):
                 self.config.clients,
                 "-l",
                 self.config.time_window_size,
+                "-t",
+                self.config.timeout_len,
                 "-m",
                 self.config.transport_mode,
             ]

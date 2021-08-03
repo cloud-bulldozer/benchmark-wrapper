@@ -51,7 +51,8 @@ venv.bak/
 
 # Testing
 .tox
-.coverage*
+.coverage
+.coverage.*
 
 # JetBrains settings
 .idea/

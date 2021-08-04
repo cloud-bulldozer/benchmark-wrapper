@@ -3,6 +3,7 @@
 """Wrapper for running the dnsperf benchmark.
 See https://dns-oarc.net/tools/dnsperf for more information."""
 import dataclasses
+import random
 from datetime import datetime
 from typing import Iterable, Optional, Tuple
 from pathlib import Path
@@ -17,8 +18,7 @@ from snafu.config import Config, ConfigArgument
 from snafu.process import ProcessSample, sample_process
 
 
-@dataclasses.dataclass
-class RawDnsperfSample:
+class RawDnsperfSample(BaseModel):
     fqdn: str
     rtt_mu_s: int
     qtype: str
@@ -26,8 +26,7 @@ class RawDnsperfSample:
     iteration: Optional[int]
 
 
-@dataclasses.dataclass
-class DnsperfStdout:
+class DnsperfStdout(BaseModel):
     avg_request_packet_size: int
     avg_response_packet_size: int
     sum_rtt: float
@@ -53,9 +52,11 @@ class DnsperfConfig(BaseModel):
     transport_mode: str
     timeout_len: float
     # [1, +inf]
+    rng_seed: int
     max_allowed_load: Optional[float] = None
     cache_size: Optional[int] = None
     networkpolicy: Optional[str] = None
+    network_type: Optional[str] = None
     pod_id: Optional[str] = None
     node_id: Optional[str] = None
 
@@ -66,7 +67,7 @@ class DnsperfConfig(BaseModel):
         """
         # merge dictionaries (right-most dictionary takes precedence)
         # then, unpack merged dictionary
-        return cls(**toolz.merge(config.params.__dict__, dataclasses.asdict(stdout)), max_allowed_load=load)
+        return cls(**toolz.merge(config.params.__dict__, dict(stdout)), max_allowed_load=load)
 
 
 class Dnsperf(Benchmark):
@@ -87,7 +88,7 @@ class Dnsperf(Benchmark):
             required=True,
             help="filepath to a list of DNS queries",
         ),
-        ConfigArgument("-l", "--load-sequence", dest="load_sequence", type=int, nargs="+", default=None),
+        ConfigArgument("-l", "--load-sequence", dest="load_sequence", type=int, nargs="+", default=list()),
         ConfigArgument(
             "-a",
             "--address",
@@ -127,8 +128,10 @@ class Dnsperf(Benchmark):
             default="udp",
         ),
         ConfigArgument("--network-policy", dest="networkpolicy", env_var="networkpolicy"),
+        ConfigArgument("--network-type", dest="network_type", env_var="network_type"),
         ConfigArgument("--pod-id", dest="pod_id", default=None),
         ConfigArgument("--node-id", dest="node_id", default=None),
+        ConfigArgument("--rng-seed", dest="rng_seed", default=1),
     )
 
     def setup(self) -> bool:
@@ -136,6 +139,7 @@ class Dnsperf(Benchmark):
         self.logger.info("Setting up dnsperf benchmark.")
         self.config.parse_args()
         self.config.load_sequence.append(None)
+        random.seed(self.config.rng_seed)
         # dynamically set timeout length for template parser
         self.output_template = (
             self.output_template + "\n"
@@ -156,6 +160,7 @@ class Dnsperf(Benchmark):
         """Run the dnsperf benchmark and collect results."""
 
         self.logger.info("Starting dnsperf")
+        random.shuffle(self.config.load_sequence)
         for load in self.config.load_sequence:
             cmd = [
                 "dnsperf",

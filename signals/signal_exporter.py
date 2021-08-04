@@ -1,11 +1,16 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 import redis
 import platform
 import json
 import time
 import uuid
 
+class ResultCodes(Enum):
+    ALL_SUBS_SUCCESS = 0
+    SUB_FAILED = 1
+    MISSING_RESPONSE = 2
 
 @dataclass
 class Signal:
@@ -179,7 +184,7 @@ class SignalExporter:
 
         to_check = set(self.subs)
         subscriber = self.redis.pubsub(ignore_subscribe_messages=True)
-        result_box = [0]
+        result_code_holder = [ResultCodes.ALL_SUBS_SUCCESS]
 
         def _sub_handler(item: Dict) -> None:
             data = self._get_data_dict(item)
@@ -190,13 +195,13 @@ class SignalExporter:
                         print(
                             f"WARNING: Tool '{data['responder_id']}' returned bad response for event '{event}', ras: {data['ras']}"
                         )
-                        result_box[0] = 1
+                        result_code_holder[0] = ResultCodes.SUB_FAILED
             if not to_check:
                 listener.stop()
 
         subscriber.subscribe(**{"event-signal-response": _sub_handler})
         listener = subscriber.run_in_thread()
-        return listener, result_box
+        return listener, result_code_holder
 
     def _valid_str_list(self, names: List[str]) -> bool:
         """
@@ -210,22 +215,23 @@ class SignalExporter:
         )
 
     def publish_signal(
-        self, event: str, sample: int = -1, tag: str = None, metadata: Dict = None
+        self, event: str, sample: int = -1, tag: str = None, metadata: Dict = None, timeout: int = 20
     ) -> int:
         """
         Publish a legal event signal. Includes additional options to specify sample_no,
         a tag, and any other additional metadata. Will then wait for responses from
-        subscribed responders (if any). Returns one of the below result codes based on 
+        subscribed responders (if any). The method will give up once the timeout period
+        is reached (default = 20s). Returns one of the below result codes based on
         signal publish/response success.
 
         RESULT CODES:
-        0 = ALL SUBS RESPONDED WELL
-        1 = SOME SUBS RESPONDED BADLY
-        2 = NOT ALL SUBS RESPONDED
-        3 = ILLEGAL EVENT NAME PASSED IN
-        4 = INITIALIZATION SIGNAL ATTEMPTED, BAD
-        5 = SHUTDOWN SIGNAL ATTEMPTED, BAD
+        ALL_SUBS_SUCCESS = 0 = ALL SUBS RESPONDED WELL
+        SUB_FAILED = 1 = ONE OR MORE SUB RESPONDED BADLY
+        MISSING_RESPONE = 2 = NOT ALL SUBS RESPONDED
         """
+        if not isinstance(timeout, int):
+            raise TypeError("'timeout' arg must be an int value")
+
         skip_check = False
         if not self.init_listener or not self.init_listener.is_alive():
             print(
@@ -234,21 +240,16 @@ class SignalExporter:
             skip_check = True
 
         if event == "initialization":
-            print(
-                "ERROR: Please use the 'initialize()' method for publishing initialization signals"
-            )
-            return 4
+            raise ValueError("Please use the 'initialize()' method for publishing 'initialization' signals")
 
         if event == "shutdown":
-            print("ERROR: Please use the 'shutdown()' method for shutdown signals")
-            return 5
+            raise ValueError("ERROR: Please use the 'shutdown()' method for 'shutdown' signals")
 
         if not skip_check and not event in self.legal_events:
-            print(f"Event {self.event} not one of legal events: {self.legal_events}")
-            return 3
+            raise ValueError(f"Event {self.event} not one of legal events: {self.legal_events}")
 
         sig = self._sig_builder(event=event, sample=sample, tag=tag, metadata=metadata)
-        sub_check, result_box = self._check_subs(event)
+        sub_check, result_code_holder = self._check_subs(event)
 
         self.redis.publish(channel="event-signal-pubsub", message=sig.to_json_str())
 
@@ -256,11 +257,11 @@ class SignalExporter:
         while sub_check and sub_check.is_alive():
             time.sleep(0.1)
             counter += 1
-            if counter >= 200:
-                print("Timeout after waiting 20 seconds for sub response")
-                return 2
+            if counter >= timeout * 10:
+                print(f"Timeout after waiting {timeout} seconds for sub response")
+                return ResultCodes.MISSING_RESPONSE
 
-        return result_box[0]
+        return result_code_holder[0]
 
     def initialize(
         self, legal_events: List[str], tag: str = None, expected_hosts: List[str] = None
@@ -272,13 +273,11 @@ class SignalExporter:
         input of expected hostnames (subscribers) as well as a tag.
         """
         if not self._valid_str_list(legal_events):
-            print("ERROR: 'legal_events' arg must be a list of string event names")
-            return
+            raise TypeError("ERROR: 'legal_events' arg must be a list of string event names")
 
         if expected_hosts:
             if not self._valid_str_list(expected_hosts):
-                print("ERROR: 'expected_hosts' arg must be a list of string hostnames")
-                return
+                raise TypeError("ERROR: 'expected_hosts' arg must be a list of string hostnames")
             for host in expected_hosts:
                 self.subs.append(host + "-resp")
 

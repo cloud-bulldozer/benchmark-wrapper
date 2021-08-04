@@ -36,15 +36,6 @@ function update_operator_image() {
   image_spec=$image_location/$image_account/benchmark-operator:$SNAFU_IMAGE_TAG
   make image-build image-push deploy IMG=$image_spec
   kubectl wait --for=condition=available "deployment/benchmark-controller-manager" -n benchmark-operator --timeout=300s
-
-  # In case we have issues uploading to quay we will retry a few times
-  for i in {1..3}; do
-    $SUDO ${image_builder} push ${image_spec} && break
-    if [[ ${i} == 3 ]]; then
-      echo "Could not upload image to $image_location. Exiting"
-      exit $NOTOK
-    fi
-  done
 }
 
 function wait_clean {

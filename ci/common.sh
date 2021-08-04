@@ -34,7 +34,7 @@ function update_operator_image() {
   sed -i "s#${default_ripsaw_image_prefix}/stressng:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/stressng:${SNAFU_IMAGE_TAG}#g" roles/stressng/templates/*
   sed -i "s#${default_ripsaw_image_prefix}/flent:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/flent:${SNAFU_IMAGE_TAG}#g" roles/flent/templates/*
   image_spec=$image_location/$image_account/benchmark-operator:$SNAFU_IMAGE_TAG
-  make podman-build podman-push deploy IMG=$image_spec
+  make image-build image-push deploy IMG=$image_spec
   kubectl wait --for=condition=available "deployment/benchmark-controller-manager" -n benchmark-operator --timeout=300s
 
   # In case we have issues uploading to quay we will retry a few times

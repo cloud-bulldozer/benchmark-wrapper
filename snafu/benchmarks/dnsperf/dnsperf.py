@@ -3,6 +3,7 @@
 """Wrapper for running the dnsperf benchmark.
 See https://dns-oarc.net/tools/dnsperf for more information."""
 import dataclasses
+import random
 from datetime import datetime
 from typing import Optional, Tuple, Union
 from pathlib import Path
@@ -142,6 +143,7 @@ class Dnsperf(Benchmark):
         ConfigArgument("--network-type", dest="network_type", env_var="network_type"),
         ConfigArgument("--pod-id", dest="pod_id", default=None),
         ConfigArgument("--node-id", dest="node_id", default=None),
+        ConfigArgument("--rng-seed", dest="rng_seed", default=1),
     )
 
     def setup(self) -> bool:

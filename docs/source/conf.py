@@ -65,5 +65,5 @@ nbsphinx_execute = "always"
 
 
 # -- linkcheck configuration --------------------------------------------------
-linkcheck_retries = 3
-linkcheck_timeout = 30
+linkcheck_retries = 5
+linkcheck_timeout = 60

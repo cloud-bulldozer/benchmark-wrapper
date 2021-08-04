@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 import redis
 import platform
 import json
@@ -21,16 +21,16 @@ class Signal:
     runner_host: str = platform.node()
     sample_no: int = -1
     tag: str = "No tag specified"
-    metadata: Dict = None
+    metadata: Optional[Dict] = None
 
     def __post_init__(self) -> None:
         """
         Checks all field types.
         """
         for (name, field_type) in self.__annotations__.items():
+            if name == "metadata":
+                field_type = field_type.__args__
             if not isinstance(self.__dict__[name], field_type):
-                if name == "metadata" and self.metadata == None:
-                    continue
                 raise TypeError(
                     f"The field {name} should be type {field_type}, not {type(self.__dict__[name])}"
                 )
@@ -59,16 +59,16 @@ class Response:
     responder_id: str
     publisher_id: str
     event: str
-    ras: int
+    ras: Optional[int]
 
     def __post_init__(self) -> None:
         """
         Checks all field types.
         """
         for (name, field_type) in self.__annotations__.items():
+            if name == "ras":
+                field_type = field_type.__args__
             if not isinstance(self.__dict__[name], field_type):
-                if name == "ras" and self.ras == None:
-                    continue
                 raise TypeError(
                     f"The field {name} should be type {field_type}, not {type(self.__dict__[name])}"
                 )
@@ -169,7 +169,7 @@ class SignalExporter:
         subscriber.subscribe(**{"event-signal-response": _init_handler})
         self.init_listener = subscriber.run_in_thread()
 
-    def _check_subs(self, event: str) -> Tuple[Any, list]:
+    def _check_subs(self, event: str) -> Tuple[Any, List[int]]:
         """
         Listen for responses from all registered subscribers. Return
         listener, as well as value based on responders' RAS codes.
@@ -198,7 +198,7 @@ class SignalExporter:
         listener = subscriber.run_in_thread()
         return listener, result_box
 
-    def _valid_str_list(self, names: list) -> bool:
+    def _valid_str_list(self, names: List[str]) -> bool:
         """
         Return true if input is a non-empty list of strings. Otherwise
         return false.
@@ -263,7 +263,7 @@ class SignalExporter:
         return result_box[0]
 
     def initialize(
-        self, legal_events: list, tag: str = None, expected_hosts: list = None
+        self, legal_events: List[str], tag: str = None, expected_hosts: List[str] = None
     ) -> None:
         """
         Publishes an initialization message. Starts a listener that reads responses

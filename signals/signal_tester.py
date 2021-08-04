@@ -2,7 +2,7 @@ from signals import signal_exporter
 import time
 from multiprocessing import Process
 
-responder = signal_exporter.SignalResponder()
+responder = signal_exporter.SignalResponder(responder_name="fakeresp")
 def _listener():
     for signal in responder.listen():
         print(signal)

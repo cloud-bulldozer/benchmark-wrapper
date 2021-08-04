@@ -56,7 +56,7 @@ class Response:
     converting object data to json string.
     """
 
-    tool_id: str
+    responder_id: str
     publisher_id: str
     event: str
     ras: int
@@ -141,14 +141,18 @@ class SignalExporter:
             data = json.loads(response["data"])
         except ValueError:
             return None
-        if "tool_id" not in data or "publisher_id" not in data or "event" not in data:
+        if (
+            "responder_id" not in data
+            or "publisher_id" not in data
+            or "event" not in data
+        ):
             print("Malformed response data found")
             return None
         return data
 
     def _fetch_responders(self) -> None:
         """
-        Start initialization response listener. Add tool_ids from proper
+        Start initialization response listener. Add respoder_ids from proper
         responses to the subscriber list.
         """
         subscriber = self.redis.pubsub(ignore_subscribe_messages=True)
@@ -160,7 +164,7 @@ class SignalExporter:
                 and data["event"] == "initialization"
                 and data["publisher_id"] == self.pub_id
             ):
-                self.subs.append(data["tool_id"])
+                self.subs.append(data["responder_id"])
 
         subscriber.subscribe(**{"event-signal-response": _init_handler})
         self.init_listener = subscriber.run_in_thread()
@@ -181,10 +185,10 @@ class SignalExporter:
             data = self._get_data_dict(item)
             if data and data["publisher_id"] == self.pub_id and data["event"] == event:
                 if "ras" in data:
-                    to_check.remove(data["tool_id"])
+                    to_check.remove(data["responder_id"])
                     if data["ras"] != 1:
                         print(
-                            f"WARNING: Tool '{data['tool_id']}' returned bad response for event '{event}', ras: {data['ras']}"
+                            f"WARNING: Tool '{data['responder_id']}' returned bad response for event '{event}', ras: {data['ras']}"
                         )
                         result_box[0] = 1
             if not to_check:
@@ -302,15 +306,20 @@ class SignalResponder:
     response protocol for all published messages.
     """
 
-    def __init__(self, redis_host: str = "localhost", redis_port: int = 6379) -> None:
+    def __init__(
+        self,
+        redis_host: str = "localhost",
+        redis_port: int = 6379,
+        responder_name: str = platform.node(),
+    ) -> None:
         """
-        Sets exporter object fields and generates unique tool_id.
+        Sets exporter object fields and generates unique responder_id.
         Allows for specification of redis host/port.
         """
         self.redis = redis.Redis(host=redis_host, port=redis_port, db=0)
         self.subscriber = self.redis.pubsub(ignore_subscribe_messages=True)
         self.subscriber.subscribe("event-signal-pubsub")
-        self.tool_id = platform.node() + "-resp"  # ADD UUID HERE?
+        self.responder_id = responder_name + "-" + str(uuid.uuid4()) + "-resp"
         self.locked_id = None
         self.locked_tag = None
 
@@ -360,7 +369,7 @@ class SignalResponder:
         Also allows for optional ras code to be added on (required for 
         publisher acknowledgement, but not for initialization response).
         """
-        response = Response(self.tool_id, publisher_id, event, ras)
+        response = Response(self.responder_id, publisher_id, event, ras)
         self.redis.publish("event-signal-response", response.to_json_str())
 
     def lock_id(self, publisher_id: str) -> None:

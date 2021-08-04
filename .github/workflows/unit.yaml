@@ -40,7 +40,7 @@ jobs:
         with:
           python-version: 3.8
       - name: Install tox
-        run: Pip install tox
+        run: pip install tox
       - name: Create coverage report
         run: tox -e coverage
       - name: Upload coverage report

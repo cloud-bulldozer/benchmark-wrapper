@@ -58,5 +58,12 @@ html_theme_options = {"collapse_navigation": False}  # show + next to items in T
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = []
 
+
 # -- nbsphinx configuration --------------------------------------------------
+
 nbsphinx_execute = "always"
+
+
+# -- linkcheck configuration --------------------------------------------------
+linkcheck_retries = 3
+linkcheck_timeout = 30

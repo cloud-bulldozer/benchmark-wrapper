@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running the dnsperf benchmark.
 See https://dns-oarc.net/tools/dnsperf for more information."""
-import dataclasses
 import random
 from datetime import datetime
 from typing import Iterable, Optional, Tuple
@@ -214,9 +213,7 @@ class Dnsperf(Benchmark):
                     rcode=data_point["rcode"],
                 )
                 yield self.create_new_result(
-                    data=toolz.merge(dataclasses.asdict(stdout), dataclasses.asdict(dnsperf_sample)),
-                    config=dict(cfg),
-                    tag="results",
+                    data=toolz.merge(dict(stdout), dict(dnsperf_sample)), config=dict(cfg), tag="results",
                 )
 
     def parse_process_output(self, stdout: str) -> Tuple[DnsperfStdout, Tuple[RawDnsperfSample, ...]]:

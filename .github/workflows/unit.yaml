@@ -9,24 +9,32 @@ on:
 jobs:
   unit_tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pyver: [6, 7, 8, 9]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.6
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
+          python-version: 3.${{ matrix.pyver }}
       - name: Install tox
         run: pip install tox
       - name: Run Tox
-        run: tox -e py36-unit,py37-unit,py38-unit,py39-unit,coverage
+        run: tox -e py3${{ matrix.pyver }}-unit
+      - name: Upload coverage report artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-py3${{ matrix.pyver }}
+          path: .coverage-py3${{ matrix.pyver }}
+  coverage_report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v2
+      - name: Unpack artifact
+        run: find . -name ".coverage*" -exec mv {} . \;
+      - name: Create coverage report
+        run: tox -e coverage
       - name: Upload coverage report
         uses: codecov/codecov-action@v1
         with:

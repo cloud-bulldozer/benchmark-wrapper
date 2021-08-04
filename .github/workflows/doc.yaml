@@ -7,23 +7,17 @@ on:
 jobs:
   build_docs:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pyver: [6, 7, 8, 9]
     steps:
       - uses: actions/checkout@v2
       - name: Install build dependencies
         run: sudo apt-get install -y pandoc
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.6
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
+          python-version: 3.${{ matrix.pyver }}
       - name: Install tox
         run: pip install tox
       - name: Run Tox
-        run: tox -e py36-docs,py37-docs,py38-docs,py39-docs
+        run: tox -e py3${{ matrix.pyver }}-docs

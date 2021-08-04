@@ -27,7 +27,9 @@ jobs:
           name: coverage-py3${{ matrix.pyver }}
           path: .coverage-py3${{ matrix.pyver }}
   coverage_report:
+    needs: unit_tests
     runs-on: ubuntu-latest
+    needs: unit_tests
     steps:
       - name: Download coverage artifacts
         uses: actions/download-artifact@v2

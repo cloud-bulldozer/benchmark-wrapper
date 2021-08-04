@@ -20,7 +20,10 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.8
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
       - name: Install tox
         run: pip install tox
       - name: Run Tox
-        run: tox -e py36-docs,py37-docs,py38-docs
+        run: tox -e py36-docs,py37-docs,py38-docs,py39-docs

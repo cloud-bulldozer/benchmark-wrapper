@@ -7,10 +7,12 @@ import json
 import time
 import uuid
 
+
 class ResultCodes(Enum):
     ALL_SUBS_SUCCESS = 0
     SUB_FAILED = 1
     MISSING_RESPONSE = 2
+
 
 @dataclass
 class Signal:
@@ -190,7 +192,12 @@ class SignalExporter:
             data = self._get_data_dict(item)
             if data and data["publisher_id"] == self.pub_id and data["event"] == event:
                 if "ras" in data:
-                    to_check.remove(data["responder_id"])
+                    if data["responder_id"] not in to_check:
+                        print(
+                            f"WARNING: Got a response from tool '{data['responder_id']}' but it's not on the known subscribers list"
+                        )
+                    else:
+                        to_check.remove(data["responder_id"])
                     if data["ras"] != 1:
                         print(
                             f"WARNING: Tool '{data['responder_id']}' returned bad response for event '{event}', ras: {data['ras']}"
@@ -215,7 +222,12 @@ class SignalExporter:
         )
 
     def publish_signal(
-        self, event: str, sample: int = -1, tag: str = None, metadata: Dict = None, timeout: int = 20
+        self,
+        event: str,
+        sample: int = -1,
+        tag: str = None,
+        metadata: Dict = None,
+        timeout: int = 20,
     ) -> int:
         """
         Publish a legal event signal. Includes additional options to specify sample_no,
@@ -240,13 +252,19 @@ class SignalExporter:
             skip_check = True
 
         if event == "initialization":
-            raise ValueError("Please use the 'initialize()' method for publishing 'initialization' signals")
+            raise ValueError(
+                "Please use the 'initialize()' method for publishing 'initialization' signals"
+            )
 
         if event == "shutdown":
-            raise ValueError("ERROR: Please use the 'shutdown()' method for 'shutdown' signals")
+            raise ValueError(
+                "ERROR: Please use the 'shutdown()' method for 'shutdown' signals"
+            )
 
         if not skip_check and not event in self.legal_events:
-            raise ValueError(f"Event {self.event} not one of legal events: {self.legal_events}")
+            raise ValueError(
+                f"Event {self.event} not one of legal events: {self.legal_events}"
+            )
 
         sig = self._sig_builder(event=event, sample=sample, tag=tag, metadata=metadata)
         sub_check, result_code_holder = self._check_subs(event)
@@ -273,11 +291,15 @@ class SignalExporter:
         input of expected hostnames (subscribers) as well as a tag.
         """
         if not self._valid_str_list(legal_events):
-            raise TypeError("ERROR: 'legal_events' arg must be a list of string event names")
+            raise TypeError(
+                "ERROR: 'legal_events' arg must be a list of string event names"
+            )
 
         if expected_hosts:
             if not self._valid_str_list(expected_hosts):
-                raise TypeError("ERROR: 'expected_hosts' arg must be a list of string hostnames")
+                raise TypeError(
+                    "ERROR: 'expected_hosts' arg must be a list of string hostnames"
+                )
             for host in expected_hosts:
                 self.subs.append(host + "-resp")
 

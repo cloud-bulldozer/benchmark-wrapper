@@ -25,7 +25,7 @@ class Signal:
     publisher_id: str
     process_name: str
     event: str
-    runner_host: str = platform.node()
+    runner_host: str
     sample_no: int = -1
     tag: str = "No tag specified"
     metadata: Optional[Dict] = None
@@ -106,7 +106,7 @@ class SignalExporter:
         process_name: str,
         redis_host: str = "localhost",
         redis_port: int = 6379,
-        runner_host: str = None,
+        runner_host: str = platform.node(),
     ) -> None:
         """
         Sets exporter object fields and generates unique publisher_id.
@@ -129,8 +129,12 @@ class SignalExporter:
         Build a signal data object based on exporter object fields,
         as well as user-inputted fields. Returns the signal object.
         """
-        sig = Signal(publisher_id=self.pub_id, process_name=self.proc_name, event=event)
-        sig.runner_host = self.runner_host if self.runner_host else sig.runner_host
+        sig = Signal(
+            publisher_id=self.pub_id,
+            process_name=self.proc_name,
+            event=event,
+            runner_host=self.runner_host,
+        )
         sig.tag = tag if tag else sig.tag
         sig.metadata = metadata if metadata else sig.metadata
         sig.sample_no = sample if sample >= 0 else sig.sample_no

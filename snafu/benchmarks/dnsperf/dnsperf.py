@@ -6,9 +6,11 @@ import random
 from datetime import datetime
 from typing import Iterable, Optional, Tuple
 from pathlib import Path
+import dataclasses
 
 import dateutil.parser
 from pydantic import BaseModel
+import pydantic.dataclasses
 from ttp import ttp
 import toolz
 
@@ -21,13 +23,12 @@ class RawDnsperfSample(BaseModel):
     fqdn: str
     rtt_mu_s: int
     qtype: str
-    rcode: str
+    response_state: str
     iteration: Optional[int]
 
 
-class DnsperfStdout(BaseModel):
-    avg_request_packet_size: int
-    avg_response_packet_size: int
+@pydantic.dataclasses.dataclass
+class DnsperfStdout:
     sum_rtt: float
     queries_sent: int
     queries_completed: int
@@ -35,6 +36,11 @@ class DnsperfStdout(BaseModel):
     start_time: datetime
     dnsperf_version: str
     time_window_size: float
+    mean_load: Optional[float] = None
+
+    def __post_init_post_parse__(self):
+        self.mean_load = self.queries_sent / self.time_window_size
+        print(self.mean_load)
 
 
 class DnsperfConfig(BaseModel):
@@ -52,7 +58,7 @@ class DnsperfConfig(BaseModel):
     timeout_len: float
     # [1, +inf]
     rng_seed: int
-    max_allowed_load: Optional[float] = None
+    load_limit: Optional[float] = float("inf")
     cache_size: Optional[int] = None
     networkpolicy: Optional[str] = None
     network_type: Optional[str] = None
@@ -66,7 +72,7 @@ class DnsperfConfig(BaseModel):
         """
         # merge dictionaries (right-most dictionary takes precedence)
         # then, unpack merged dictionary
-        return cls(**toolz.merge(config.params.__dict__, dict(stdout)), max_allowed_load=load)
+        return cls(**toolz.merge(config.params.__dict__, dataclasses.asdict(stdout)), load_limit=load)
 
 
 class Dnsperf(Benchmark):
@@ -137,7 +143,7 @@ class Dnsperf(Benchmark):
         """Setup dnsperf benchmark."""
         self.logger.info("Setting up dnsperf benchmark.")
         self.config.parse_args()
-        self.config.load_sequence.append(None)
+        self.config.load_sequence.append(float("inf"))
         random.seed(self.config.rng_seed)
         # dynamically set timeout length for template parser
         self.output_template = (
@@ -160,7 +166,7 @@ class Dnsperf(Benchmark):
 
         self.logger.info("Starting dnsperf")
         random.shuffle(self.config.load_sequence)
-        for load in self.config.load_sequence:
+        for load_limit in self.config.load_sequence:
             cmd = [
                 "dnsperf",
                 "-v",  # print latency information for each query
@@ -180,8 +186,8 @@ class Dnsperf(Benchmark):
                 self.config.transport_mode,
             ]
 
-            if load:
-                cmd = [*cmd, "-Q", str(load)]
+            if isinstance(load_limit, int):
+                cmd = [*cmd, "-Q", str(load_limit)]
 
             sample: ProcessSample = sample_process(
                 cmd, self.logger,
@@ -202,7 +208,7 @@ class Dnsperf(Benchmark):
             stdout: DnsperfStdout
             data_points: Tuple[RawDnsperfSample, ...]
             stdout, data_points = self.parse_process_output(sample.successful.stdout)
-            cfg: DnsperfConfig = DnsperfConfig.new(stdout, self.config, load=load)
+            cfg: DnsperfConfig = DnsperfConfig.new(stdout, self.config, load=load_limit)
 
             for i, data_point in enumerate(data_points):
                 dnsperf_sample: RawDnsperfSample = RawDnsperfSample(
@@ -210,10 +216,12 @@ class Dnsperf(Benchmark):
                     iteration=i,
                     fqdn=data_point["fqdn"],
                     qtype=data_point["qtype"],
-                    rcode=data_point["rcode"],
+                    response_state=data_point["response_state"],
                 )
                 yield self.create_new_result(
-                    data=toolz.merge(dict(stdout), dict(dnsperf_sample)), config=dict(cfg), tag="results",
+                    data=toolz.merge(dataclasses.asdict(stdout), dict(dnsperf_sample)),
+                    config=dict(cfg),
+                    tag="results",
                 )
 
     def parse_process_output(self, stdout: str) -> Tuple[DnsperfStdout, Tuple[RawDnsperfSample, ...]]:

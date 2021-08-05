@@ -1,7 +1,6 @@
 from snafu.vegeta_wrapper.vegeta_wrapper import vegeta_wrapper
 from snafu.fio_wrapper.fio_wrapper import fio_wrapper
 from snafu.smallfile_wrapper.smallfile_wrapper import smallfile_wrapper
-from snafu.uperf_wrapper.uperf_wrapper import uperf_wrapper
 from snafu.pgbench_wrapper.pgbench_wrapper import pgbench_wrapper
 from snafu.fs_drift_wrapper.fs_drift_wrapper import fs_drift_wrapper
 from snafu.hammerdb.hammerdb_wrapper import hammerdb_wrapper
@@ -29,7 +28,6 @@ wrapper_dict = {
     "fs-drift": fs_drift_wrapper,
     "hammerdb": hammerdb_wrapper,
     "ycsb": ycsb_wrapper,
-    "uperf": uperf_wrapper,
     "pgbench": pgbench_wrapper,
     "vegeta": vegeta_wrapper,
     "scale": scale_openshift_wrapper,

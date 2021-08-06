@@ -4,7 +4,7 @@
 See https://dns-oarc.net/tools/dnsperf for more information."""
 import random
 from datetime import datetime
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional, Tuple, Union
 from pathlib import Path
 import dataclasses
 
@@ -19,20 +19,29 @@ from snafu.config import Config, ConfigArgument
 from snafu.process import ProcessSample, sample_process
 
 
-class RawDnsperfSample(BaseModel):
+class DnsRttSample(BaseModel):
     fqdn: str
-    rtt_mu_s: int
+    rtt_s: float
     qtype: str
     response_state: str
-    iteration: Optional[int]
+
+
+class ThroughputSample(BaseModel):
+    timestamp: datetime
+    throughput: float
+
+
+DnsperfSample = Union[DnsRttSample, ThroughputSample]
 
 
 @pydantic.dataclasses.dataclass
 class DnsperfStdout:
+    throughput_ts: Tuple[ThroughputSample, ...]
+    rtt_samples: Tuple[DnsRttSample, ...]
     sum_rtt: float
     queries_sent: int
     queries_completed: int
-    throughput: float
+    throughput_mean: float
     start_time: datetime
     dnsperf_version: str
     time_window_size: float
@@ -40,7 +49,6 @@ class DnsperfStdout:
 
     def __post_init_post_parse__(self):
         self.load_mean = self.queries_sent / self.time_window_size
-        print(self.load_mean)
 
 
 class DnsperfConfig(BaseModel):
@@ -50,19 +58,15 @@ class DnsperfConfig(BaseModel):
     start_time: datetime
     sum_rtt: float
     dnsperf_version: str
-    # 0 to 10_000
     clients: int
-    # [1, +inf)
     time_window_size: float
     transport_mode: str
     timeout_len: float
-    # [1, +inf]
     rng_seed: int
     # the load limit number is parsed to a string,
     # so that it can be stored as a discrete
     # variable; one possible value is infinity
     load_limit: Optional[float] = float("inf")
-    cache_size: Optional[int] = None
     networkpolicy: Optional[str] = None
     network_type: Optional[str] = None
     pod_id: Optional[str] = None
@@ -113,13 +117,6 @@ class Dnsperf(Benchmark):
             default="1",
         ),
         ConfigArgument(
-            "-s",
-            "--cache-size",
-            dest="cache_size",
-            env_var="cache_size",
-            help="Quantity of entries allowed in cache",
-        ),
-        ConfigArgument(
             "-w",
             "--time-window-size",
             dest="time_window_size",
@@ -134,6 +131,13 @@ class Dnsperf(Benchmark):
             dest="transport_mode",
             help="set transport mode: udp, tcp, dot",
             default="udp",
+        ),
+        ConfigArgument(
+            "-S",
+            "--throughput-time-interval",
+            dest="throughput_time_interval",
+            help="time interval at which to check dns throughput",
+            default=".0011",  # smallest interval
         ),
         ConfigArgument("--network-policy", dest="networkpolicy", env_var="networkpolicy"),
         ConfigArgument("--network-type", dest="network_type", env_var="network_type"),
@@ -187,6 +191,8 @@ class Dnsperf(Benchmark):
                 self.config.timeout_len,
                 "-m",
                 self.config.transport_mode,
+                "-S",
+                self.config.throughput_time_interval,
             ]
 
             if isinstance(load_limit, int):
@@ -208,32 +214,28 @@ class Dnsperf(Benchmark):
                 )
                 return None
 
-            stdout: DnsperfStdout
-            data_points: Tuple[RawDnsperfSample, ...]
-            stdout, data_points = self.parse_process_output(sample.successful.stdout)
+            stdout: DnsperfStdout = self.parse_process_output(sample.successful.stdout)
             cfg: DnsperfConfig = DnsperfConfig.new(stdout, self.config, load=load_limit)
-            # change load limit to string for Elasticsearch
+
+            # prepare stdout data for JSON serialization
             cfg.load_limit = str(load_limit)
+            stdout.throughput_ts = [item.dict() for item in stdout.throughput_ts]
+            stdout.rtt_samples = [item.dict() for item in stdout.rtt_samples]
 
-            for i, data_point in enumerate(data_points):
-                dnsperf_sample: RawDnsperfSample = RawDnsperfSample(
-                    rtt_mu_s=int(data_point["rtt_s"] * 1_000_000),
-                    iteration=i,
-                    fqdn=data_point["fqdn"],
-                    qtype=data_point["qtype"],
-                    response_state=data_point["response_state"],
-                )
-                yield self.create_new_result(
-                    data=toolz.merge(dataclasses.asdict(stdout), dict(dnsperf_sample)),
-                    config=dict(cfg),
-                    tag="results",
-                )
+            yield self.create_new_result(
+                data=dataclasses.asdict(stdout), config=dict(cfg), tag="results",
+            )
 
-    def parse_process_output(self, stdout: str) -> Tuple[DnsperfStdout, Tuple[RawDnsperfSample, ...]]:
+    def parse_process_output(self, stdout: str) -> DnsperfStdout:
         """Parse string output from the dnsperf benchmark."""
 
         output_parser = ttp(data=stdout, template=self.output_template)
         output_parser.parse()
         result = output_parser.result()[0][0]
         result["config"]["start_time"] = dateutil.parser.parse(result["config"]["start_time"])
-        return DnsperfStdout(**result["stats"], **result["config"]), result["data"]
+        return DnsperfStdout(
+            **result["stats"],
+            **result["config"],
+            throughput_ts=tuple(ThroughputSample(**item) for item in result["data"] if "throughput" in item),
+            rtt_samples=tuple(DnsRttSample(**item) for item in result["data"] if "throughput" not in item),
+        )

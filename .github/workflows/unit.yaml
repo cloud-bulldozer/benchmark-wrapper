@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: 3.${{ matrix.pyver }}
       - name: Install tox and coverage
-        run: pip install tox
+        run: pip install tox coverage
       - name: Run Tox
         run: tox -e py3${{ matrix.pyver }}-unit
       - name: Generate coverage report

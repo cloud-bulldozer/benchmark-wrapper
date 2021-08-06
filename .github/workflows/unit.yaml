@@ -18,33 +18,14 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.${{ matrix.pyver }}
-      - name: Install tox
+      - name: Install tox and coverage
         run: pip install tox
       - name: Run Tox
         run: tox -e py3${{ matrix.pyver }}-unit
-      - name: Upload coverage report artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: coverage-py3${{ matrix.pyver }}
-          path: .coverage.py3${{ matrix.pyver }}-unit
-  coverage_report:
-    needs: unit_tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Download coverage artifacts
-        uses: actions/download-artifact@v2
-      - name: Unpack artifact
-        run: find . -name ".coverage.*" -exec mv {} . \;
-      - name: Setup Python 3.8
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - name: Install tox
-        run: pip install tox
-      - name: Create coverage report
-        run: tox -e coverage
+      - name: Generate coverage report
+        run: coverage xml
       - name: Upload coverage report
         uses: codecov/codecov-action@v1
         with:
           files: ./coverage.xml
+          flags: unit,gha,python-3.${{ matrix.pyver }}

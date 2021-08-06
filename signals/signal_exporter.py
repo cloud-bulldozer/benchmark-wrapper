@@ -129,15 +129,19 @@ class SignalExporter:
         Build a signal data object based on exporter object fields,
         as well as user-inputted fields. Returns the signal object.
         """
-        sig = Signal(
-            publisher_id=self.pub_id,
-            process_name=self.proc_name,
-            event=event,
-            runner_host=self.runner_host,
-        )
-        sig.tag = tag if tag else sig.tag
-        sig.metadata = metadata if metadata else sig.metadata
-        sig.sample_no = sample if sample >= 0 else sig.sample_no
+        config = {
+            "publisher_id": self.pub_id,
+            "process_name": self.proc_name,
+            "event": event,
+            "runner_host": self.runner_host,
+        }
+        if sample:
+            config["sample_no"] = sample
+        if tag:
+            config["tag"] = tag
+        if metadata:
+            config["metadata"] = metadata
+        sig = Signal(**config)
         return sig
 
     def _get_data_dict(self, response: Dict) -> Dict:

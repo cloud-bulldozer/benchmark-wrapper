@@ -193,6 +193,7 @@ class Dnsperf(Benchmark):
             ]
 
             if isinstance(load_limit, int):
+                # load_limit = str(load_limit)
                 cmd = [*cmd, "-Q", str(load_limit)]
 
             sample: ProcessSample = sample_process(
@@ -213,6 +214,8 @@ class Dnsperf(Benchmark):
 
             stdout: DnsperfStdout = self.parse_process_output(sample.successful.stdout)
             cfg: DnsperfConfig = DnsperfConfig.new(stdout, self.config, load=load_limit)
+            # change load limit to string for Elasticsearch
+            cfg.load_limit = str(load_limit)
 
             # prepare stdout data for JSON serialization
             cfg.load_limit = str(load_limit)

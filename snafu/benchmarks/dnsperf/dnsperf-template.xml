@@ -5,7 +5,10 @@ Version {{ dnsperf_version }}
 [Status] Stopping after {{ time_window_size | to_float }} seconds
 </group>
 <group name="data*" default="default_values">
+<<<<<<< HEAD
 {{ timestamp | _start_ }}: {{ throughput | to_float }}
+=======
+>>>>>>> 45fe99f (use strings for load limit and update dnpserf template)
 &gt; {{ response_state | _start_ }} {{ fqdn }} {{ qtype }}
 &gt; {{ response_state | _start_ }} {{ fqdn }} {{ qtype }} {{ rtt_s | to_float }}
 </group>

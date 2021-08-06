@@ -49,6 +49,10 @@ class DnsperfStdout:
 
     def __post_init_post_parse__(self):
         self.load_mean = self.queries_sent / self.time_window_size
+<<<<<<< HEAD
+=======
+        print(self.load_mean)
+>>>>>>> 1c03b18 (refactor mean_load to load_mean to follow load_limit convention)
 
 
 class DnsperfConfig(BaseModel):
@@ -193,7 +197,6 @@ class Dnsperf(Benchmark):
             ]
 
             if isinstance(load_limit, int):
-                # load_limit = str(load_limit)
                 cmd = [*cmd, "-Q", str(load_limit)]
 
             sample: ProcessSample = sample_process(

@@ -5,14 +5,13 @@ Version {{ dnsperf_version }}
 [Status] Stopping after {{ time_window_size | to_float }} seconds
 </group>
 <group name="data*" default="default_values">
-&gt; {{ rcode | _start_ }} {{ fqdn }} {{ qtype }}
-&gt; {{ rcode | _start_ }} {{ fqdn }} {{ qtype }} {{ rtt_s | to_float }}
+&gt; {{ response_state | _start_ }} {{ fqdn }} {{ qtype }}
+&gt; {{ response_state | _start_ }} {{ fqdn }} {{ qtype }} {{ rtt_s | to_float }}
 </group>
 <group name="stats">
   Queries sent:         {{ queries_sent | to_int }}
   Queries completed:    {{ queries_completed | to_int }} ({{ ignore }}%)
 
-  Average packet size:  request {{ avg_request_packet_size | to_int }}, response {{ avg_response_packet_size | to_int }}
   Run time (s):         {{ sum_rtt | to_float }}
   Queries per second:   {{ throughput | to_float }}
 </group>

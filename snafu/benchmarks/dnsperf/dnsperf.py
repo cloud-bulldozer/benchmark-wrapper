@@ -58,6 +58,9 @@ class DnsperfConfig(BaseModel):
     timeout_len: float
     # [1, +inf]
     rng_seed: int
+    # the load limit number is parsed to a string,
+    # so that it can be stored as a discrete
+    # variable; one possible value is infinity
     load_limit: Optional[float] = float("inf")
     cache_size: Optional[int] = None
     networkpolicy: Optional[str] = None
@@ -187,6 +190,7 @@ class Dnsperf(Benchmark):
             ]
 
             if isinstance(load_limit, int):
+                # load_limit = str(load_limit)
                 cmd = [*cmd, "-Q", str(load_limit)]
 
             sample: ProcessSample = sample_process(
@@ -209,6 +213,8 @@ class Dnsperf(Benchmark):
             data_points: Tuple[RawDnsperfSample, ...]
             stdout, data_points = self.parse_process_output(sample.successful.stdout)
             cfg: DnsperfConfig = DnsperfConfig.new(stdout, self.config, load=load_limit)
+            # change load limit to string for Elasticsearch
+            cfg.load_limit = str(load_limit)
 
             for i, data_point in enumerate(data_points):
                 dnsperf_sample: RawDnsperfSample = RawDnsperfSample(

@@ -18,12 +18,13 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.${{ matrix.pyver }}
-      - name: Install tox and coverage
-        run: pip install tox coverage
+      - name: Install tox
+        run: pip install tox
       - name: Run Tox
         run: tox -e py3${{ matrix.pyver }}-unit
       - name: Generate coverage report
-        run: coverage xml
+        if: matrix.pyver == 6
+        run: tox -e coverage
       - name: Upload coverage report
         if: matrix.pyver == 6
         uses: codecov/codecov-action@v1

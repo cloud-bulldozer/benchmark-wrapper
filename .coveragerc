@@ -1,0 +1,6 @@
+[run]
+omit =
+    snafu/benchmarks/*/*
+    **/*_wrapper*
+    **/trigger*
+    **/__init__.py

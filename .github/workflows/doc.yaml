@@ -13,14 +13,8 @@ jobs:
         run: sudo apt-get install -y pandoc
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.6
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
+          python-version: 3.${{ matrix.pyver }}
       - name: Install tox
         run: pip install tox
       - name: Run Tox
-        run: tox -e py36-docs,py37-docs,py38-docs
+        run: tox -e py3${{ matrix.pyver }}-docs

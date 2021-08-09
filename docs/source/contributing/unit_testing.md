@@ -2,9 +2,9 @@
 
 benchmark-wrapper uses [tox](https://pypi.org/project/tox/) and [pytest](https://docs.pytest.org/en/6.2.x/) for unit testing as well as documentation build testing.
 
-As a quick reminder, unit testing is defined as follows by [STF](https://softwaretestingfundamentals.com/unit-testing/):
+As a quick reminder, unit testing is defined as follows by [guru99.com](https://www.guru99.com/unit-testing-guide.html):
 
-> UNIT TESTING, also known as COMPONENT TESTING,  is a level of software testing where individual units / components of a software are tested. The purpose is to validate that each unit of the software performs as designed.
+> UNIT TESTING is a type of software testing where individual units or components of a software are tested. The purpose is to validate that each unit of the software code performs as expected.
 
 The goal for unit testing within benchmark-wrapper specifically is to ensure that all shared units (common modules and functionality) behave as expected, in order to create a solid foundation that all benchmarks may be based upon.
 
@@ -35,4 +35,4 @@ For more information on how pytest can be leveraged to write unit tests, please 
 
 ## Code Coverage
 
-When unit tests are invoked using tox, [pytest-cov](https://pytest-cov.readthedocs.io/en/latest/readme.html) will be used to generate a coverage report, showing which lines were covered. Additionally, a [coverage file](https://coverage.readthedocs.io/en/coverage-5.5/) will be placed in the project root with the tox environment used as the file extension (i.e. ``.coverage.py{36,37,38,39}-unit``). Please use these coverage resources to help write unit tests for your PRs as needed. Note that code for benchmark wrappers are not included in these coverage reports, as benchmarks will be tested with [functional tests](https://softwaretestingfundamentals.com/functional-testing/), rather than unit tests.
+When unit tests are invoked using tox, [pytest-cov](https://pytest-cov.readthedocs.io/en/latest/readme.html) will be used to generate a coverage report, showing which lines were covered. Additionally, a [coverage file](https://coverage.readthedocs.io/en/coverage-5.5/) will be placed in the project root with the tox environment used as the file extension (i.e. ``.coverage.py{36,37,38,39}-unit``). Please use these coverage resources to help write unit tests for your PRs as needed. Note that code for benchmark wrappers are not included in these coverage reports, as benchmarks will be tested with [functional tests](https://www.guru99.com/functional-testing.html), rather than unit tests.

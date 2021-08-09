@@ -17,7 +17,7 @@ done
 
 # Clone ripsaw so we can use it for testing
 rm -rf ripsaw
-git clone -b v0.1 https://github.com/cloud-bulldozer/ripsaw.git --depth 1
+git clone https://github.com/cloud-bulldozer/ripsaw.git --depth 1
 
 # Generate uuid
 NEW_UUID=$(uuidgen)
@@ -34,8 +34,6 @@ fi
 
 cd ripsaw
 sed -i "s#ES_SERVER#$ES_SERVER#g" tests/test_crs/*
-sed -i "s/my-ripsaw/my-ripsaw-$UUID/g" `grep -Rl my-ripsaw`
-sed -i "s/sql-server/sql-server-$UUID/g" tests/mssql.yaml tests/test_crs/valid_hammerdb.yaml tests/test_hammerdb.sh
 update_operator_image
 cd ..
 
@@ -67,13 +65,11 @@ elif [[ `echo "${diff_list}" | grep -cv /` -gt 0 || `echo ${diff_list} | grep -E
 else
   echo "Running specific tests"
   echo $diff_list
-  test_list=`echo "${diff_list}" | awk -F "/" '{print $1"/"$2}' | uniq`
+  test_list=`echo "${diff_list}" | awk 'BEGIN{FS=OFS="/"}{NF--; print}' | uniq`
 fi
 
 echo -e "Running tests in the following directories:\n${test_list}"
 test_rc=0
-
-sed -i "s/my-ripsaw/my-ripsaw-$UUID/g" ci/common.sh
 
 wait_clean
 

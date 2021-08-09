@@ -7,9 +7,9 @@ if [ "$#" -ne 4 ]; then
 fi
 
 # Location of Linpack binary
-LINPACK='/opt/l_mklb_p_2019.6.005/benchmarks_2019/linux/mkl/benchmarks/linpack/xlinpack_xeon64'
+LINPACK='/opt/benchmarks_2021.2.0/linux/mkl/benchmarks/linpack/xlinpack_xeon64'
 
-LINPACK_DAT='/opt/linpack.dat'
+LINPACK_DAT='/tmp/linpack.dat'
 
 NUM_CPU=`cat /proc/cpuinfo | grep processor | wc -l`
 export OMP_NUM_THREADS=$NUM_CPU

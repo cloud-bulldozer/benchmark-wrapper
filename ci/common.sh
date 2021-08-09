@@ -34,7 +34,8 @@ function update_operator_image() {
   sed -i "s#${default_ripsaw_image_prefix}/stressng:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/stressng:${SNAFU_IMAGE_TAG}#g" roles/stressng/templates/*
   sed -i "s#${default_ripsaw_image_prefix}/flent:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/flent:${SNAFU_IMAGE_TAG}#g" roles/flent/templates/*
   image_spec=$image_location/$image_account/benchmark-operator:$SNAFU_IMAGE_TAG
-  $SUDO operator-sdk build $image_spec --image-builder $image_builder
+  make image-build image-push deploy IMG=$image_spec
+  kubectl wait --for=condition=available "deployment/benchmark-controller-manager" -n benchmark-operator --timeout=300s
 
   # In case we have issues uploading to quay we will retry a few times
   for i in {1..3}; do
@@ -44,11 +45,10 @@ function update_operator_image() {
       exit $NOTOK
     fi
   done
-  sed -i "s|image: $default_operator_image|image: $image_spec|g" resources/operator.yaml
 }
 
 function wait_clean {
-  kubectl delete namespace my-ripsaw --wait=true --ignore-not-found
+  echo "skip"
 }
 
 # Takes 2 argumentes. $1 is the Dockerfile path and $2 is the image name

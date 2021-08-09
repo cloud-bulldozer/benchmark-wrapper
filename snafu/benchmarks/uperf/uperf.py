@@ -228,7 +228,8 @@ class Uperf(Benchmark):
         # This will yeild us this structure :
         #     timestamp, number of bytes, number of operations
         # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
-        results = re.findall(r"timestamp_ms:(.*) name:Txn2 nr_bytes:(.*) nr_ops:(.*)", stdout)
+        tx_str = "Txn1" if parsed_profile_name["test_type"] == "connect" else "Txn2"
+        results = re.findall(r"timestamp_ms:(.*) name:{} nr_bytes:(.*) nr_ops:(.*)".format(tx_str), stdout)
         # We assume message_size=write_message_size to prevent breaking dependant implementations
 
         uperf_stdout = UperfStdout(

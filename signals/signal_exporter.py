@@ -6,6 +6,7 @@ import platform
 import json
 import time
 import uuid
+import logging
 
 
 class ResultCodes(Enum):
@@ -114,6 +115,9 @@ class SignalExporter:
         hostname to be inputted manually (otherwise will default to 
         platform.node() value)
         """
+        self.logger: logging.Logger = logging.getLogger("SignalExporter").getChild(
+            process_name
+        )
         self.subs = []
         self.proc_name = process_name
         self.runner_host = runner_host
@@ -150,7 +154,7 @@ class SignalExporter:
         response is received. Otherwise return None.
         """
         if not "data" in response:
-            print("No data in this response message")
+            self.logger.debug(f"No data in this response message: {response}")
             return None
         try:
             data = json.loads(response["data"])
@@ -161,7 +165,7 @@ class SignalExporter:
             or "publisher_id" not in data
             or "event" not in data
         ):
-            print("Malformed response data found")
+            self.logger.debug(f"Malformed response data found: {response}")
             return None
         return data
 
@@ -201,13 +205,13 @@ class SignalExporter:
             if data and data["publisher_id"] == self.pub_id and data["event"] == event:
                 if "ras" in data:
                     if data["responder_id"] not in to_check:
-                        print(
+                        self.logger.warning(
                             f"WARNING: Got a response from tool '{data['responder_id']}' but it's not on the known subscribers list (or already responded for '{event}'). RAS: {data['ras']}"
                         )
                     else:
                         to_check.remove(data["responder_id"])
                         if data["ras"] != 1:
-                            print(
+                            self.logger.warning(
                                 f"WARNING: Tool '{data['responder_id']}' returned bad response for event '{event}', ras: {data['ras']}"
                             )
                             result_code_holder[0] = ResultCodes.SUB_FAILED
@@ -254,7 +258,7 @@ class SignalExporter:
 
         skip_check = False
         if not self.init_listener or not self.init_listener.is_alive():
-            print(
+            self.logger.warning(
                 "WARNING: Exporter is not initialized, not accepting subscribers and no event checking"
             )
             skip_check = True
@@ -284,7 +288,9 @@ class SignalExporter:
             time.sleep(0.1)
             counter += 1
             if counter >= timeout * 10:
-                print(f"Timeout after waiting {timeout} seconds for sub response")
+                self.logger.error(
+                    f"Timeout after waiting {timeout} seconds for sub response"
+                )
                 sub_check.stop()
                 return ResultCodes.MISSING_RESPONSE
 
@@ -346,6 +352,9 @@ class SignalResponder:
         Sets exporter object fields and generates unique responder_id.
         Allows for specification of redis host/port.
         """
+        #self.logger: logging.Logger = logging.getLogger("SignalResponder").getChild(
+        #    responder_name
+        #)
         self.redis = redis.Redis(host=redis_host, port=redis_port, db=0)
         self.subscriber = self.redis.pubsub(ignore_subscribe_messages=True)
         self.subscriber.subscribe("event-signal-pubsub")
@@ -410,7 +419,7 @@ class SignalResponder:
         if isinstance(publisher_id, str):
             self.locked_id == publisher_id
         else:
-            print("Unsuccessful lock, 'publisher_id' must be type str")
+            raise TypeError("Unsuccessful lock, 'publisher_id' must be type str")
 
     def lock_tag(self, tag: str) -> None:
         """
@@ -419,4 +428,4 @@ class SignalResponder:
         if isinstance(tag, str):
             self.locked_tag == tag
         else:
-            print("Unsuccessful lock, 'tag' must be type str")
+            raise TypeError("Unsuccessful lock, 'tag' must be type str")

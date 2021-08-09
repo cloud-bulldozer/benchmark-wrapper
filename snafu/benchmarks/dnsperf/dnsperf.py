@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running the dnsperf benchmark.
 See https://dns-oarc.net/tools/dnsperf for more information."""
-import random
 from datetime import datetime
-from typing import Iterable, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 from pathlib import Path
 import dataclasses
 
@@ -62,7 +61,6 @@ class DnsperfConfig(BaseModel):
     time_window_size: float
     transport_mode: str
     timeout_len: float
-    rng_seed: int
     # the load limit number is parsed to a string,
     # so that it can be stored as a discrete
     # variable; one possible value is infinity
@@ -143,7 +141,6 @@ class Dnsperf(Benchmark):
         ConfigArgument("--network-type", dest="network_type", env_var="network_type"),
         ConfigArgument("--pod-id", dest="pod_id", default=None),
         ConfigArgument("--node-id", dest="node_id", default=None),
-        ConfigArgument("--rng-seed", dest="rng_seed", default=1),
     )
 
     def setup(self) -> bool:
@@ -151,7 +148,6 @@ class Dnsperf(Benchmark):
         self.logger.info("Setting up dnsperf benchmark.")
         self.config.parse_args()
         self.config.load_sequence.append(float("inf"))
-        random.seed(self.config.rng_seed)
         # dynamically set timeout length for template parser
         self.output_template = (
             self.output_template + "\n"
@@ -168,11 +164,10 @@ class Dnsperf(Benchmark):
         self.logger.info("Cleaning up dnsperf benchmark.")
         return True
 
-    def collect(self) -> Iterable[BenchmarkResult]:
+    def collect(self) -> BenchmarkResult:
         """Run the dnsperf benchmark and collect results."""
 
         self.logger.info("Starting dnsperf")
-        random.shuffle(self.config.load_sequence)
         for load_limit in self.config.load_sequence:
             cmd = [
                 "dnsperf",
@@ -183,7 +178,7 @@ class Dnsperf(Benchmark):
                 self.config.port,
                 "-d",
                 self.config.query_filepath,
-                "-c",
+                "-T",
                 self.config.clients,
                 "-l",
                 self.config.time_window_size,
@@ -225,6 +220,8 @@ class Dnsperf(Benchmark):
             yield self.create_new_result(
                 data=dataclasses.asdict(stdout), config=dict(cfg), tag="results",
             )
+
+            self.logger.info(f"dnsperf ran succesfully!\n")
 
     def parse_process_output(self, stdout: str) -> DnsperfStdout:
         """Parse string output from the dnsperf benchmark."""

@@ -11,8 +11,7 @@ RUN dnf -y install --nodocs \
     dnf clean all && \
     rm --force --recursive /var/cache/yum && \
     ln --symbolic /usr/bin/python3 /usr/bin/python && \
-    mkdir --parent /opt/snafu
+    mkdir --parent /opt/snafu/snafu
 
 COPY . /opt/snafu
-
 RUN python -m pip install --editable /opt/snafu

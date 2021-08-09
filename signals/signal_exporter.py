@@ -9,6 +9,28 @@ import uuid
 import logging
 
 
+def _create_logger(
+    class_name: str, process_name: str, log_level: str
+) -> logging.Logger:
+    """
+    Creates and returns logging.Logger object for detailed logging.
+    Used by SignalExporter and SignalResponder.
+    """
+    logger = logging.getLogger(class_name).getChild(process_name)
+    try:
+        logger.setLevel(log_level)
+        ch = logging.StreamHandler()
+        ch.setLevel(log_level)
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
+    except ValueError:
+        raise ValueError("Legal log levels: [DEBUG, INFO, WARNING, ERROR, CRITICAL]")
+    return logger
+
+
 class ResultCodes(Enum):
     ALL_SUBS_SUCCESS = 0
     SUB_FAILED = 1
@@ -108,6 +130,7 @@ class SignalExporter:
         redis_host: str = "localhost",
         redis_port: int = 6379,
         runner_host: str = platform.node(),
+        log_level: str = "INFO",
     ) -> None:
         """
         Sets exporter object fields and generates unique publisher_id.
@@ -115,9 +138,7 @@ class SignalExporter:
         hostname to be inputted manually (otherwise will default to 
         platform.node() value)
         """
-        self.logger: logging.Logger = logging.getLogger("SignalExporter").getChild(
-            process_name
-        )
+        self.logger = _create_logger("SignalExporter", process_name, log_level)
         self.subs = []
         self.proc_name = process_name
         self.runner_host = runner_host
@@ -206,13 +227,13 @@ class SignalExporter:
                 if "ras" in data:
                     if data["responder_id"] not in to_check:
                         self.logger.warning(
-                            f"WARNING: Got a response from tool '{data['responder_id']}' but it's not on the known subscribers list (or already responded for '{event}'). RAS: {data['ras']}"
+                            f"Got a response from tool '{data['responder_id']}' but it's not on the known subscribers list (or already responded for '{event}'). RAS: {data['ras']}"
                         )
                     else:
                         to_check.remove(data["responder_id"])
                         if data["ras"] != 1:
                             self.logger.warning(
-                                f"WARNING: Tool '{data['responder_id']}' returned bad response for event '{event}', ras: {data['ras']}"
+                                f"Tool '{data['responder_id']}' returned bad response for event '{event}', ras: {data['ras']}"
                             )
                             result_code_holder[0] = ResultCodes.SUB_FAILED
             if not to_check:
@@ -259,7 +280,7 @@ class SignalExporter:
         skip_check = False
         if not self.init_listener or not self.init_listener.is_alive():
             self.logger.warning(
-                "WARNING: Exporter is not initialized, not accepting subscribers and no event checking"
+                "Exporter is not initialized, not accepting subscribers and no event checking"
             )
             skip_check = True
 
@@ -270,7 +291,7 @@ class SignalExporter:
 
         if event == "shutdown":
             raise ValueError(
-                "ERROR: Please use the 'shutdown()' method for 'shutdown' signals"
+                "Please use the 'shutdown()' method for 'shutdown' signals"
             )
 
         if not skip_check and not event in self.legal_events:
@@ -282,6 +303,7 @@ class SignalExporter:
         sub_check, result_code_holder = self._check_subs(event)
 
         self.redis.publish(channel="event-signal-pubsub", message=sig.to_json_str())
+        self.logger.debug(f"Signal published for event {event}")
 
         counter = 0
         while sub_check and sub_check.is_alive():
@@ -297,31 +319,30 @@ class SignalExporter:
         return result_code_holder[0]
 
     def initialize(
-        self, legal_events: List[str], tag: str = None, expected_hosts: List[str] = None
+        self, legal_events: List[str], tag: str = None, expected_resps: List[str] = None
     ) -> None:
         """
         Publishes an initialization message. Starts a listener that reads responses
         to the initialization message and adds responders to the subscriber list.
         Sets list of legal event names for future signals, and also allows for optional
-        input of expected hostnames (subscribers) as well as a tag.
+        input of expected responders (subscribers) as well as a tag.
         """
         if not self._valid_str_list(legal_events):
-            raise TypeError(
-                "ERROR: 'legal_events' arg must be a list of string event names"
-            )
+            raise TypeError("'legal_events' arg must be a list of string event names")
 
-        if expected_hosts:
-            if not self._valid_str_list(expected_hosts):
+        if expected_resps:
+            if not self._valid_str_list(expected_resps):
                 raise TypeError(
-                    "ERROR: 'expected_hosts' arg must be a list of string hostnames"
+                    "'expected_hosts' arg must be a list of string hostnames"
                 )
-            for host in expected_hosts:
-                self.subs.append(host + "-resp")
+            for resp in expected_resps:
+                self.subs.append(resp)
 
         self.legal_events = legal_events
         sig = self._sig_builder(event="initialization", tag=tag)
         self._fetch_responders()
         self.redis.publish(channel="event-signal-pubsub", message=sig.to_json_str())
+        self.logger.debug("Initialization successful!")
 
     def shutdown(self, tag: str = None) -> None:
         """
@@ -332,6 +353,7 @@ class SignalExporter:
         self.init_listener.stop()
         self.subs = []
         self.redis.publish(channel="event-signal-pubsub", message=sig.to_json_str())
+        self.logger.debug("Shutdown successful!")
 
 
 class SignalResponder:
@@ -347,14 +369,16 @@ class SignalResponder:
         redis_host: str = "localhost",
         redis_port: int = 6379,
         responder_name: str = platform.node(),
+        log_level="INFO",
     ) -> None:
         """
         Sets exporter object fields and generates unique responder_id.
         Allows for specification of redis host/port.
         """
-        #self.logger: logging.Logger = logging.getLogger("SignalResponder").getChild(
+        # self.logger: logging.Logger = logging.getLogger("SignalResponder").getChild(
         #    responder_name
-        #)
+        # )
+        self.logger = _create_logger("SignalResponder", responder_name, log_level)
         self.redis = redis.Redis(host=redis_host, port=redis_port, db=0)
         self.subscriber = self.redis.pubsub(ignore_subscribe_messages=True)
         self.subscriber.subscribe("event-signal-pubsub")
@@ -410,6 +434,7 @@ class SignalResponder:
         """
         response = Response(self.responder_id, publisher_id, event, ras)
         self.redis.publish("event-signal-response", response.to_json_str())
+        self.logger.debug(f"Published response for event {event} from {publisher_id}")
 
     def lock_id(self, publisher_id: str) -> None:
         """
@@ -418,6 +443,7 @@ class SignalResponder:
         """
         if isinstance(publisher_id, str):
             self.locked_id == publisher_id
+            self.logger.debug(f"Locked onto id: {publisher_id}")
         else:
             raise TypeError("Unsuccessful lock, 'publisher_id' must be type str")
 
@@ -427,5 +453,6 @@ class SignalResponder:
         """
         if isinstance(tag, str):
             self.locked_tag == tag
+            self.logger.debug(f"Locked onto tag: {tag}")
         else:
             raise TypeError("Unsuccessful lock, 'tag' must be type str")

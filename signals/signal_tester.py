@@ -2,7 +2,7 @@ from signals import signal_exporter
 import time
 from multiprocessing import Process
 
-responder = signal_exporter.SignalResponder(responder_name="fakeresp")
+responder = signal_exporter.SignalResponder(responder_name="fakeresp", log_level="DEBUG")
 def _listener():
     for signal in responder.listen():
         print(signal)
@@ -14,7 +14,7 @@ def _listener():
 init = Process(target=_listener)
 init.start()
 
-sig_ex = signal_exporter.SignalExporter("fakemark")
+sig_ex = signal_exporter.SignalExporter("fakemark", log_level="DEBUG")
 print("\nBENCHMARK INIT TEST\n")
 sig_ex.initialize(legal_events=["benchmark-start", "benchmark-stop"])
 time.sleep(1)

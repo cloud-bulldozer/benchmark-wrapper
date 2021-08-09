@@ -35,40 +35,38 @@ DnsperfSample = Union[DnsRttSample, ThroughputSample]
 
 @pydantic.dataclasses.dataclass
 class DnsperfStdout:
-    throughput_ts: Tuple[ThroughputSample, ...]
-    rtt_samples: Tuple[DnsRttSample, ...]
-    sum_rtt: float
+    dnsperf_version: str
     queries_sent: int
     queries_completed: int
-    throughput_mean: float
+    rtt_samples: Tuple[DnsRttSample, ...]
     start_time: datetime
-    dnsperf_version: str
-    time_window_size: float
+    sum_rtt: float
+    throughput_ts: Tuple[ThroughputSample, ...]
+    throughput_mean: float
+    runtime_length: float
     load_mean: Optional[float] = None
 
     def __post_init_post_parse__(self):
-        self.load_mean = self.queries_sent / self.time_window_size
+        self.load_mean = self.queries_sent / self.runtime_length
 
 
 class DnsperfConfig(BaseModel):
     address: str
     port: int
-    query_filepath: str
-    start_time: datetime
-    sum_rtt: float
+    client_threads: int
     dnsperf_version: str
-    clients: int
-    time_window_size: float
+    query_filepath: str
+    runtime_length: float
+    timeout_length: float
     transport_mode: str
-    timeout_len: float
     # the load limit number is parsed to a string,
     # so that it can be stored as a discrete
     # variable; one possible value is infinity
     load_limit: Optional[float] = float("inf")
-    networkpolicy: Optional[str] = None
-    network_type: Optional[str] = None
-    pod_id: Optional[str] = None
-    node_id: Optional[str] = None
+    # networkpolicy: Optional[str] = None
+    # network_type: Optional[str] = None
+    # pod_id: Optional[str] = None
+    # node_id: Optional[str] = None
 
     @classmethod
     def new(cls, stdout: DnsperfStdout, config: Config, load):
@@ -109,20 +107,19 @@ class Dnsperf(Benchmark):
         ConfigArgument("-p", "--port", dest="port", help="Port on which DNS packets are sent.", default="53"),
         ConfigArgument(
             "-c",
-            "--clients",
-            dest="clients",
-            help="Quantity of clients to act as. (1 client : 1 thread)",
+            "--client-threads",
+            dest="client_threads",
+            help="Quantity of client threads to act as; (1 client : 1 thread).",
             default="1",
         ),
         ConfigArgument(
-            "-w",
-            "--time-window-size",
-            dest="time_window_size",
-            env_var="time_window_size",
-            help="Time window size for test",
+            "-r",
+            "--runtime-length",
+            dest="runtime_length",
+            help="Length of time dnsperf will create load",
             default=".01",
         ),
-        ConfigArgument("--timeout", help="Length of timeout in seconds", dest="timeout_len", default="5"),
+        ConfigArgument("--timeout", help="Length of timeout in seconds", dest="timeout_length", default="5"),
         ConfigArgument(
             "-m",
             "--transport-mode",
@@ -141,7 +138,6 @@ class Dnsperf(Benchmark):
         ConfigArgument("--network-type", dest="network_type", env_var="network_type"),
         ConfigArgument("--pod-id", dest="pod_id", default=None),
         ConfigArgument("--node-id", dest="node_id", default=None),
-        ConfigArgument("--rng-seed", dest="rng_seed", default=1),
     )
 
     def setup(self) -> bool:
@@ -154,7 +150,7 @@ class Dnsperf(Benchmark):
             self.output_template + "\n"
             "<vars>"
             "default_values = {"
-            f"'rtt_s': {self.config.timeout_len}"
+            f"'rtt_s': {self.config.timeout_length}"
             "}"
             "</vars>\n"
         )
@@ -179,12 +175,14 @@ class Dnsperf(Benchmark):
                 self.config.port,
                 "-d",
                 self.config.query_filepath,
+                "-c",
+                self.config.client_threads,
                 "-T",
-                self.config.clients,
+                self.config.client_threads,
                 "-l",
-                self.config.time_window_size,
+                self.config.runtime_length,
                 "-t",
-                self.config.timeout_len,
+                self.config.timeout_length,
                 "-m",
                 self.config.transport_mode,
                 "-S",
@@ -194,9 +192,7 @@ class Dnsperf(Benchmark):
             if isinstance(load_limit, int):
                 cmd = [*cmd, "-Q", str(load_limit)]
 
-            sample: ProcessSample = sample_process(
-                cmd, self.logger,
-            )
+            sample: ProcessSample = sample_process(cmd, self.logger)
 
             if not sample.success:
                 self.logger.critical(f"dnsperf failed to complete! Got results: {sample}\n")
@@ -220,8 +216,7 @@ class Dnsperf(Benchmark):
 
             # prepare stdout data for JSON serialization
             cfg.load_limit = str(load_limit)
-            stdout.throughput_ts = [item.dict() for item in stdout.throughput_ts]
-            stdout.rtt_samples = [item.dict() for item in stdout.rtt_samples]
+            self.logger.info(stdout)
 
             yield self.create_new_result(
                 data=dataclasses.asdict(stdout), config=dict(cfg), tag="results",

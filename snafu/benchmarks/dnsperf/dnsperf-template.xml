@@ -2,7 +2,7 @@
 Version {{ dnsperf_version }}
 
 [Status] Started at: {{ start_time | ROW }}
-[Status] Stopping after {{ time_window_size | to_float }} seconds
+[Status] Stopping after {{ runtime_length | to_float }} seconds
 </group>
 <group name="data*" default="default_values">
 {{ timestamp | _start_ }}: {{ throughput | to_float }}

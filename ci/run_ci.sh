@@ -65,7 +65,7 @@ elif [[ `echo "${diff_list}" | grep -cv /` -gt 0 || `echo ${diff_list} | grep -E
 else
   echo "Running specific tests"
   echo $diff_list
-  test_list=`echo "${diff_list}" | awk -F "/" '{print $1"/"$2}' | uniq`
+  test_list=`echo "${diff_list}" | awk 'BEGIN{FS=OFS="/"}{NF--; print}' | uniq`
 fi
 
 echo -e "Running tests in the following directories:\n${test_list}"

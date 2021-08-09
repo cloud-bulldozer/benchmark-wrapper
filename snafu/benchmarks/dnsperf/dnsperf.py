@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running the dnsperf benchmark.
 See https://dns-oarc.net/tools/dnsperf for more information."""
-import random
 from datetime import datetime
 from typing import Optional, Tuple, Union
 from pathlib import Path
@@ -49,13 +48,6 @@ class DnsperfStdout:
 
     def __post_init_post_parse__(self):
         self.load_mean = self.queries_sent / self.time_window_size
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        print(self.load_mean)
->>>>>>> 1c03b18 (refactor mean_load to load_mean to follow load_limit convention)
-=======
->>>>>>> 90cef3c (refactor data to a list of dns rtt samples and a throughput time series)
 
 
 class DnsperfConfig(BaseModel):
@@ -69,10 +61,6 @@ class DnsperfConfig(BaseModel):
     time_window_size: float
     transport_mode: str
     timeout_len: float
-<<<<<<< HEAD
-=======
-    rng_seed: int
->>>>>>> 90cef3c (refactor data to a list of dns rtt samples and a throughput time series)
     # the load limit number is parsed to a string,
     # so that it can be stored as a discrete
     # variable; one possible value is infinity
@@ -230,7 +218,6 @@ class Dnsperf(Benchmark):
             stdout.throughput_ts = [item.dict() for item in stdout.throughput_ts]
             stdout.rtt_samples = [item.dict() for item in stdout.rtt_samples]
 
-<<<<<<< HEAD
             # prepare stdout data for JSON serialization
             cfg.load_limit = str(load_limit)
             stdout.throughput_ts = [item.dict() for item in stdout.throughput_ts]
@@ -242,12 +229,6 @@ class Dnsperf(Benchmark):
 
             self.logger.info(f"dnsperf ran succesfully!\n")
 
-=======
-            yield self.create_new_result(
-                data=dataclasses.asdict(stdout), config=dict(cfg), tag="results",
-            )
-
->>>>>>> 90cef3c (refactor data to a list of dns rtt samples and a throughput time series)
     def parse_process_output(self, stdout: str) -> DnsperfStdout:
         """Parse string output from the dnsperf benchmark."""
 

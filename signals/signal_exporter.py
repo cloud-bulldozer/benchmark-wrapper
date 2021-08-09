@@ -202,15 +202,15 @@ class SignalExporter:
                 if "ras" in data:
                     if data["responder_id"] not in to_check:
                         print(
-                            f"WARNING: Got a response from tool '{data['responder_id']}' but it's not on the known subscribers list"
+                            f"WARNING: Got a response from tool '{data['responder_id']}' but it's not on the known subscribers list (or already responded for '{event}'). RAS: {data['ras']}"
                         )
                     else:
                         to_check.remove(data["responder_id"])
-                    if data["ras"] != 1:
-                        print(
-                            f"WARNING: Tool '{data['responder_id']}' returned bad response for event '{event}', ras: {data['ras']}"
-                        )
-                        result_code_holder[0] = ResultCodes.SUB_FAILED
+                        if data["ras"] != 1:
+                            print(
+                                f"WARNING: Tool '{data['responder_id']}' returned bad response for event '{event}', ras: {data['ras']}"
+                            )
+                            result_code_holder[0] = ResultCodes.SUB_FAILED
             if not to_check:
                 listener.stop()
 

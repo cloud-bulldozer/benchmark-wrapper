@@ -285,6 +285,7 @@ class SignalExporter:
             counter += 1
             if counter >= timeout * 10:
                 print(f"Timeout after waiting {timeout} seconds for sub response")
+                sub_check.stop()
                 return ResultCodes.MISSING_RESPONSE
 
         return result_code_holder[0]

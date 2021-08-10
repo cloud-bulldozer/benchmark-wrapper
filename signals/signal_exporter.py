@@ -394,6 +394,7 @@ class SignalResponder:
         try:
             data = json.loads(signal["data"])
         except ValueError:
+            self.logger.debug(f"Received non-signal redis message {signal}")
             return None
         # FIXME - Replace below line, maybe with dataclasses.fields()?
         check_set = set(
@@ -410,11 +411,21 @@ class SignalResponder:
         if set(data.keys()) == check_set or check_set - set(data.keys()) == {
             "metadata"
         }:
-            if (not self.locked_id or self.locked_id == data["publisher_id"]) and (
-                not self.locked_tag or self.locked_tag == data["tag"]
-            ):
-                return data
+            return data
+        self.logger.warning(f"Received malformed signal payload {signal}")
         return None
+
+    def _check_target(self, payload):
+        """
+        Checks if given signal payload matches the locked publisher_id/tag
+        (if any were provided). Returns True if the check passes or if no
+        locks were provided, and False otherwise.
+        """
+        if (not self.locked_id or self.locked_id == payload["publisher_id"]) and (
+            not self.locked_tag or self.locked_tag == payload["tag"]
+        ):
+            return True
+        return False
 
     def listen(self):
         """
@@ -423,7 +434,7 @@ class SignalResponder:
         """
         for item in self.subscriber.listen():
             data = self._parse_signal(item)
-            if data:
+            if data and self._check_target(data):
                 yield data
 
     def respond(self, publisher_id: str, event: str, ras: int = None) -> None:

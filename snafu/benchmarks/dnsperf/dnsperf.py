@@ -216,6 +216,9 @@ class Dnsperf(Benchmark):
             cfg.load_limit = str(load_limit)
             stdout.throughput_ts = [item.dict() for item in stdout.throughput_ts]
             stdout.rtt_samples = [item.dict() for item in stdout.rtt_samples]
+
+            # TODO: emit one index for config, one index for throughput ts, one index for dns rtts
+            # change tag for each index
             yield self.create_new_result(data=dataclasses.asdict(stdout), config=dict(cfg), tag="results")
 
             self.logger.info(f"ran succesfully!\n")

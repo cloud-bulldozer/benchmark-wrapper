@@ -429,7 +429,7 @@ class SignalResponder:
         self.logger.warning(f"Received malformed signal payload {signal}")
         return None
 
-    def _check_target(self, payload):
+    def _check_target(self, payload: Dict) -> bool:
         """
         Checks if given signal payload matches the locked publisher_id/tag
         (if any were provided). Returns True if the check passes or if no

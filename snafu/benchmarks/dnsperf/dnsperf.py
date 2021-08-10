@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running the dnsperf benchmark.
 See https://dns-oarc.net/tools/dnsperf for more information."""
-from datetime import datetime
+import datetime
 from typing import Optional, Tuple, Union
 from pathlib import Path
 import dataclasses
@@ -12,10 +12,11 @@ from pydantic import BaseModel
 import pydantic.dataclasses
 from ttp import ttp
 import toolz
+import dateutil.tz
 
 from snafu.benchmarks import Benchmark, BenchmarkResult
 from snafu.config import Config, ConfigArgument
-from snafu.process import ProcessSample, sample_process
+from snafu.process import ProcessSample, get_process_sample
 
 
 class DnsRttSample(BaseModel):
@@ -26,8 +27,12 @@ class DnsRttSample(BaseModel):
 
 
 class ThroughputSample(BaseModel):
-    timestamp: datetime
+    timestamp: datetime.datetime
     throughput: float
+
+    @pydantic.validator("timestamp", pre="True")
+    def parse_utc(cls, value):
+        return datetime.datetime.fromtimestamp(float(value))
 
 
 DnsperfSample = Union[DnsRttSample, ThroughputSample]
@@ -39,7 +44,7 @@ class DnsperfStdout:
     queries_sent: int
     queries_completed: int
     rtt_samples: Tuple[DnsRttSample, ...]
-    start_time: datetime
+    start_time: datetime.datetime
     sum_rtt: float
     throughput_ts: Tuple[ThroughputSample, ...]
     throughput_mean: float
@@ -192,7 +197,7 @@ class Dnsperf(Benchmark):
             if isinstance(load_limit, int):
                 cmd = [*cmd, "-Q", str(load_limit)]
 
-            sample: ProcessSample = sample_process(cmd, self.logger)
+            sample: ProcessSample = get_process_sample(cmd, self.logger)
 
             if not sample.success:
                 self.logger.critical(f"dnsperf failed to complete! Got results: {sample}\n")
@@ -211,10 +216,7 @@ class Dnsperf(Benchmark):
             cfg.load_limit = str(load_limit)
             stdout.throughput_ts = [item.dict() for item in stdout.throughput_ts]
             stdout.rtt_samples = [item.dict() for item in stdout.rtt_samples]
-
-            yield self.create_new_result(
-                data=dataclasses.asdict(stdout), config=dict(cfg), tag="results",
-            )
+            yield self.create_new_result(data=dataclasses.asdict(stdout), config=dict(cfg), tag="results")
 
             self.logger.info(f"ran succesfully!\n")
 
@@ -224,7 +226,8 @@ class Dnsperf(Benchmark):
         output_parser = ttp(data=stdout, template=self.output_template)
         output_parser.parse()
         result = output_parser.result()[0][0]
-        result["config"]["start_time"] = dateutil.parser.parse(result["config"]["start_time"])
+        result["config"]["start_time"] = dateutil.parser.parse(result["config"]["start_time"]).astimezone()
+
         return DnsperfStdout(
             **result["stats"],
             **result["config"],

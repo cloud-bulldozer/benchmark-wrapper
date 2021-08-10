@@ -392,9 +392,6 @@ class SignalResponder:
         Sets exporter object fields and generates unique responder_id.
         Allows for specification of redis host/port.
         """
-        # self.logger: logging.Logger = logging.getLogger("SignalResponder").getChild(
-        #    responder_name
-        # )
         self.logger = _create_logger("SignalResponder", responder_name, log_level)
         self.redis = redis.Redis(host=redis_host, port=redis_port, db=0)
         self.subscriber = self.redis.pubsub(ignore_subscribe_messages=True)

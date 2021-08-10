@@ -24,7 +24,7 @@ The JSON output looks like this, in accordance to the GHA Job Matrix Format:
             "benchmark": "name of the benchmark (i.e. name of directory containing the DF)",
             "env_var": "environment variable where image URL will be stored (i.e. <BENCHMARK>_IMAGE)",
             "tag_prefix": "prefix of the image tag that should be used (i.e. arch of the DF with a dash)",
-            "archs": "architecture that the DF should be built on",
+            "arch": "architecture that the DF should be built on",
             "changed": "whether or not changes have been made which require the benchmark to be tested",
         },
         ...
@@ -79,9 +79,9 @@ def get_git_diff(upstream_branch: str) -> Set[str]:
 
     subprocess.run(shlex.split(f"git fetch origin {upstream_branch}"), check=True)
     completed_process = subprocess.run(
-        shlex.split(f"git diff origin/{upstream_branch} --name-only"), check=True, capture_output=True
+        shlex.split(f"git diff origin/{upstream_branch} --name-only"), check=True, stdout=subprocess.PIPE,
     )
-    return completed_process.stdout
+    return completed_process.stdout.decode("utf-8")
 
 
 def parse_git_diff(diff_str: str) -> Set[str]:
@@ -113,9 +113,9 @@ def get_dockerfile_list() -> str:
     """
 
     completed_process = subprocess.run(
-        shlex.split("find snafu/ -name Dockerfile*"), check=True, capture_output=True
+        shlex.split("find snafu/ -name Dockerfile*"), check=True, stdout=subprocess.PIPE
     )
-    return completed_process.stdout
+    return completed_process.stdout.decode("utf-8")
 
 
 def parse_dockerfile_list(df_list: str) -> Set[str]:
@@ -164,12 +164,11 @@ class MatrixEntry:
     image_name: str
     benchmark: str
     env_var: str
-    tag_prefix: str
     archs: str
     changed: bool
 
     @classmethod
-    def new(cls, dockerfile: str, changed: bool, archs: List[str]) -> "MatrixEntry":
+    def new(cls, dockerfile: str, changed: bool, archs: Iterable[str]) -> "MatrixEntry":
         """
         Create a new instances of the MatrixEntry
 
@@ -191,15 +190,28 @@ class MatrixEntry:
             image_name=benchmark,
             benchmark=benchmark,
             env_var=f"{benchmark.upper()}_IMAGE",
-            tag_prefix=f"{benchmark}-",
         )
+
+    def as_json(self) -> Iterable[Dict[str, str]]:
+        """Convert the given MatrixEntry into series of JSON-dicts, one for each arch."""
+
+        for arch in self.archs:
+            yield {
+                "dockerfile": self.dockerfile,
+                "image_name": self.image_name,
+                "benchmark": self.benchmark,
+                "env_var": self.env_var,
+                "tag_prefix": f"{arch}-",
+                "arch": arch,
+                "changed": self.changed,
+            }
 
 
 class MatrixBuilder:
     """
     Builder for the GHA Jobs Matrix.
 
-    Attributes
+    Parameters
     ----------
     archs : iterable of str
         List of architectures to build against. Will create a matrix entry for each architecture for each
@@ -208,23 +220,86 @@ class MatrixBuilder:
         List of regex strings to match paths against to determine if the path is a snafu "bone".
     upstream_branch : str
         Upstream branch to compare changes to, in order to determine the value of "changed".
+    dockerfile_set : set of str
+        Set of dockerfiles within the snafu repository
+    changed_set : set of str
+        Set of changed files within the snafu repository
     """
 
-    def __init__(self, archs: Iterable[str], bones: Iterable[str], upstream_branch: str):
+    def __init__(
+        self,
+        archs: Iterable[str],
+        bones: Iterable[str],
+        upstream_branch: str,
+        dockerfile_set: Set[str],
+        changed_set: Set[str],
+    ):
         """Contsruct the matrix builder."""
 
         self.archs = archs
         self.bones = bones
         self.upstream_branch = upstream_branch
+        self.dockerfile_set = dockerfile_set
+        self.changed_set = changed_set
         self.matrix: Dict[str, List[Dict[str, str]]] = dict()
+
+        self.reset()
+
+    def reset(self):
+        """Reset the matrix to empty starting point."""
+        self.matrix = {"include": []}
+
+    def add_entry(self, entry: MatrixEntry):
+        """Add the given MatrixEntry into the jobs matrix."""
+
+        for json_dict in entry.as_json():
+            self.matrix["include"].append(json_dict)
+
+    def bones_changed(self) -> bool:
+        """Return True if a bone has is found in the changed set."""
+
+        for bone in self.bones:
+            bone_regex = re.compile(bone)
+            for changed in self.changed_set:
+                if bone_regex.search(changed) is not None:
+                    return True
+        return False
+
+    def benchmark_changed(self, dockerfile: str) -> bool:
+        """Return True if the given dockerfile's benchmark has changed."""
+
+        dockerfile_dir = pathlib.Path(dockerfile).parent
+        for changed in self.changed_set:
+            try:
+                pathlib.Path(changed).relative_to(dockerfile_dir)
+            except ValueError:
+                pass
+            else:
+                return True
+        return False
+
+    def build(self):
+        """Build the GHA jobs matrix."""
+
+        bones_changed = self.bones_changed()
+        for dockerfile in self.dockerfile_set:
+            changed = bones_changed or self.benchmark_changed(dockerfile)
+            entry = MatrixEntry.new(dockerfile=dockerfile, archs=self.archs, changed=changed,)
+            self.add_entry(entry)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "upstream", default="master", help="Upstream branch to compare against. Defaults to 'master'"
+        "upstream", default="master", help="Upstream branch to compare against. Defaults to 'master'",
     )
     args = parser.parse_args()
-    builder = MatrixBuilder(archs=ARCHS, bones=BONES, upstream_branch=args.upstream_branch)
+    builder = MatrixBuilder(
+        archs=ARCHS,
+        bones=BONES,
+        upstream_branch=args.upstream,
+        dockerfile_set=parse_dockerfile_list(get_dockerfile_list()),
+        changed_set=parse_git_diff(get_git_diff(args.upstream)),
+    )
     builder.build()
     print(builder.matrix)

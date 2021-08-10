@@ -183,7 +183,6 @@ sysbench/Dockerfile
 tests/unit/test_config.py
 tests/unit/test_process.py
 tox.ini
-uperf-wrapper/Dockerfile
 uperf-wrapper/uperf-wrapper.py
 utils/__init__.py
 utils/common_logging.py

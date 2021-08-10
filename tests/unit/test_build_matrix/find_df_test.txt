@@ -27,3 +27,5 @@ snafu/benchmarks/uperf/Dockerfile
 snafu/benchmarks/uperf/Dockerfile.ppc64le
 snafu/fs_drift_wrapper/Dockerfile
 snafu/fs_drift_wrapper/Dockerfile.ppc64le
+snafu/my_unchanged_benchmark/Dockerfile
+uperf-wrapper/Dockerfile

@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 """Test functionality of ci/build_matrix.py"""
 import dataclasses
+import importlib
+import json
 import string
 import sys
 from pathlib import Path
-import importlib
-import json
-
 
 # Load the build_matrix.py file using importlib.
 # See https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly for reference.

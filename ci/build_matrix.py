@@ -32,16 +32,14 @@ The JSON output looks like this, in accordance to the GHA Job Matrix Format:
 }
 ```
 """
-from typing import Dict, Iterable, List, Set
-import subprocess
-import shlex
-
 # import json
 import argparse
 import dataclasses
-import re
 import pathlib
-
+import re
+import shlex
+import subprocess
+from typing import Dict, Iterable, List, Set
 
 ARCHS = (
     "amd64",

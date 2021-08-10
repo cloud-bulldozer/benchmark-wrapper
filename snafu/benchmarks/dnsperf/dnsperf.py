@@ -208,21 +208,15 @@ class Dnsperf(Benchmark):
 
             stdout: DnsperfStdout = self.parse_process_output(sample.successful.stdout)
             cfg: DnsperfConfig = DnsperfConfig.new(stdout, self.config, load=load_limit)
-
-            # prepare stdout data for JSON serialization
             cfg.load_limit = str(load_limit)
             stdout.throughput_ts = [item.dict() for item in stdout.throughput_ts]
             stdout.rtt_samples = [item.dict() for item in stdout.rtt_samples]
-
-            # prepare stdout data for JSON serialization
-            cfg.load_limit = str(load_limit)
-            self.logger.info(stdout)
 
             yield self.create_new_result(
                 data=dataclasses.asdict(stdout), config=dict(cfg), tag="results",
             )
 
-            self.logger.info(f"dnsperf ran succesfully!\n")
+            self.logger.info(f"ran succesfully!\n")
 
     def parse_process_output(self, stdout: str) -> DnsperfStdout:
         """Parse string output from the dnsperf benchmark."""

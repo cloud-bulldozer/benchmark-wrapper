@@ -1,0 +1,38 @@
+name: Update Requirement Files
+on:
+  workflow_dispatch:
+jobs:
+  update_requirements:
+    name: Update Requirement Files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install tox
+        run: pip install tox
+      - name: Run version update
+        run: tox -e py36-requirements,py37-requirements,py38-requirements,py39-requirements
+      - name: Open PR
+        uses: peter-evans/create-pull-request@v3
+        id: pr
+        with:
+          commit-message: "chore: Update Requirements Files"
+          branch: ci/update-reqs-files
+          delete-branch: true
+          title: "(CI chore): Update Requirements Files"
+          draft: false
+      - name: Check outputs
+        run: |
+          echo "Pull Request Number - ${{ steps.pr.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.pr.outputs.pull-request-url }}"

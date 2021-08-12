@@ -64,6 +64,7 @@ class Trigger_trex:
     def emit_actions(self):
         logger.info("Starting TRex Traffic Generator..")
         stdout, stderr, rc = self._run_trex()
+        logger.debug(f"stdout: {stdout}")
         if rc == 0:
             documents = self._json_payload(stdout)
             for document in documents:
@@ -71,7 +72,6 @@ class Trigger_trex:
                 logger.info(document)
             logger.info("Finished Generating traffic..")
         else:
-            raise Exception("TRex failed to execute, stopping...")
             logger.critical("TRex failed to execute, stopping...")
             logger.critical("stdout: %s" % stdout)
             logger.critical("stderr: %s" % stderr)

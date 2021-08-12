@@ -40,6 +40,7 @@ jobs:
   detect_changes:
     runs-on: ubuntu-latest
     name: Submit PR on changes
+    needs: update_requirements
     steps:
       - uses: actions/checkout@v2
       - name: Download diff files

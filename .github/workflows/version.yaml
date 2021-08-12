@@ -42,16 +42,19 @@ jobs:
     runs-on: ubuntu-latest
     name: Submit PR on changes
     needs: update_requirements
+    env:
+      PATCH_DIR: patch_files_${{ github.run_id }}
     steps:
       - uses: actions/checkout@v2
       - name: Download diff files
         uses: actions/download-artifact@v2
         with:
-          path: patch_files
+          path: ${{ env.PATCH_DIR }}
       - name: Apply patch files
         run: |
-            find patch_files/ -name "*.patch" -exec mv {} . \;
-            git apply *.patch
+            find ${{ env.PATCH_DIR }}/ -name "*.patch" -exec mv {} ./${{ env.PATCH_DIR  }} \;
+            git apply ${{ env.PATCH_DIR }}/*.patch
+            rm -fr ${{ env.PATCH_DIR }}
       - name: Open PR
         uses: peter-evans/create-pull-request@v3
         id: pr

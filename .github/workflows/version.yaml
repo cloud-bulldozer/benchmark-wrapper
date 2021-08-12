@@ -31,12 +31,13 @@ jobs:
           else
               echo PATCH_LINES="true" >> $GITHUB_ENV
           fi
+          mv diff.patch diff.py3${{ matrix.pyver }}.patch
       - name: Upload artifact
         if: fromJSON(env.PATCH_LINES)
         uses: actions/upload-artifact@v2
         with:
           name: diff-py3${{ matrix.pyver }}
-          path: diff.patch
+          path: diff.py3${{ matrix.pyver}}.patch
   detect_changes:
     runs-on: ubuntu-latest
     name: Submit PR on changes

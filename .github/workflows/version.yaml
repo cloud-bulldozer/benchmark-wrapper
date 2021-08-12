@@ -50,7 +50,16 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           path: ${{ env.PATCH_DIR }}
+      - name: Check if diff files exist
+        run: |
+          if [ -d "${{ env.PATCH_DIR }}" ]
+          then
+              echo APPLY_DIFF="true" >> $GITHUB_ENV
+          else
+              echo APPLY_DIFF="false" >> $GITHUB_ENV
+          fi
       - name: Apply patch files
+        if: fromJSON(env.APPLY_DIFF)
         run: |
             find ${{ env.PATCH_DIR }}/ -name "*.patch" -exec mv {} ./${{ env.PATCH_DIR  }} \;
             git apply ${{ env.PATCH_DIR }}/*.patch

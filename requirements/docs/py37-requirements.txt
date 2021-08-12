@@ -22,11 +22,11 @@ backcall==0.2.0
     # via ipython
 bleach==4.0.0
     # via nbconvert
-boto3==1.18.19
+boto3==1.18.20
     # via
     #   -r requirements/install/py37-requirements.txt
     #   snafu (setup.cfg)
-botocore==1.21.19
+botocore==1.21.20
     # via
     #   -r requirements/install/py37-requirements.txt
     #   boto3
@@ -215,7 +215,9 @@ openshift==0.11
     #   snafu (setup.cfg)
 packaging==21.0
     # via
+    #   -r requirements/install/py37-requirements.txt
     #   bleach
+    #   snafu (setup.cfg)
     #   sphinx
 pandas==1.3.1
     # via
@@ -265,7 +267,9 @@ pygments==2.9.0
     #   nbconvert
     #   sphinx
 pyparsing==2.4.7
-    # via packaging
+    # via
+    #   -r requirements/install/py37-requirements.txt
+    #   packaging
 pyrsistent==0.18.0
     # via jsonschema
 python-dateutil==2.8.2

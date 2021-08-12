@@ -49,8 +49,7 @@ jobs:
           path: patch_files
       - name: Apply patch files
         run: |
-            find patch_files/ -name "*.patch.zip" -exec unzip {} \;
-            git apply *.patch
+            git apply patch_files/*.patch
       - name: Open PR
         uses: peter-evans/create-pull-request@v3
         id: pr

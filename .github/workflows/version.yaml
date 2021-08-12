@@ -8,26 +8,48 @@ on:
     - cron: '0 0 * * 1'
 jobs:
   update_requirements:
-    name: Update Requirement Files
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pyver: [6, 7, 8, 9]
+    name: Update Req Files -- Python 3.${{ matrix.pyver }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.6
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
+          python-version: 3.${{ matrix.pyver }}
       - name: Install tox
         run: pip install tox
       - name: Run version update
-        run: tox -e py36-requirements,py37-requirements,py38-requirements,py39-requirements
+        run: tox -e py3${{ matrix.pyver }}-requirements
+      - name: Save git diff
+        run: |
+          git diff --output diff.patch
+          if [ `wc -l diff.patch | cut -d ' ' -f 1` -eq 0 ]
+          then
+              echo PATCH_LINES="false" >> $GITHUB_ENV
+          else
+              echo PATCH_LINES="true" >> $GITHUB_ENV
+          fi
+      - name: Upload artifact
+        if: fromJSON(env.PATCH_LINES)
+        uses: actions/upload-artifact@v2
+        with:
+          name: diff-py3${{ matrix.pyver }}.patch
+          path: diff.patch
+  detect_changes:
+    runs-on: ubuntu-latest
+    name: Submit PR on changes
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download diff files
+        uses: actions/download-artifact@v2
+        with:
+          path: patch_files
+      - name: Apply patch files
+        run: |
+            find patch_files/ -name "*.patch.zip" -exec unzip {} \;
+            git apply *.patch
       - name: Open PR
         uses: peter-evans/create-pull-request@v3
         id: pr

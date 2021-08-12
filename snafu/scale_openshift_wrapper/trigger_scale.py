@@ -11,10 +11,14 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from openshift.dynamic import DynamicClient
+from kubernetes import client, config
+import subprocess
 import logging
 import time
-from kubernetes import client, config
-from openshift.dynamic import DynamicClient
+from shutil import which
+from packaging import version
+import json
 
 logger = logging.getLogger("snafu")
 
@@ -28,6 +32,41 @@ class Trigger_scale:
         self.incluster = args.incluster
         self.poll_interval = args.poll_interval
         self.kubeconfig = args.kubeconfig
+        self.is_rosa = False
+        if args.rosa_cluster is not None:
+            logger.info("Identified ROSA for scaling process")
+            if args.rosa_token is None:
+                logger.error("--rosa-token is required when --rosa is true")
+                exit(1)
+            else:
+                self.rosa_token = args.rosa_token
+            if which("rosa") is None:
+                logger.error("ROSA tool not found")
+                exit(1)
+            else:
+                # required rosa version >= 1.0.10
+                self.rosa_tool = which("rosa")
+                logger.info("Checking ROSA version")
+                rosa_command = [self.rosa_tool, "version"]
+                logger.debug(rosa_command)
+                rosa_process = subprocess.Popen(rosa_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                rosa_stdout, rosa_stderr = rosa_process.communicate()
+                if rosa_process.returncode != 0:
+                    logger.error("Unable to execute %s" % rosa_command)
+                    logger.error(rosa_stderr.strip().decode("utf-8"))
+                    exit(1)
+                else:
+                    logger.debug(rosa_stdout.strip().decode("utf-8"))
+                    rosa_version = rosa_stdout.strip().decode("utf-8")
+                    logger.info("Detected ROSA version %s" % rosa_version)
+                    if version.parse(rosa_stdout.strip().decode("utf-8")) < version.parse("1.0.10"):
+                        logger.error("Minimum ROSA version required: 1.0.10")
+                        exit(1)
+            self.cluster_name = args.rosa_cluster
+            self.rosa_env = args.rosa_env
+            self._rosa_login()
+            logger.info("ROSA login completed")
+            self.is_rosa = True
 
     def _json_payload(self, data):
         payload = {
@@ -36,6 +75,64 @@ class Trigger_scale:
         }
         payload.update(data)
         return payload
+
+    def _rosa_login(self):
+        logger.info("Attempting to log in ROSA")
+        rosa_command = [self.rosa_tool, "login", "--token=" + self.rosa_token]
+        if self.rosa_env:
+            rosa_command.append("--env=" + self.rosa_env)
+        logger.debug(rosa_command)
+        rosa_process = subprocess.Popen(rosa_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        rosa_stdout, rosa_stderr = rosa_process.communicate()
+        if rosa_process.returncode != 0:
+            logger.error("Unable to execute %s" % rosa_command)
+            logger.error(rosa_stderr.strip().decode("utf-8"))
+            exit(1)
+        else:
+            logger.debug(rosa_stdout.strip().decode("utf-8"))
+
+    def _rosa_getmachinepools(self):
+        logger.info("Getting machinepools information for cluster: %s" % (self.cluster_name))
+        rosa_command = [self.rosa_tool, "list", "machinepools", "-c", self.cluster_name, "-o", "json"]
+        logger.debug(rosa_command)
+        rosa_process = subprocess.Popen(rosa_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        rosa_stdout, rosa_stderr = rosa_process.communicate()
+        if rosa_process.returncode != 0:
+            logger.error("Unable to execute %s" % rosa_command)
+            logger.error(rosa_stderr.strip().decode("utf-8"))
+            exit(1)
+        return json.loads(rosa_stdout)
+
+    def _rosa_scale(self, machinepool):
+        logger.info(
+            "Attempting to scale machinepool %s of %s to %d" % (machinepool, self.cluster_name, self.scale)
+        )
+        for i in self.rosa_machinepools:
+            if i["id"] == machinepool:
+                azs = len(i["availability_zones"])
+                if self.scale % azs != 0:
+                    logger.error(
+                        "%d is not multiple of %d (workers must be a multiple of AZs on ROSA)"
+                        % (self.scale, azs)
+                    )
+                    exit(1)
+        rosa_command = [
+            self.rosa_tool,
+            "edit",
+            "machinepool",
+            "-c",
+            self.cluster_name,
+            "--replicas",
+            str(self.scale),
+            machinepool,
+        ]
+        logger.debug(rosa_command)
+        rosa_process = subprocess.Popen(rosa_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        rosa_stdout, rosa_stderr = rosa_process.communicate()
+        if rosa_process.returncode != 0:
+            logger.error("Unable to execute %s" % rosa_command)
+            logger.error(rosa_stderr.strip().decode("utf-8"))
+            exit(1)
 
     def _run_scale(self):
         # Var defs
@@ -56,16 +153,20 @@ class Trigger_scale:
         try:
             dyn_client = DynamicClient(k8s_client)
         except Exception as err:
-            logger.info("ERROR: Could not configure client, failing the run")
-            logger.info(err)
+            logger.error("Could not configure client, failing the run")
+            logger.error(err)
             exit(1)
+
+        if self.is_rosa:
+            self.rosa_machinepools = self._rosa_getmachinepools()
+            logger.debug("ROSA MachinePools: %s" % self.rosa_machinepools)
 
         try:
             nodes = dyn_client.resources.get(api_version="v1", kind="Node")
             machinesets = dyn_client.resources.get(kind="MachineSet")
         except Exception as err:
-            logger.info("ERROR: Could not get information on nodes/machinesets, failing the run")
-            logger.info(err)
+            logger.error("Could not get information on nodes/machinesets, failing the run")
+            logger.error(err)
             exit(1)
 
         worker_count = (
@@ -88,15 +189,15 @@ class Trigger_scale:
         try:
             platform = infra.get().attributes.items[0].spec.platformSpec.type
         except Exception as err:
-            logger.info("Platform type not obtained through spec.platformSpec.type")
-            logger.info("Trying to query status.platform")
-            logger.info(err)
+            logger.error("Platform type not obtained through spec.platformSpec.type")
+            logger.error("Trying to query status.platform")
+            logger.error(err)
 
             try:
                 platform = infra.get().attributes.items[0].status.platform
             except Exception as err:
-                logger.warning("Could not identify platform. Marking as Unknown")
-                logger.warning(err)
+                logger.error("Could not identify platform. Marking as Unknown")
+                logger.error(err)
                 platform = "Unknown"
 
         # Machine set name list
@@ -112,7 +213,6 @@ class Trigger_scale:
                 == "worker"
             ):
                 machineset_worker_list.append(machineset_all_list[i])
-
         # If we are already at the requested scale exit
         # Determine if we are scaling down or up
         action = "scale_nochange"
@@ -145,16 +245,19 @@ class Trigger_scale:
 
         logger.info("Starting Patching of machine sets")
         # Patch the machinesets
-        for i in range(len(machineset_workers)):
-            body = {"spec": {"replicas": machine_spread[i]}}
-            machinesets.patch(
-                body=body,
-                namespace="openshift-machine-api",
-                name=machineset_workers[i],
-                content_type="application/merge-patch+json",
-            )
+        if not self.is_rosa:
+            for i in range(len(machineset_workers)):
+                body = {"spec": {"replicas": machine_spread[i]}}
+                machinesets.patch(
+                    body=body,
+                    namespace="openshift-machine-api",
+                    name=machineset_workers[i],
+                    content_type="application/merge-patch+json",
+                )
+        else:
+            self._rosa_scale("Default")
 
-        # Wait for worker machine sets to show the appropriate ready replicas
+        logger.info("Waiting for worker machine set to show the appropiate ready replicas")
         for i in range(len(machineset_worker_list)):
             new_machine_sets = machinesets.get(
                 namespace="openshift-machine-api", name=machineset_worker_list[i].metadata.name
@@ -164,6 +267,14 @@ class Trigger_scale:
                     break
                 new_machine_sets = machinesets.get(
                     namespace="openshift-machine-api", name=machineset_worker_list[i].metadata.name
+                )
+                logger.debug(
+                    "Number of ready replicas for %s: %s. Waiting %d seconds for next check..."
+                    % (
+                        new_machine_sets.metadata.name,
+                        str(new_machine_sets.status.readyReplicas),
+                        self.poll_interval,
+                    )
                 )
                 time.sleep(self.poll_interval)
 
@@ -176,6 +287,10 @@ class Trigger_scale:
         for i in range(len(new_worker_list)):
             while i < len(new_worker_list) and new_worker_list[i].spec.unschedulable:
                 new_worker_list = nodes.get(label_selector="node-role.kubernetes.io/worker").attributes.items
+                logger.debug(
+                    "Number of ready workers: %d. Waiting %d seconds for next check..."
+                    % (len(new_worker_list), self.poll_interval)
+                )
                 time.sleep(self.poll_interval)
         logger.info("All workers schedulable")
 

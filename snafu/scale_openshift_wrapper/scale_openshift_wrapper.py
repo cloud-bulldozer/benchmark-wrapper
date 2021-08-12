@@ -44,6 +44,9 @@ class scale_openshift_wrapper:
             help="Polling interval for checks while waiting on the machine scaling",
         )
         parser.add_argument("--kubeconfig", help="Optional kubeconfig location. Incluster cannot be true")
+        parser.add_argument("--rosa-cluster", help="If running on ROSA, ID or name of the cluster")
+        parser.add_argument("--rosa-token", help="Token to execute rosa commands")
+        parser.add_argument("--rosa-env", help="ROSA environment to log in if different than Production")
         self.args = parser_object.parse_args()
 
         self.args.cluster_name = os.getenv("clustername", "mycluster")

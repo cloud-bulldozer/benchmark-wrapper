@@ -1,6 +1,11 @@
 name: Update Requirement Files
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'setup.cfg'
+  schedule:
+    - cron: '0 0 * * 1'
 jobs:
   update_requirements:
     name: Update Requirement Files

@@ -35,7 +35,7 @@ jobs:
         if: fromJSON(env.PATCH_LINES)
         uses: actions/upload-artifact@v2
         with:
-          name: diff-py3${{ matrix.pyver }}.patch
+          name: diff-py3${{ matrix.pyver }}
           path: diff.patch
   detect_changes:
     runs-on: ubuntu-latest
@@ -49,7 +49,8 @@ jobs:
           path: patch_files
       - name: Apply patch files
         run: |
-            git apply patch_files/*.patch
+            find patch_files/ -name "*.patch" -exec mv {} . \;
+            git apply *.patch
       - name: Open PR
         uses: peter-evans/create-pull-request@v3
         id: pr

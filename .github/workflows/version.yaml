@@ -67,7 +67,7 @@ jobs:
           body: |
             Update requirement files with new package versions.
 
-            Triggered by workflow run [${{ github.run_id }}@${{ github.repository }}](https://github.com/${{ github.repository }}/runs/${{ github.run_id }})
+            Triggered by workflow run [${{ github.run_id }}@${{ github.repository }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
       - name: Check outputs
         run: |

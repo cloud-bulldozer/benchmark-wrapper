@@ -32,7 +32,7 @@ The JSON output looks like this, in accordance to the GHA Job Matrix Format:
 }
 ```
 """
-# import json
+import json
 import argparse
 import dataclasses
 import pathlib
@@ -300,4 +300,4 @@ if __name__ == "__main__":
         changed_set=parse_git_diff(get_git_diff(args.upstream)),
     )
     builder.build()
-    print(builder.matrix)
+    print(json.dumps(builder.matrix))

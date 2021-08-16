@@ -289,7 +289,7 @@ class MatrixBuilder:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "upstream", default="master", help="Upstream branch to compare against. Defaults to 'master'",
+        "--upstream", default="master", help="Upstream branch to compare against. Defaults to 'master'",
     )
     args = parser.parse_args()
     builder = MatrixBuilder(

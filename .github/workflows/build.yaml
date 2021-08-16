@@ -4,6 +4,14 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
+    inputs:
+      diff_branch:
+        description: 'Upstream branch for determining changes'
+        default: 'master'
+      run_all:
+        description: 'Run all tests regardless of changes?'
+        default: 'false'
 
 jobs:
   create_matrix:
@@ -17,15 +25,32 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
+
+      - name: Echo manual trigger params
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "${{ toJSON(github.event.inputs) }}"
+      - name: Set upstream branch
+        run: |
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]
+            then
+                echo UPSTREAM_BRANCH=${{ github.event.inputs.diff_branch }} >> $GITHUB_ENV
+            else
+                echo UPSTREAM_BRANCH=master >> $GITHUB_ENV
+            fi
+
       - name: Build job matrix
-        run: echo matrix=`python ci/build_matrix.py` >> $GITHUB_ENV
+        run: echo matrix=`python ci/build_matrix.py ${{ env.UPSTREAM_BRANCH }}` >> $GITHUB_ENV
       - name: Filter Dockerfiles with no changes
+        if: >-
+            github.event_name != 'workflow_dispatch' ||
+            (github.event_name == 'workflow_dispatch' && github.event.inputs.run_all == 'false')
         run: >-
             echo matrix=`echo "$matrix" | jq -c
             '{"include": .include | map(select(.changed == "true"))}'` >> $GITHUB_ENV
       - name: Set job matrix
         id: set-matrix
         run: echo '::set-output name=matrix::${{ env.matrix }}'
+
       - name: Echo matrix variable
         run: |
             cat << EOF

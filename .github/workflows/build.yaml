@@ -39,7 +39,7 @@ jobs:
             fi
 
       - name: Build job matrix
-        run: echo matrix=`python ci/build_matrix.py ${{ env.UPSTREAM_BRANCH }}` >> $GITHUB_ENV
+        run: echo matrix=`python ci/build_matrix.py --upstream ${{ env.UPSTREAM_BRANCH }}` >> $GITHUB_ENV
       - name: Filter Dockerfiles with no changes
         if: >-
             github.event_name != 'workflow_dispatch' ||

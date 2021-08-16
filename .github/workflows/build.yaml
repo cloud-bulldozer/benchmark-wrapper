@@ -56,7 +56,7 @@ jobs:
             cat << EOF
             ${{ steps.set-matrix.outputs.matrix }}
             EOF
-      - name: Sanity check: parse matrix using fromJSON
+      - name: Sanity check by parsing matrix using fromJSON
         run: echo ${{ fromJSON(steps.set-matrix.outputs.matrix) }}
 
   build_push:

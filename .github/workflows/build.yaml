@@ -1,0 +1,72 @@
+name: Build Images
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  create_matrix:
+    runs-on: ubuntu-latest
+    name: Create Build Matrix
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Build job matrix
+        run: echo matrix=`python ci/build_matrix.py` >> $GITHUB_ENV
+      - name: Filter Dockerfiles with no changes
+        run: >-
+            echo matrix=`echo "$matrix" | jq -c
+            '{"include": .include | map(select(.changed == "true"))}'` >> $GITHUB_ENV
+      - name: Set job matrix
+        id: set-matrix
+        run: echo '::set-output name=matrix::${{ env.matrix }}'
+      - name: Echo matrix variable
+        run: |
+            cat << EOF
+            ${{ steps.set-matrix.outputs.matrix }}
+            EOF
+      - name: Sanity check: parse matrix using fromJSON
+        run: echo ${{ fromJSON(steps.set-matrix.outputs.matrix) }}
+
+  build_push:
+    needs: create_matrix
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix: ${{ fromJSON(needs.create_matrix.outputs.matrix) }}
+      fail-fast: false
+    name: ${{ matrix.benchmark }} (${{ matrix.arch }})
+    steps:
+      - uses: actions/checkout@v2
+      - name: Echo Matrix Permutation
+        run: |
+            cat << EOF
+            ${{ toJSON(matrix) }}
+            EOF
+      - name: Update apt cache
+        run: sudo apt update
+      - name: Install podman and qemu-user-static
+        run: sudo apt install -y podman qemu-user-static
+      - name: Build ${{ matrix.containerfile }}
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          arch: ${{ matrix.arch }}
+          image: ${{ matrix.image_name }}
+          tags: ${{ matrix.tag_prefix }}${{ github.sha }} ${{ matrix.tag_prefix }}latest
+          dockerfiles: ${{ matrix.dockerfile }}
+      - name: Push ${{ matrix.dockerfile }}
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: quay.io/${{ secrets.REGISTRY_USER }}
+          username: ${{ secrets.REGISTRY_AUTH_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Print image URL
+        run: echo "Image pushed to ${{ steps.push-image.outputs.registry-paths }}"

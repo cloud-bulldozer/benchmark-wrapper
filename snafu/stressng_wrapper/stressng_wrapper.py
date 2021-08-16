@@ -23,6 +23,14 @@ class stressng_wrapper:
         self.args.vm_stressors = ""
         self.args.vm_bytes = ""
         self.args.mem_stressors = ""
+        # es custom fields
+        self.args.es_ocp_version = ""
+        self.args.es_cnv_version = ""
+        self.args.es_vm_os_version = ""
+        self.args.es_rhcos_version = ""
+        self.args.es_kata_version = ""
+        self.args.es_kind = ""
+        self.args.es_data = ""
 
         if "runtype" in os.environ:
             self.args.runtype = os.environ["runtype"]
@@ -34,6 +42,21 @@ class stressng_wrapper:
             self.args.vm_bytes = os.environ["vm_bytes"]
         if "mem_stressors" in os.environ:
             self.args.mem_stressors = os.environ["mem_stressors"]
+        # es custom fields
+        if "es_ocp_version" in os.environ:
+            self.args.es_ocp_version = os.environ["es_ocp_version"]
+        if "es_cnv_version" in os.environ:
+            self.args.es_cnv_version = os.environ["es_cnv_version"]
+        if "es_vm_os_version" in os.environ:
+            self.args.es_vm_os_version = os.environ["es_vm_os_version"]
+        if "es_rhcos_version" in os.environ:
+            self.args.es_rhcos_version = os.environ["es_rhcos_version"]
+        if "es_kata_version" in os.environ:
+            self.args.es_kata_version = os.environ["es_kata_version"]
+        if "es_kind" in os.environ:
+            self.args.es_kind = os.environ["es_kind"]
+        if "es_data" in os.environ:
+            self.args.es_data = os.environ["es_data"]
 
     def run(self):
         stressng_wrapper_obj = Trigger_stressng(self.args)

@@ -17,6 +17,14 @@ class Trigger_stressng:
         self.vm_bytes = args.vm_bytes
         self.mem_stressors = args.mem_stressors
         self.jobfile = args.jobfile
+        # es customs fields
+        self.es_ocp_version = args.es_ocp_version
+        self.es_cnv_version = args.es_cnv_version
+        self.es_vm_os_version = args.es_vm_os_version
+        self.es_rhcos_version = args.es_rhcos_version
+        self.es_kata_version = args.es_kata_version
+        self.es_kind = args.es_kind
+        self.es_data = args.es_data
 
     def _run_stressng(self):
         cmd = "stress-ng --job {} --log-file stressng.log -Y stressng.yml".format(self.jobfile)
@@ -36,7 +44,7 @@ class Trigger_stressng:
             results.append(result)
         return results
 
-    def _json_payload(self, data, uuid, runtype, timeout, vm_stressors, vm_bytes, mem_stressors, timestamp):
+    def _json_payload(self, data, uuid, runtype, timeout, vm_stressors, vm_bytes, mem_stressors, es_ocp_version, es_cnv_version, es_vm_os_version, es_rhcos_version, es_kata_version, es_kind, es_data, timestamp):
         logger.info("generating json payload")
         edict = {}
         processed = []
@@ -49,6 +57,13 @@ class Trigger_stressng:
                 "vm_stressors": vm_stressors,
                 "vm_bytes": vm_bytes,
                 "mem_stressors": mem_stressors,
+                "es_ocp_version": es_ocp_version,
+                "es_cnv_version": es_cnv_version,
+                "es_vm_os_version": es_vm_os_version,
+                "es_rhcos_version": es_rhcos_version,
+                "es_kata_version": es_kata_version,
+                "es_kind": es_kind,
+                "es_data": es_data,
                 "timestamp": timestamp,
             }
         )
@@ -100,6 +115,13 @@ class Trigger_stressng:
             self.vm_stressors,
             self.vm_bytes,
             self.mem_stressors,
+            self.es_ocp_version,
+            self.es_cnv_version,
+            self.es_vm_os_version,
+            self.es_rhcos_version,
+            self.es_kata_version,
+            self.es_kind,
+            self.es_data,
             timestamp,
         )
         if len(documents) > 0:

@@ -43,7 +43,7 @@ from typing import Dict, Iterable, List, Set
 
 ARCHS = (
     "amd64",
-    "aarch64",
+    "arm64",
 )
 BONES = (
     r"ci/",

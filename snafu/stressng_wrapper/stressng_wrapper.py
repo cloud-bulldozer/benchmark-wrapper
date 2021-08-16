@@ -30,6 +30,7 @@ class stressng_wrapper:
         self.args.es_rhcos_version = ""
         self.args.es_kata_version = ""
         self.args.es_kind = ""
+        self.args.es_build_version = ""
         self.args.es_data = ""
 
         if "runtype" in os.environ:
@@ -55,6 +56,8 @@ class stressng_wrapper:
             self.args.es_kata_version = os.environ["es_kata_version"]
         if "es_kind" in os.environ:
             self.args.es_kind = os.environ["es_kind"]
+        if "es_build_version" in os.environ:
+            self.args.es_build_version = os.environ["es_build_version"]
         if "es_data" in os.environ:
             self.args.es_data = os.environ["es_data"]
 

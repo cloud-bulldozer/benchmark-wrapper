@@ -24,6 +24,7 @@ class Trigger_stressng:
         self.es_rhcos_version = args.es_rhcos_version
         self.es_kata_version = args.es_kata_version
         self.es_kind = args.es_kind
+        self.es_build_version = args.es_build_version
         self.es_data = args.es_data
 
     def _run_stressng(self):
@@ -59,6 +60,7 @@ class Trigger_stressng:
         es_rhcos_version,
         es_kata_version,
         es_kind,
+        es_build_version,
         es_data,
         timestamp,
     ):
@@ -80,6 +82,7 @@ class Trigger_stressng:
                 "es_rhcos_version": es_rhcos_version,
                 "es_kata_version": es_kata_version,
                 "es_kind": es_kind,
+                "es_build_version": es_build_version,
                 "es_data": es_data,
                 "timestamp": timestamp,
             }
@@ -138,6 +141,7 @@ class Trigger_stressng:
             self.es_rhcos_version,
             self.es_kata_version,
             self.es_kind,
+            self.es_build_version,
             self.es_data,
             timestamp,
         )

@@ -83,6 +83,19 @@ def test_matrix_entry_new_parses_file_path_correctly():
     assert dataclasses.asdict(entry) == as_dict
 
 
+def test_matrix_entry_new_parses_benchmark_name_correctly():
+    """Test that the new method of MatrixEntry class correctly parses the benchmark name."""
+
+    dockerfiles = [
+        ("my/path/to/benchmark/Dockerfile", "benchmark"),
+        ("my_benchmark_wrapper/Dockerfile", "my_benchmark"),
+        ("benchmark_wrapper/Dockerfile", "benchmark"),
+    ]
+    for dockerfile, benchmark_name in dockerfiles:
+        entry = build_matrix.MatrixEntry.new(dockerfile=dockerfile, changed=True, archs=["myarch"])
+        assert entry.benchmark == benchmark_name
+
+
 def test_matrix_entry_as_json_correctly_creates_expected_json_dict():
     """Test that the as_json method of the MatrixEntry class correctly creates the expected JSON dicts."""
 

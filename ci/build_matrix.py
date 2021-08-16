@@ -180,7 +180,7 @@ class MatrixEntry:
             Sets the archs attribute.
         """
 
-        benchmark = pathlib.Path(dockerfile).parent.stem
+        benchmark = str(pathlib.Path(dockerfile).parent.stem).replace("_wrapper", "")
         return cls(
             dockerfile=dockerfile,
             changed=changed,

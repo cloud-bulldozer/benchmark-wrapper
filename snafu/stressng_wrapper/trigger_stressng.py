@@ -60,7 +60,7 @@ class Trigger_stressng:
         es_kata_version,
         es_kind,
         es_data,
-        timestamp
+        timestamp,
     ):
         logger.info("generating json payload")
         edict = {}

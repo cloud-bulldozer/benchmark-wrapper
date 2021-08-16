@@ -49,23 +49,10 @@ class Trigger_stressng:
         edict = {}
         processed = []
         edict.update(
-            {
-                "workload": "stressng",
-                "uuid": uuid,
-                "runtype": runtype,
-                "timeout": timeout,
-                "vm_stressors": vm_stressors,
-                "vm_bytes": vm_bytes,
-                "mem_stressors": mem_stressors,
-                "es_ocp_version": es_ocp_version,
-                "es_cnv_version": es_cnv_version,
-                "es_vm_os_version": es_vm_os_version,
-                "es_rhcos_version": es_rhcos_version,
-                "es_kata_version": es_kata_version,
-                "es_kind": es_kind,
-                "es_data": es_data,
-                "timestamp": timestamp,
-            }
+            dict(workload="stressng", uuid=uuid, runtype=runtype, timeout=timeout, vm_stressors=vm_stressors,
+                 vm_bytes=vm_bytes, mem_stressors=mem_stressors, es_ocp_version=es_ocp_version,
+                 es_cnv_version=es_cnv_version, es_vm_os_version=es_vm_os_version, es_rhcos_version=es_rhcos_version,
+                 es_kata_version=es_kata_version, es_kind=es_kind, es_data=es_data, timestamp=timestamp)
         )
         for i in range(len(data)):
             edict.update(dict(data[i]))

@@ -57,7 +57,7 @@ jobs:
         id: set-build-matrix
         run: |
             export build_matrix=`echo '${{ env.matrix }}' | jq -c '.build'`
-            echo '::set-output name=matrix::$build_matrix'
+            echo "::set-output name=matrix::$build_matrix"
       - name: Echo build matrix variable
         run: |
             cat << EOF
@@ -70,7 +70,7 @@ jobs:
         id: set-manifest-matrix
         run: |
             export manifest_matrix=`echo '${{ env.matrix }}' | jq -c '.manifest'`
-            echo '::set-output name=matrix::$manifest_matrix'
+            echo "::set-output name=matrix::$manifest_matrix"
       - name: Echo manifest matrix variable
         run: |
             cat << EOF

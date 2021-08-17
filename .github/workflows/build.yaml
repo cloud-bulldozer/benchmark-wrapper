@@ -120,6 +120,7 @@ jobs:
     needs:
       - create_matrix
       - build_push
+    if: always()
     runs-on: ubuntu-20,04
     strategy:
       matrix: ${{ fromJSON(needs.create_matrix.outputs.manifest_matrix) }}

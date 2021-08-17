@@ -10,7 +10,7 @@ on:
         description: 'Upstream branch for determining changes'
         default: 'master'
       run_all:
-        description: 'Run all tests regardless of changes?'
+        description: 'Run all builds regardless of changes?'
         default: 'false'
 
 jobs:
@@ -42,7 +42,7 @@ jobs:
         if: >-
             (
                 github.event_name != 'workflow_run' ||
-                (zgithub.event_name == 'workflow_run' && toJSON(github.event.workflow_run.inputs.run_all) == false)
+                (github.event_name == 'workflow_run' && toJSON(github.event.workflow_run.inputs.run_all) == false)
             )
         run: echo matrix=`python ci/build_matrix.py --changed-only --upstream ${{ env.UPSTREAM_BRANCH }}` >> $GITHUB_ENV
       - name: Build job matirx (all)

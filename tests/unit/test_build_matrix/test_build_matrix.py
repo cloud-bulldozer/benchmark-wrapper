@@ -101,8 +101,8 @@ def test_matrix_entry_new_parses_benchmark_name_correctly():
         assert entry.benchmark == benchmark_name
 
 
-def test_matrix_entry_as_json_correctly_creates_expected_json_dict():
-    """Test that the as_json method of the MatrixEntry class correctly creates the expected JSON dicts."""
+def test_matrix_entry_json_methods_correctly_creates_expected_json_dict():
+    """Test that the json methods of the MatrixEntry class correctly creates the expected JSON dicts."""
 
     dockerfile = "dockerfile"
     changed = True
@@ -110,16 +110,17 @@ def test_matrix_entry_as_json_correctly_creates_expected_json_dict():
     benchmark = "benchmark"
     env_var = "BENCHMARK_IMAGE"
     input_tags = ["0", "1", "2"]
+    input_archs = ["1", "2", "3"]
     entry = build_matrix.MatrixEntry(
         dockerfile=dockerfile,
         changed=changed,
-        archs=["1", "2", "3"],
-        tags=["0", "1", "2"],
+        archs=input_archs,
+        tags=input_tags,
         image_name=image_name,
         benchmark=benchmark,
         env_var=env_var,
     )
-    for index, json_dict in enumerate(entry.as_json()):
+    for index, json_dict in enumerate(entry.build_json()):
         arch = str(index + 1)
         tags = " ".join([f"{str(tag)}-{arch}" for tag in input_tags])
         assert json_dict["dockerfile"] == dockerfile
@@ -132,6 +133,18 @@ def test_matrix_entry_as_json_correctly_creates_expected_json_dict():
         assert json_dict["tag_suffix"] == f"-{arch}"
         json.dumps(json_dict)
 
+    for index, json_dict in enumerate(entry.manifest_json()):
+        tag = str(index)
+        tag_suffixes = [f"-{arch}" for arch in input_archs]
+        assert json_dict["dockerfile"] == dockerfile
+        assert json_dict["changed"] == changed
+        assert json_dict["image_name"] == image_name
+        assert json_dict["benchmark"] == benchmark
+        assert json_dict["archs"] == input_archs
+        assert json_dict["tag"] == tag
+        assert json_dict["tag_suffixes"] == tag_suffixes
+        json.dumps(json_dict)
+
 
 def test_matrix_builder_can_instantiate_correctly():
     """Test that the MatrixBuilder instantiates correctly with given args and creates empty build matrix."""
@@ -141,17 +154,19 @@ def test_matrix_builder_can_instantiate_correctly():
     assert builder.bones == EXAMPLE_MATRIX_BUILDER_KWARGS_DICT["bones"]
     assert builder.dockerfile_set == EXAMPLE_MATRIX_BUILDER_KWARGS_DICT["dockerfile_set"]
     assert builder.changed_set == EXAMPLE_MATRIX_BUILDER_KWARGS_DICT["changed_set"]
-    assert builder.matrix == {"include": []}
+    assert builder.build_matrix == {"include": []}
+    assert builder.manifest_matrix == {"include": []}
 
 
 def test_matrix_builder_reset_method_correctly_clears_matrix():
     """Test that the MatrixBuilder.reset method will correctly clear out the matrix."""
 
     builder = build_matrix.MatrixBuilder(**EXAMPLE_MATRIX_BUILDER_KWARGS_DICT)
-    builder.matrix = "this is a matrix"
+    builder.build_matrix = builder.manifest_matrix = "this is a matrix"
     builder.reset()
-    assert isinstance(builder.matrix, dict)
-    assert builder.matrix == {"include": []}
+    for matrix in (builder.build_matrix, builder.manifest_matrix):
+        assert isinstance(matrix, dict)
+        assert matrix == {"include": []}
 
 
 def test_matrix_builder_bones_changed_method_correctly_identifies_changed_bones():
@@ -201,12 +216,19 @@ def test_matrix_builder_build_method_changed_only_param_works_as_expected():
 
     reduce_to_dockerfiles = lambda matrix: list(map(lambda entry: entry["dockerfile"], matrix["include"]))
     builder.build(changed_only=False)
-    all_dockerfiles = reduce_to_dockerfiles(builder.matrix)
+    all_build_dockerfiles = reduce_to_dockerfiles(builder.build_matrix)
+    all_manifest_dockerfiles = reduce_to_dockerfiles(builder.manifest_matrix)
     builder.reset()
     builder.build(changed_only=True)
-    changed_dockerfiles = reduce_to_dockerfiles(builder.matrix)
+    changed_build_dockerfiles = reduce_to_dockerfiles(builder.build_matrix)
+    changed_manifest_dockerfiles = reduce_to_dockerfiles(builder.manifest_matrix)
 
-    assert all(unchanged_df not in changed_dockerfiles for unchanged_df in not_changed)
-    assert all(changed_df in changed_dockerfiles for changed_df in changed)
-    assert all(unchanged_df in all_dockerfiles for unchanged_df in not_changed)
-    assert all(changed_df in all_dockerfiles for changed_df in changed)
+    assert all(unchanged_df not in changed_build_dockerfiles for unchanged_df in not_changed)
+    assert all(changed_df in changed_build_dockerfiles for changed_df in changed)
+    assert all(unchanged_df in all_build_dockerfiles for unchanged_df in not_changed)
+    assert all(changed_df in all_build_dockerfiles for changed_df in changed)
+
+    assert all(unchanged_df not in changed_manifest_dockerfiles for unchanged_df in not_changed)
+    assert all(changed_df in changed_manifest_dockerfiles for changed_df in changed)
+    assert all(unchanged_df in all_manifest_dockerfiles for unchanged_df in not_changed)
+    assert all(changed_df in all_manifest_dockerfiles for changed_df in changed)

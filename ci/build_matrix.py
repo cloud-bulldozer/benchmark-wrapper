@@ -23,7 +23,7 @@ The JSON output looks like this, in accordance to the GHA Job Matrix Format:
             "image_name": "name of the image (i.e. name of directory containing the DF)",
             "benchmark": "name of the benchmark (i.e. name of directory containing the DF)",
             "env_var": "environment variable where image URL will be stored (i.e. <BENCHMARK>_IMAGE)",
-            "tag_prefix": "prefix of the image tag that should be used (i.e. arch of the DF with a dash)",
+            "tag_suffix": "suffix of the image tag that should be used (i.e. arch of the DF with a dash)",
             "tags": "space separated list of tags that should be applied to the image",
             "arch": "architecture that the DF should be built on",
             "changed": "whether or not changes have been made which require the benchmark to be tested",
@@ -32,6 +32,28 @@ The JSON output looks like this, in accordance to the GHA Job Matrix Format:
     ]
 }
 ```
+
+If the `--manifest` option is given, then GHA job matrices will be printed which can be used for
+building and pushing multi-arch image manifests to quay. The output looks like this:
+
+```json
+{
+    "build": "build matrix from above",
+    "manifest": {
+        "include": [
+            {
+                "benchmark": "name of the benchmark associated with the image",
+                "image_name": "name of the image",
+                "dockerfile": "relative path to dockerfile of image",
+                "tag": "tag the manifest will be built for",
+                "archs": "archictectures that should be added into the image manifest",
+                "tag_suffixes": "tag suffixes to add into the image manifest (i.e. dash followed by arch)",
+                "changed": "whether or not changes have been made which require the benchmark to be tested",
+            },
+            ...
+        ]
+    }
+}
 """
 import json
 import argparse
@@ -40,7 +62,7 @@ import pathlib
 import re
 import shlex
 import subprocess
-from typing import Dict, Iterable, List, Set
+from typing import Dict, Iterable, List, Set, Union
 
 ARCHS = (
     "amd64",
@@ -195,7 +217,7 @@ class MatrixEntry:
             tags=tags,
         )
 
-    def as_json(self) -> Iterable[Dict[str, str]]:
+    def build_json(self) -> Iterable[Dict[str, Union[str, bool]]]:
         """Convert the given MatrixEntry into series of JSON-dicts, one for each arch."""
 
         for arch in self.archs:
@@ -209,6 +231,21 @@ class MatrixEntry:
                 "arch": arch,
                 "changed": self.changed,
                 "tags": " ".join([f"{tag}{tag_suffix}" for tag in self.tags]),
+            }
+
+    def manifest_json(self) -> Iterable[Dict[str, Union[str, bool]]]:
+        """Convert the given MatrixEntry into series of JSON-dicts, one for each tag."""
+
+        for tag in self.tags:
+            tag_suffixes = [f"-{arch}" for arch in self.archs]
+            yield {
+                "benchmark": self.benchmark,
+                "image_name": self.image_name,
+                "dockerfile": self.dockerfile,
+                "tag": tag,
+                "tag_suffixes": tag_suffixes,
+                "changed": self.changed,
+                "archs": self.archs,
             }
 
 
@@ -250,19 +287,23 @@ class MatrixBuilder:
         self.upstream_branch = upstream_branch
         self.dockerfile_set = dockerfile_set
         self.changed_set = changed_set
-        self.matrix: Dict[str, List[Dict[str, str]]] = dict()
+        self.manifest_matrix: Dict[str, List[Dict[str, str]]] = dict()
+        self.build_matrix: Dict[str, List[Dict[str, str]]] = dict()
 
         self.reset()
 
     def reset(self):
         """Reset the matrix to empty starting point."""
-        self.matrix = {"include": []}
+        self.build_matrix = {"include": []}
+        self.manifest_matrix = {"include": []}
 
     def add_entry(self, entry: MatrixEntry):
         """Add the given MatrixEntry into the jobs matrix."""
 
-        for json_dict in entry.as_json():
-            self.matrix["include"].append(json_dict)
+        for json_dict in entry.build_json():
+            self.build_matrix["include"].append(json_dict)
+        for json_dict in entry.manifest_json():
+            self.manifest_matrix["include"].append(json_dict)
 
     def bones_changed(self) -> bool:
         """Return True if a bone has is found in the changed set."""
@@ -315,6 +356,9 @@ if __name__ == "__main__":
         "--upstream", default="master", help="Upstream branch to compare against. Defaults to 'master'",
     )
     parser.add_argument("--changed-only", action="store_true", help="Only output changed Dockerfiles")
+    parser.add_argument(
+        "--manifest", action="store_true", help="Output both the build and manifest matrix JSON"
+    )
     args = parser.parse_args()
     builder = MatrixBuilder(
         archs=ARCHS,
@@ -325,4 +369,7 @@ if __name__ == "__main__":
         changed_set=parse_git_diff(get_git_diff(args.upstream)),
     )
     builder.build(changed_only=args.changed_only)
-    print(json.dumps(builder.matrix))
+    if args.manifest:
+        print(json.dumps({"build": builder.build_matrix, "manifest": builder.manifest_matrix}))
+    else:
+        print(json.dumps(builder.build_matrix))

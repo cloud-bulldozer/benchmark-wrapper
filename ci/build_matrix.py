@@ -276,14 +276,23 @@ class MatrixBuilder:
                 return True
         return False
 
-    def build(self):
-        """Build the GHA jobs matrix."""
+    def build(self, changed_only: bool = True):
+        """
+        Build the GHA jobs matrix.
+
+        Parameters
+        ----------
+        changed_only : bool, optional
+            If True, then only dockerfiles that are considered changed will be added into the matrix.
+            Defaults to True.
+        """
 
         bones_changed = self.bones_changed()
         for dockerfile in self.dockerfile_set:
             changed = bones_changed or self.benchmark_changed(dockerfile)
-            entry = MatrixEntry.new(dockerfile=dockerfile, archs=self.archs, changed=changed,)
-            self.add_entry(entry)
+            if (changed_only and changed) or not changed_only:
+                entry = MatrixEntry.new(dockerfile=dockerfile, archs=self.archs, changed=changed)
+                self.add_entry(entry)
 
 
 if __name__ == "__main__":
@@ -291,6 +300,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--upstream", default="master", help="Upstream branch to compare against. Defaults to 'master'",
     )
+    parser.add_argument("--changed-only", action="store_true", help="Only output changed Dockerfiles")
     args = parser.parse_args()
     builder = MatrixBuilder(
         archs=ARCHS,
@@ -299,5 +309,5 @@ if __name__ == "__main__":
         dockerfile_set=parse_dockerfile_list(get_dockerfile_list()),
         changed_set=parse_git_diff(get_git_diff(args.upstream)),
     )
-    builder.build()
+    builder.build(changed_only=args.changed_only)
     print(json.dumps(builder.matrix))

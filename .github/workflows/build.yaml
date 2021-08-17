@@ -38,15 +38,17 @@ jobs:
                 echo UPSTREAM_BRANCH=master >> $GITHUB_ENV
             fi
 
-      - name: Build job matrix
-        run: echo matrix=`python ci/build_matrix.py --upstream ${{ env.UPSTREAM_BRANCH }}` >> $GITHUB_ENV
-      - name: Filter Dockerfiles with no changes
+      - name: Build job matrix (changed only)
         if: >-
-            github.event_name != 'workflow_dispatch' ||
-            (github.event_name == 'workflow_dispatch' && github.event.inputs.run_all == 'false')
-        run: >-
-            echo matrix=`echo "$matrix" | jq -c
-            '{"include": .include | map(select(.changed == "true"))}'` >> $GITHUB_ENV
+            (
+                github.event_name != 'workflow_run' ||
+                (zgithub.event_name == 'workflow_run' && toJSON(github.event.workflow_run.inputs.run_all) == false)
+            )
+        run: echo matrix=`python ci/build_matrix.py --changed-only --upstream ${{ env.UPSTREAM_BRANCH }}` >> $GITHUB_ENV
+      - name: Build job matirx (all)
+        if: (github.event_name == 'workflow_run' && toJSON(github.event.workflow_run.inputs.run_all) == true)
+        run: echo matrix=`python ci/build_matrix.py --upstream ${{ env.UPSTREAM_BRANCH }}` >> $GITHUB_ENV
+
       - name: Set job matrix
         id: set-matrix
         run: echo '::set-output name=matrix::${{ env.matrix }}'

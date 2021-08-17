@@ -161,7 +161,11 @@ def test_matrix_builder_bones_changed_method_correctly_identifies_changed_bones(
 def test_matrix_builder_benchmark_changed_method_correctly_identifies_if_benchmark_changed():
     """Test that the MatrixBuilder.benchmark_changed method will identify if a benchmark has changed."""
 
-    changed = ["snafu/dns_perf_wrapper/Dockerfile", "snafu/benchmarks/uperf/Dockerfile", "uperf-wrapper"]
+    changed = [
+        "snafu/dns_perf_wrapper/Dockerfile",
+        "snafu/benchmarks/uperf/Dockerfile",
+        "uperf-wrapper/Dockerfile",
+    ]
     not_changed = ["snafu/my_unchanged_benchmark/Dockerfile"]
     builder = build_matrix.MatrixBuilder(**EXAMPLE_MATRIX_BUILDER_KWARGS_DICT)
     builder.changed_set = build_matrix.parse_git_diff(EXAMPLE_GIT_DIFF)
@@ -171,3 +175,29 @@ def test_matrix_builder_benchmark_changed_method_correctly_identifies_if_benchma
         assert builder.benchmark_changed(changed_benchmark)
     for not_changed_benchmark in not_changed:
         assert not builder.benchmark_changed(not_changed_benchmark)
+
+
+def test_matrix_builder_build_method_changed_only_param_works_as_expected():
+    """Test that the MatrixBuilder.build method will only output changed dockerfiles with changed_only."""
+
+    changed = [
+        "snafu/dns_perf_wrapper/Dockerfile",
+        "snafu/benchmarks/uperf/Dockerfile",
+        "uperf-wrapper/Dockerfile",
+    ]
+    not_changed = ["snafu/my_unchanged_benchmark/Dockerfile"]
+    builder = build_matrix.MatrixBuilder(**EXAMPLE_MATRIX_BUILDER_KWARGS_DICT)
+    builder.changed_set = build_matrix.parse_git_diff(EXAMPLE_GIT_DIFF)
+    builder.dockerfile_set = build_matrix.parse_dockerfile_list(EXAMPLE_DF_LIST)
+
+    reduce_to_dockerfiles = lambda matrix: list(map(lambda entry: entry["dockerfile"], matrix["include"]))
+    builder.build(changed_only=False)
+    all_dockerfiles = reduce_to_dockerfiles(builder.matrix)
+    builder.reset()
+    builder.build(changed_only=True)
+    changed_dockerfiles = reduce_to_dockerfiles(builder.matrix)
+
+    assert all(unchanged_df not in changed_dockerfiles for unchanged_df in not_changed)
+    assert all(changed_df in changed_dockerfiles for changed_df in changed)
+    assert all(unchanged_df in all_dockerfiles for unchanged_df in not_changed)
+    assert all(changed_df in all_dockerfiles for changed_df in changed)

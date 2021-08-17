@@ -26,6 +26,7 @@ with open(Path(__file__).parent.joinpath("find_df_test.txt")) as find_df_test:
 
 EXAMPLE_MATRIX_BUILDER_KWARGS_DICT = {
     "archs": ("arch1", "arch2"),
+    "tags": ("latest", "my-sha"),
     "bones": ("bone1", "bone2"),
     "upstream_branch": "my_upstream_branch",
     "dockerfile_set": {"dockerfile1", "dockerfile2"},
@@ -71,6 +72,7 @@ def test_matrix_entry_new_parses_file_path_correctly():
     dockerfile = "my/path/to/benchmark/Dockerfile"
     changed = False
     archs = ["arch"]
+    tags = ["latest"]
     as_dict = {
         "dockerfile": dockerfile,
         "image_name": "benchmark",
@@ -78,8 +80,9 @@ def test_matrix_entry_new_parses_file_path_correctly():
         "env_var": "BENCHMARK_IMAGE",
         "archs": archs,
         "changed": changed,
+        "tags": tags,
     }
-    entry = build_matrix.MatrixEntry.new(dockerfile=dockerfile, changed=changed, archs=archs)
+    entry = build_matrix.MatrixEntry.new(dockerfile=dockerfile, changed=changed, archs=archs, tags=tags)
     assert dataclasses.asdict(entry) == as_dict
 
 
@@ -92,7 +95,9 @@ def test_matrix_entry_new_parses_benchmark_name_correctly():
         ("benchmark_wrapper/Dockerfile", "benchmark"),
     ]
     for dockerfile, benchmark_name in dockerfiles:
-        entry = build_matrix.MatrixEntry.new(dockerfile=dockerfile, changed=True, archs=["myarch"])
+        entry = build_matrix.MatrixEntry.new(
+            dockerfile=dockerfile, changed=True, archs=["myarch"], tags=["latest"]
+        )
         assert entry.benchmark == benchmark_name
 
 
@@ -104,22 +109,26 @@ def test_matrix_entry_as_json_correctly_creates_expected_json_dict():
     image_name = "bimage"
     benchmark = "benchmark"
     env_var = "BENCHMARK_IMAGE"
+    input_tags = ["0", "1", "2"]
     entry = build_matrix.MatrixEntry(
         dockerfile=dockerfile,
         changed=changed,
         archs=["1", "2", "3"],
+        tags=["0", "1", "2"],
         image_name=image_name,
         benchmark=benchmark,
         env_var=env_var,
     )
     for index, json_dict in enumerate(entry.as_json()):
         arch = str(index + 1)
+        tags = " ".join([f"{str(tag)}-{arch}" for tag in input_tags])
         assert json_dict["dockerfile"] == dockerfile
         assert json_dict["changed"] == changed
         assert json_dict["image_name"] == image_name
         assert json_dict["benchmark"] == benchmark
         assert json_dict["env_var"] == env_var
         assert json_dict["arch"] == arch
+        assert json_dict["tags"] == tags
         assert json_dict["tag_suffix"] == f"-{arch}"
         json.dumps(json_dict)
 

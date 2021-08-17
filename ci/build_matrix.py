@@ -24,6 +24,7 @@ The JSON output looks like this, in accordance to the GHA Job Matrix Format:
             "benchmark": "name of the benchmark (i.e. name of directory containing the DF)",
             "env_var": "environment variable where image URL will be stored (i.e. <BENCHMARK>_IMAGE)",
             "tag_prefix": "prefix of the image tag that should be used (i.e. arch of the DF with a dash)",
+            "tags": "space separated list of tags that should be applied to the image",
             "arch": "architecture that the DF should be built on",
             "changed": "whether or not changes have been made which require the benchmark to be tested",
         },
@@ -164,9 +165,10 @@ class MatrixEntry:
     env_var: str
     archs: str
     changed: bool
+    tags: Iterable[str]
 
     @classmethod
-    def new(cls, dockerfile: str, changed: bool, archs: Iterable[str]) -> "MatrixEntry":
+    def new(cls, dockerfile: str, changed: bool, archs: Iterable[str], tags: Iterable[str]) -> "MatrixEntry":
         """
         Create a new instances of the MatrixEntry
 
@@ -178,6 +180,8 @@ class MatrixEntry:
             Sets the changed attribute.
         archs : list of str
             Sets the archs attribute.
+        tags : list of str
+            Sets the tags attribute.
         """
 
         benchmark = str(pathlib.Path(dockerfile).parent.stem).replace("_wrapper", "")
@@ -188,20 +192,23 @@ class MatrixEntry:
             image_name=benchmark,
             benchmark=benchmark,
             env_var=f"{benchmark.upper()}_IMAGE",
+            tags=tags,
         )
 
     def as_json(self) -> Iterable[Dict[str, str]]:
         """Convert the given MatrixEntry into series of JSON-dicts, one for each arch."""
 
         for arch in self.archs:
+            tag_suffix = f"-{arch}"
             yield {
                 "dockerfile": self.dockerfile,
                 "image_name": self.image_name,
                 "benchmark": self.benchmark,
                 "env_var": self.env_var,
-                "tag_suffix": f"-{arch}",
+                "tag_suffix": tag_suffix,
                 "arch": arch,
                 "changed": self.changed,
+                "tags": " ".join([f"{tag}{tag_suffix}" for tag in self.tags]),
             }
 
 
@@ -213,20 +220,23 @@ class MatrixBuilder:
     ----------
     archs : iterable of str
         List of architectures to build against. Will create a matrix entry for each architecture for each
-        Dockerfile
+        Dockerfile.
+    tags : iterable of str
+        List of tags that will be applied to the built images.
     bones : iterable of str
         List of regex strings to match paths against to determine if the path is a snafu "bone".
     upstream_branch : str
         Upstream branch to compare changes to, in order to determine the value of "changed".
     dockerfile_set : set of str
-        Set of dockerfiles within the snafu repository
+        Set of dockerfiles within the snafu repository.
     changed_set : set of str
-        Set of changed files within the snafu repository
+        Set of changed files within the snafu repository.
     """
 
     def __init__(
         self,
         archs: Iterable[str],
+        tags: Iterable[str],
         bones: Iterable[str],
         upstream_branch: str,
         dockerfile_set: Set[str],
@@ -235,6 +245,7 @@ class MatrixBuilder:
         """Contsruct the matrix builder."""
 
         self.archs = archs
+        self.tags = tags
         self.bones = bones
         self.upstream_branch = upstream_branch
         self.dockerfile_set = dockerfile_set
@@ -291,12 +302,15 @@ class MatrixBuilder:
         for dockerfile in self.dockerfile_set:
             changed = bones_changed or self.benchmark_changed(dockerfile)
             if (changed_only and changed) or not changed_only:
-                entry = MatrixEntry.new(dockerfile=dockerfile, archs=self.archs, changed=changed)
+                entry = MatrixEntry.new(
+                    dockerfile=dockerfile, archs=self.archs, changed=changed, tags=self.tags
+                )
                 self.add_entry(entry)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("tags", nargs="+", help="Tags to apply to the built images")
     parser.add_argument(
         "--upstream", default="master", help="Upstream branch to compare against. Defaults to 'master'",
     )
@@ -304,6 +318,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     builder = MatrixBuilder(
         archs=ARCHS,
+        tags=args.tags,
         bones=BONES,
         upstream_branch=args.upstream,
         dockerfile_set=parse_dockerfile_list(get_dockerfile_list()),

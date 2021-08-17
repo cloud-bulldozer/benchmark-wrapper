@@ -46,8 +46,8 @@ building and pushing multi-arch image manifests to quay. The output looks like t
                 "image_name": "name of the image",
                 "dockerfile": "relative path to dockerfile of image",
                 "tag": "tag the manifest will be built for",
-                "archs": "archictectures that should be added into the image manifest",
-                "tag_suffixes": "tag suffixes to add into the image manifest (i.e. dash followed by arch)",
+                "archs": "archictectures that should be added into the image manifest, space separated",
+                "tag_suffixes": "tag suffixes to add into the image manifest, space separated",
                 "changed": "whether or not changes have been made which require the benchmark to be tested",
             },
             ...
@@ -237,7 +237,8 @@ class MatrixEntry:
         """Convert the given MatrixEntry into series of JSON-dicts, one for each tag."""
 
         for tag in self.tags:
-            tag_suffixes = [f"-{arch}" for arch in self.archs]
+            tag_suffixes = " ".join([f"-{arch}" for arch in self.archs])
+            archs = " ".join(self.archs)
             yield {
                 "benchmark": self.benchmark,
                 "image_name": self.image_name,
@@ -245,7 +246,7 @@ class MatrixEntry:
                 "tag": tag,
                 "tag_suffixes": tag_suffixes,
                 "changed": self.changed,
-                "archs": self.archs,
+                "archs": archs,
             }
 
 

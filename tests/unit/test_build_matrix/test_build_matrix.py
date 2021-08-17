@@ -140,9 +140,9 @@ def test_matrix_entry_json_methods_correctly_creates_expected_json_dict():
         assert json_dict["changed"] == changed
         assert json_dict["image_name"] == image_name
         assert json_dict["benchmark"] == benchmark
-        assert json_dict["archs"] == input_archs
+        assert json_dict["archs"] == " ".join(input_archs)
         assert json_dict["tag"] == tag
-        assert json_dict["tag_suffixes"] == tag_suffixes
+        assert json_dict["tag_suffixes"] == " ".join(tag_suffixes)
         json.dumps(json_dict)
 
 

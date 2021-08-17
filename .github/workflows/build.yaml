@@ -83,7 +83,7 @@ jobs:
         with:
           arch: ${{ matrix.arch }}
           image: ${{ matrix.image_name }}
-          tags: ${{ matrix.tag_prefix }}${{ github.sha }} ${{ matrix.tag_prefix }}latest
+          tags: ${{ github.sha }}${{ matrix.tag_suffix }} latest${{ matrix.tag_suffix }}
           dockerfiles: ${{ matrix.dockerfile }}
       - name: Push ${{ matrix.dockerfile }}
         uses: redhat-actions/push-to-registry@v2

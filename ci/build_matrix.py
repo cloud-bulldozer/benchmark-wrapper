@@ -199,7 +199,7 @@ class MatrixEntry:
                 "image_name": self.image_name,
                 "benchmark": self.benchmark,
                 "env_var": self.env_var,
-                "tag_prefix": f"{arch}-",
+                "tag_suffix": f"-{arch}",
                 "arch": arch,
                 "changed": self.changed,
             }

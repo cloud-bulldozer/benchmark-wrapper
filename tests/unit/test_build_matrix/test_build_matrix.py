@@ -120,7 +120,7 @@ def test_matrix_entry_as_json_correctly_creates_expected_json_dict():
         assert json_dict["benchmark"] == benchmark
         assert json_dict["env_var"] == env_var
         assert json_dict["arch"] == arch
-        assert json_dict["tag_prefix"] == f"{arch}-"
+        assert json_dict["tag_suffix"] == f"-{arch}"
         json.dumps(json_dict)
 
 

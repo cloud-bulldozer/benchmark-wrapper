@@ -125,6 +125,7 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.create_matrix.outputs.manifest_matrix) }}
       fail-fast: false
+    name: Update ${{ matrix.benchmark }} Manifest
     steps:
       - uses: actions/checkout@v2
       - name: Echo Matrix Permutation

@@ -125,7 +125,6 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.create_matrix.outputs.manifest_matrix) }}
       fail-fast: false
-    name: Update ${{ matrix.benchmark }} Manifest
     steps:
       - uses: actions/checkout@v2
       - name: Echo Matrix Permutation
@@ -152,5 +151,5 @@ jobs:
                 podman manifest add ${manifest} ${manifest}${suffix}
             done
             echo "Pushing manifest to quay ..."
-            podman manifest push ${manifest}
+            podman manifest push ${manifest} ${manifest}
             echo "Done!"

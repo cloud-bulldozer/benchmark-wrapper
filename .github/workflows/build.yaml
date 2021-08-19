@@ -85,7 +85,7 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.create_matrix.outputs.build_matrix) }}
       fail-fast: false
-    name: ${{ matrix.benchmark }} (${{ matrix.arch }})
+    name: Build ${{ matrix.benchmark }} on ${{ matrix.arch }}
     steps:
       - uses: actions/checkout@v2
       - name: Echo Matrix Permutation
@@ -125,6 +125,7 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.create_matrix.outputs.manifest_matrix) }}
       fail-fast: false
+    name: Push Manifest ${{ matrix.image_name }}:${{ matrix.tag }}
     steps:
       - uses: actions/checkout@v2
       - name: Echo Matrix Permutation

@@ -19,6 +19,9 @@ from snafu.config import Config, ConfigArgument
 from snafu.process import ProcessSample, get_process_sample
 
 
+Number = Union[int, float]
+
+
 class DnsRttSample(BaseModel):
     fqdn: str
     rtt_s: float
@@ -35,18 +38,15 @@ class ThroughputSample(BaseModel):
         return datetime.datetime.fromtimestamp(float(value))
 
 
-DnsperfSample = Union[DnsRttSample, ThroughputSample]
-
-
 @pydantic.dataclasses.dataclass
 class DnsperfStdout:
     dnsperf_version: str
     queries_sent: int
     queries_completed: int
-    rtt_samples: Tuple[DnsRttSample, ...]
+    # rtt_samples: Tuple[DnsRttSample, ...]
     start_time: datetime.datetime
     sum_rtt: float
-    throughput_ts: Tuple[ThroughputSample, ...]
+    # throughput_ts: Tuple[ThroughputSample, ...]
     throughput_mean: float
     runtime_length: float
     load_mean: Optional[float] = None
@@ -81,6 +81,43 @@ class DnsperfConfig(BaseModel):
         # merge dictionaries (right-most dictionary takes precedence)
         # then, unpack merged dictionary
         return cls(**toolz.merge(config.params.__dict__, dataclasses.asdict(stdout)), load_limit=load)
+
+
+# @dataclasses.dataclass
+class DnsperfMetadata(BaseModel):
+    address: str
+    client_threads: int
+    dnsperf_version: str
+    end_time: datetime.datetime
+    # the load limit number is parsed to a string,
+    # so that it can be stored as a discrete
+    # variable; one possible value is infinity;
+    # JSON doesn't like "Infinity" when it expects a number
+    load_limit: str
+    port: int
+    queries_sent: int
+    queries_completed: int
+    runtime_length: float
+    start_time: datetime.datetime
+    sum_rtt: float
+    throughput_mean: float
+    timeout_length: float
+    transport_mode: str
+    cluster_name: Optional[str] = None
+    load_mean: Optional[float] = None
+    platform: Optional[str] = None
+    networkpolicy: Optional[str] = None
+    node_id: Optional[str] = None
+    network_type: Optional[str] = None
+    user: Optional[str] = None
+    uuid: Optional[str] = None
+
+    class Config:
+        validate_assignment = True
+        allow_mutation = True
+
+    def set_load_mean(self):
+        self.load_mean = self.queries_sent / self.runtime_length
 
 
 class Dnsperf(Benchmark):
@@ -211,29 +248,40 @@ class Dnsperf(Benchmark):
                 )
                 return None
 
-            stdout: DnsperfStdout = self.parse_process_output(sample.successful.stdout)
-            cfg: DnsperfConfig = DnsperfConfig.new(stdout, self.config, load=load_limit)
-            cfg.load_limit = str(load_limit)
-            stdout.throughput_ts = [item.dict() for item in stdout.throughput_ts]
-            stdout.rtt_samples = [item.dict() for item in stdout.rtt_samples]
+            metadata: DnsperfMetadata
+            rtt_samples: Tuple[DnsRttSample, ...]
+            throughput_ts: Tuple[ThroughputSample, ...]
+            metadata, rtt_samples, throughput_ts = self.parse_process_output(
+                sample.successful.stdout, load_limit
+            )
 
-            # TODO: emit one index for config, one index for throughput ts, one index for dns rtts
-            # change tag for each index
-            yield self.create_new_result(data=dataclasses.asdict(stdout), config=dict(cfg), tag="results")
+            rtt_sample: DnsRttSample
+            for rtt_sample in rtt_samples:
+                yield self.create_new_result(data=dict(rtt_sample), config=dict(metadata), tag="rtt")
+
+            throughput: ThroughputSample
+            for throughput in throughput_ts:
+                yield self.create_new_result(data=dict(throughput), config=dict(metadata), tag="throughput")
 
             self.logger.info(f"ran succesfully!\n")
 
-    def parse_process_output(self, stdout: str) -> DnsperfStdout:
+    def parse_process_output(
+        self, stdout: str, load_limit: Number
+    ) -> Tuple[DnsperfMetadata, Tuple[DnsRttSample, ...], Tuple[ThroughputSample, ...]]:
         """Parse string output from the dnsperf benchmark."""
 
         output_parser = ttp(data=stdout, template=self.output_template)
         output_parser.parse()
         result = output_parser.result()[0][0]
         result["config"]["start_time"] = dateutil.parser.parse(result["config"]["start_time"]).astimezone()
-
-        return DnsperfStdout(
-            **result["stats"],
-            **result["config"],
-            throughput_ts=tuple(ThroughputSample(**item) for item in result["data"] if "throughput" in item),
-            rtt_samples=tuple(DnsRttSample(**item) for item in result["data"] if "throughput" not in item),
+        metadata: DnsperfMetadata = DnsperfMetadata(
+            **toolz.merge(self.config.params.__dict__, result["config"], result["stats"]),
+            load_limit=str(load_limit),
+            end_time=datetime.datetime.now().astimezone(),
+        )
+        metadata.set_load_mean()
+        return (
+            metadata,
+            tuple(DnsRttSample(**item) for item in result["data"] if "throughput" not in item),
+            tuple(ThroughputSample(**item) for item in result["data"] if "throughput" in item),
         )

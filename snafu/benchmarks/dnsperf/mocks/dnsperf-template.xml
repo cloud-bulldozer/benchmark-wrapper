@@ -1,0 +1,23 @@
+<vars>
+default_values = {
+    "rtt_s": 5.0
+}
+</vars>
+<group name="config">
+Version {{ dnsperf_version }}
+
+[Status] Started at: {{ start_time | ROW }}
+[Status] Stopping after {{ runtime_length | to_float }} seconds
+</group>
+<group name="data" default="default_values">
+{{ timestamp | _start_ }}: {{ throughput | to_float }}
+&gt; {{ response_state | _start_ }} {{ fqdn }} {{ qtype }}
+&gt; {{ response_state | _start_ }} {{ fqdn }} {{ qtype }} {{ rtt_s | to_float }}
+</group>
+<group name="stats">
+  Queries sent:         {{ queries_sent | to_int }}
+  Queries completed:    {{ queries_completed | to_int }} ({{ ignore }}%)
+
+  Run time (s):         {{ sum_rtt | to_float }}
+  Queries per second:   {{ throughput_mean | to_float }}
+</group>

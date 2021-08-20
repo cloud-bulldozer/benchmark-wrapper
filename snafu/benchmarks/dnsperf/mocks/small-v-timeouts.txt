@@ -1,0 +1,51 @@
+DNS Performance Testing Tool
+Version 2.6.0
+
+[Status] Command line: dnsperf -v -s 127.0.0.1 -p 5454 -d /home/mleader/queries.txt -c 1 -l .003 -m udp
+[Status] Sending queries (to 127.0.0.1:5454)
+[Status] Started at: Mon Aug  1 11:16:31 2021
+[Status] Stopping after 0.003000 seconds
+1628261096.559553: 850.340136
+1628261096.560686: 882.612533
+1628261096.561865: 0.000000
+> NOERROR red.pi A 0.002663
+> NOERROR pi3.lan A 0.002539
+1628261096.563803: 2579.979360
+> NOERROR red.pi A 0.003819
+> NOERROR pi3.lan A 0.004326
+> NOERROR pi3.lan A 0.005414
+> NOERROR red.pi A 0.005742
+1628261096.566065: 2624.671916
+> NOERROR pi3.lan A 0.006184
+> NOERROR red.pi A 0.006547
+1628261096.567167: 1814.882033
+> NOERROR pi3.lan A 0.007020
+> NOERROR red.pi A 0.007278
+1628261096.568315: 1742.160279
+> NOERROR red.pi A 0.004855
+> T abc.abc A
+> NOERROR pi3.lan A 0.000715
+> T abc.abc A
+Warning: received a response with an unexpected (maybe timed out) id: 2
+Warning: received a response with an unexpected (maybe timed out) id: 5
+Warning: received a response with an unexpected (maybe timed out) id: 8
+> NOERROR abc.abc A 0.022284
+> NOERROR abc.abc A 0.022243
+> NOERROR abc.abc A 0.022159
+> NOERROR abc.abc A 0.021801
+> NOERROR abc.abc A 0.021611
+[Status] Testing complete (time limit)
+
+Statistics:
+
+  Queries sent:         26
+  Queries completed:    26 (100.00%)
+  Queries lost:         0 (0.00%)
+
+  Response codes:       NOERROR 26 (100.00%)
+  Average packet size:  request 24, response 35
+  Run time (s):         0.024469
+  Queries per second:   1062.568965
+
+  Average Latency (s):  0.009061 (min 0.000590, max 0.022374)
+  Latency StdDev (s):   0.008913

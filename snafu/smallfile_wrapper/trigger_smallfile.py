@@ -69,17 +69,14 @@ class _trigger_smallfile:
                     os.unlink(os.path.join(rsptime_dir, c))
 
         if self.clients > 1 and self.redis_host:
-            channel = 'smallfile-%s-sample-%d-op-%s-before' % (
-                        self.uuid, self.sample, self.operation)
-            redis_sync_pods(self.clients, 2 * http_timeout, self.redis_host,
-                            channel, self.logger)
+            channel = "smallfile-%s-sample-%d-op-%s-before" % (self.uuid, self.sample, self.operation)
+            redis_sync_pods(self.clients, 2 * http_timeout, self.redis_host, channel, self.logger)
 
         # only do 1 operation at a time in emit_actions
         # so that cache dropping works right
 
         before = datetime.now()
-        json_output_file = os.path.join(self.result_dir,
-                                        "%s.json" % self.operation)
+        json_output_file = os.path.join(self.result_dir, "%s.json" % self.operation)
         network_shared_dir = os.path.join(self.working_dir, "network_shared")
         rsptime_file = os.path.join(network_shared_dir, "stats-rsptimes.csv")
         cmd = [
@@ -101,9 +98,7 @@ class _trigger_smallfile:
             subprocess.check_call(cmd, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             self.logger.exception(e)
-            raise SmallfileWrapperException(
-                    "smallfile_cli.py non-zero process return code %d" %
-                    e.returncode)
+            raise SmallfileWrapperException("smallfile_cli.py non-zero process return code %d" % e.returncode)
         self.logger.info(
             "completed sample {} for operation {} , results in {}".format(
                 self.sample, self.operation, json_output_file
@@ -149,10 +144,8 @@ class _trigger_smallfile:
             subprocess.check_call(cmd, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             self.logger.exception(e)
-            raise SmallfileWrapperException("rsptime_stats return code %d" %
-                                            e.returncode)
-        self.logger.info("response time result for operation {} in {}".format(
-                            self.operation, rsptime_file))
+            raise SmallfileWrapperException("rsptime_stats return code %d" % e.returncode)
+        self.logger.info("response time result for operation {} in {}".format(self.operation, rsptime_file))
         with open(rsptime_file) as rf:
             lines = [ln.strip() for ln in rf.readlines()]
             start_grabbing = False
@@ -167,9 +160,7 @@ class _trigger_smallfile:
                     interval["iops"] = int(flds[2])
                     if interval["iops"] > 0.0:
                         rsptime_date = int(flds[0])
-                        rsptime_date_str = time.strftime(
-                                                "%Y-%m-%dT%H:%M:%S.000Z",
-                                                time.gmtime(rsptime_date))
+                        rsptime_date_str = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(rsptime_date))
                         interval["cluster_name"] = self.cluster_name
                         interval["uuid"] = self.uuid
                         interval["user"] = self.user
@@ -187,10 +178,7 @@ class _trigger_smallfile:
                         yield interval, "rsptimes"
 
         if self.clients > 1 and self.redis_host:
-            channel = 'smallfile-%s-sample-%d-op-%s-after' % (
-                        self.uuid, self.sample, self.operation)
-            extra_timeout = int((datetime.now() - before).seconds
-                                * self.redis_timeout_th / 100)
+            channel = "smallfile-%s-sample-%d-op-%s-after" % (self.uuid, self.sample, self.operation)
+            extra_timeout = int((datetime.now() - before).seconds * self.redis_timeout_th / 100)
             redis_timeout = self.redis_timeout + extra_timeout
-            redis_sync_pods(self.clients, redis_timeout, self.redis_host,
-                            channel, self.logger)
+            redis_sync_pods(self.clients, redis_timeout, self.redis_host, channel, self.logger)

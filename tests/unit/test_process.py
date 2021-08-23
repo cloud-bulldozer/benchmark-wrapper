@@ -10,109 +10,47 @@ import pytest
 import snafu.process
 
 
-class TestLiveProcess:
-    """Test the LiveProcess context manager."""
+def test_get_process_sample_will_set_hit_timeout_as_needed():
+    """Test that get_process_sample will set the hit_timeout attribute appropriately for a ProcessRun."""
 
-    @staticmethod
-    def test_check_pipes_method_only_modifies_if_no_user_given_values():
-        """Test that LiveProcess._check_pipes only modifies pipes in kwargs if user didn't specify pipes."""
+    cmd = 'echo "hello"; sleep 5; echo "test"'
+    result: snafu.process.ProcessSample = snafu.process.get_process_sample(
+        cmd, logging.getLogger(), shell=True, retries=0, expected_rc=0, timeout=1, stdout=subprocess.PIPE,
+    )
 
-        for key in ("stdout", "stderr", "capture_output"):
-            kwargs = {key: True}
-            proc = snafu.process.LiveProcess("", **kwargs)
-            assert proc.kwargs == {key: True}
+    assert result.success is False
+    assert result.expected_rc == 0
+    assert result.attempts == 1
+    assert result.timeout == 1
+    assert len(result.failed) == 1
+    assert result.successful is None
+    assert result.failed[0].stdout == "hello\n"
+    assert result.failed[0].stderr is None
+    assert result.failed[0].hit_timeout is True
+    assert result.failed[0].time_seconds == 1
+    assert result.failed[0].rc is None
 
-        kwargs = {}
-        proc = snafu.process.LiveProcess("")
-        assert proc.kwargs.get("stdout", None) is not None and proc.kwargs.get("stderr", None) is not None
 
-    @staticmethod
-    def test_live_process_calls_start_on_enter_and_cleanup_on_exit(monkeypatch):
-        """Test that when we enter the LiveProcess CM we call start, and on exit we call cleanup."""
+def test_get_sample_process_captures_output_by_default():
+    """Test that get_sample_process will enable stdout and stderr capture by default."""
 
-        def monkey_start(self):
-            self.monkey_start = True
+    cmd = 'echo "hey there!"'
+    result: snafu.process.ProcessSample = snafu.process.get_process_sample(
+        cmd, logging.getLogger(), shell=True, retries=0
+    )
+    assert result.successful.stdout == "hey there!\n"
 
-        def monkey_cleanup(self):
-            self.monkey_cleanup = True
-
-        monkeypatch.setattr("snafu.process.LiveProcess.start", monkey_start)
-        monkeypatch.setattr("snafu.process.LiveProcess.cleanup", monkey_cleanup)
-
-        with snafu.process.LiveProcess("") as proc:
-            assert proc.monkey_start is True
-        assert proc.monkey_cleanup is True
-
-    @staticmethod
-    def test_live_process_runs_a_command_and_gives_output():
-        """Test that LiveProcess can run a process and give us the expected process information."""
-
-        tests = (
-            (
-                {"cmd": shlex.split("echo test")},
-                {"stdout": "test\n", "stderr": "", "rc": 0, "time_seconds": [0, 0.2]},
-            ),
-            (
-                {"cmd": "echo 'test'; sleep 0.5; echo 'test2'", "shell": True},
-                {"stdout": "test\ntest2\n", "stderr": "", "rc": 0, "time_seconds": [0.5, 1]},
-            ),
-            (
-                {"cmd": "echo 'test' >&2 | grep 'not here'", "shell": True},
-                {"stdout": "", "stderr": "test\n", "rc": 1, "time_seconds": [0, 0.2]},
-            ),
-            (
-                {"cmd": "echo 'test' >&2", "shell": True, "stderr": subprocess.STDOUT},
-                {"stdout": "", "stderr": "", "rc": 0, "time_seconds": [0, 0.2]},
-            ),
-            (
-                {
-                    "cmd": "echo 'test' >&2",
-                    "shell": True,
-                    "stdout": subprocess.PIPE,
-                    "stderr": subprocess.STDOUT,
-                },
-                {"stdout": "test\n", "stderr": "", "rc": 0, "time_seconds": [0, 0.2]},
-            ),
+    no_capture_args = {
+        "capture_output": False,
+        "stdout": None,
+        "stderr": None,
+    }
+    for arg, val in no_capture_args.items():
+        print(arg, val)
+        result: snafu.process.ProcessSample = snafu.process.get_process_sample(
+            cmd, logging.getLogger(), shell=True, retries=0, **{arg: val}
         )
-
-        for kwargs, results in tests:
-            with snafu.process.LiveProcess(**kwargs) as proc:
-                pass
-
-            attempt = proc.attempt
-            for key, val in results.items():
-                if key == "time_seconds":
-                    assert val[0] < attempt.time_seconds < val[1]
-                else:
-                    assert getattr(attempt, key) == val
-
-    @staticmethod
-    def test_live_process_kills_and_does_cleanup_after_timeout():
-        """Test that LiveProcess will only kill a process after a timeout."""
-
-        with snafu.process.LiveProcess(shlex.split("sleep 0.5"), timeout=1) as proc:
-            pass
-        assert 0 < proc.attempt.time_seconds < 1
-        assert proc.attempt.hit_timeout is False
-
-        with snafu.process.LiveProcess(shlex.split("sleep 2"), timeout=0.5) as proc:
-            pass
-        assert 0 < proc.attempt.time_seconds < 1
-        assert proc.attempt.hit_timeout is True
-
-
-def test_get_process_sample_will_use_live_process(monkeypatch):
-    """Assert that get_process_sample will use LiveProcess in the background."""
-
-    class MyError(Exception):  # pylint: disable=C0115
-        pass
-
-    def live_process_monkey(*args, **kwargs):
-        raise MyError
-
-    monkeypatch.setattr("snafu.process.LiveProcess", live_process_monkey)
-    with pytest.raises(MyError):
-        snafu.process.get_process_sample("TEST_USES_LIVE_PROCESS", logging.getLogger())
+        assert result.successful.stdout is None
 
 
 def test_get_process_sample_will_rerun_failed_process(tmpdir):

@@ -54,12 +54,12 @@ def get_process_sample(
         Command to run. Can be string or list of strings if using :py:mod:`shlex`
     logger : logging.Logger
         Logger to use in order to log progress.
-    retries : int
+    retries : int, optional
         Number of retries to perform. Defaults to zero, which means that the function will run the process
         once, not retrying on failure.
-    expected_rc : int
+    expected_rc : int, optional
         Expected return code of the process. Will be used to determine if the process ran successfully or not.
-    timeout : int
+    timeout : int, optional
         Time in seconds to wait for process to complete before killing it.
     kwargs
         Extra kwargs will be passed to :py:class:`~snafu.process.LiveProcess`

@@ -5,8 +5,8 @@ import json
 import subprocess
 import socket
 from snafu.vfs_stat import get_vfs_stat_dict
-import redis
-
+from snafu.utils.request_cache_drop import http_timeout
+from snafu.utils.sync_pods_with_redis import redis_sync_pods
 
 class SmallfileWrapperException(Exception):
     pass
@@ -66,6 +66,10 @@ class _trigger_smallfile:
             for c in contents:
                 if c.endswith(".csv"):
                     os.unlink(os.path.join(rsptime_dir, c))
+
+        if self.clients > 1 and self.redis_host:
+            channel = 'smallfile-%s-sample-%d-op-%s-before' % (self.uuid, self.sample, self.operation)
+            redis_sync_pods(self.clients, 2*http_timeout, self.redis_host, channel, self.logger)
 
         # only do 1 operation at a time in emit_actions
         # so that cache dropping works right
@@ -173,26 +177,8 @@ class _trigger_smallfile:
                         yield interval, "rsptimes"
 
         if self.clients > 1 and self.redis_host:
-            channel = "smallfile-%s" % self.uuid
-            self.logger.info("Number of smallfile clients > 1, synchronizing them for the next operation")
-            self.logger.info("Redis %s channel at %s:6379" % (channel, self.redis_host))
+            channel = 'smallfile-%s-sample-%d-op-%s-after' % (self.uuid, self.sample, self.operation)
             extra_timeout = int((datetime.now() - before).seconds * self.redis_timeout_th / 100)
             redis_timeout = self.redis_timeout + extra_timeout
-            self.logger.info("Calculated redis socket timeout: %d seconds" % redis_timeout)
-            r = redis.StrictRedis(self.redis_host, 6379, socket_timeout=redis_timeout)
-            p = r.pubsub()
-            p.subscribe(channel)
-            subscribers = int(r.pubsub_numsub(channel)[0][1])
-            if subscribers == self.clients:
-                r.publish(channel, "continue")
-                r.connection_pool.disconnect()
-                self.logger.info("Continue with next workload")
-                return
-            self.logger.info("Waiting for continue message on %s channel" % channel)
-            for msg in p.listen():
-                self.logger.info("Complete message from channel: %s" % msg)
-                if isinstance(msg["data"], bytes) and msg["data"].decode("utf-8") == "continue":
-                    self.logger.info("Continue message received. Go ahead with the next workload")
-                    break
-            r.publish(channel, "running")
-            r.connection_pool.disconnect()
+            redis_sync_pods(self.clients, redis_timeout, self.redis_host, channel, self.logger)
+

@@ -18,9 +18,11 @@ def redis_sync_pods(clients, timeout_sec, redis_host, syncpoint_name, logger, so
     )
     for msg in p.listen():
         logger.debug("Complete message from channel: %s" % msg)
-        next_msg = msg["data"].decode("utf-8")
-        if isinstance(msg["data"], bytes) and next_msg == "continue":
-            logger.info("Continue message received on channel %s" % syncpoint_name)
-            break
+        if isinstance(msg["data"], bytes):
+            if msg["data"].decode("utf-8") == "continue":
+                logger.info("Continue message received on channel %s" % syncpoint_name)
+                break
+        else:
+            logger.debug("msg data was not string")
     r.publish(syncpoint_name, "running")
     r.connection_pool.disconnect()

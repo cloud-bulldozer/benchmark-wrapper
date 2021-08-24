@@ -76,8 +76,16 @@ def get_process_sample(
     tries: int = 0
     tries_plural: str = ""
 
-    if {"stdout", "stderr", "capture_output"}.intersection(set(kwargs)) == set():
-        kwargs["capture_output"] = True
+    if (
+        kwargs.get("capture_output", False)
+        or {"stdout", "stderr", "capture_output"}.intersection(set(kwargs)) == set()
+    ):
+        kwargs["stdout"] = subprocess.PIPE
+        kwargs["stderr"] = subprocess.PIPE
+
+    # Keeps python 3.6 compatibility
+    if "capture_output" in kwargs:
+        del kwargs["capture_output"]
 
     while tries <= retries:
         tries += 1

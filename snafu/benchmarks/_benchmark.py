@@ -1,16 +1,36 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Base benchmark tools."""
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterable
-from dataclasses import dataclass
 import logging
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Dict, Iterable
+
 from snafu import registry
 from snafu.config import Config, ConfigArgument, FuncAction
 
 
 @dataclass
 class BenchmarkResult:
+    """
+    Dataclass representation of a Benchmark result.
+
+    Parameters
+    ----------
+    name : str
+        Associated benchmark name
+    metadata : dict
+        Extra metadata to include with the benchmark result
+    config : dict
+        Configuration information of the benchmark
+    data : dict
+        Benchmark result data
+    labels : dict
+        User-provided labels to add into the benchmark result
+    tag : str
+        Reference tag to set elasticsearch index
+    """
+
     name: str
     metadata: Dict[str, Any]
     config: Dict[str, Any]
@@ -19,6 +39,8 @@ class BenchmarkResult:
     tag: str
 
     def to_jsonable(self) -> Dict[str, Any]:
+        """Transform dataclass into exportable JSON doc."""
+
         result: Dict[str, Any] = dict()
         result.update(self.config)
         result.update(self.data)
@@ -30,9 +52,18 @@ class BenchmarkResult:
 
 
 class LabelParserAction(FuncAction):
-    """argparse action to parse labels in the format of key=value1,key2=value2,... into a dict"""
+    """
+    argparse action to parse labels in the format of key=value1,key2=value2,... into a dict.
 
-    def func(self, arg: str) -> Dict[str, str]:
+    Raises
+    ------
+    ValueError
+        If given arg isn't formatted correctly
+    """
+
+    @staticmethod
+    def func(arg: str) -> Dict[str, str]:
+        """Parse given arg by splitting on ',', then on '='."""
         labels = dict()
         for pair in arg.strip().split(","):
             pair_split = pair.split("=")
@@ -81,6 +112,12 @@ class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
         self.config.populate_parser(self.args)
 
     def get_metadata(self) -> Dict[str, str]:
+        """
+        Get metadata dictionary
+
+        Uses the metadata attribute as a list of keys to pull from the config.
+        """
+
         metadata: Dict[str, str] = dict()
         for key in self.metadata:
             value = getattr(self.config, key, None)
@@ -89,6 +126,7 @@ class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
         return metadata
 
     def create_new_result(self, data: Dict[str, Any], config: Dict[str, Any], tag: str) -> BenchmarkResult:
+        """Shortcut method for creating a new :py:class:`BenchmarkResult` instance."""
         result = BenchmarkResult(
             name=self.tool_name,
             labels=self.config.labels,
@@ -117,13 +155,13 @@ class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
         self.logger.info(f"Starting {self.tool_name} wrapper.")
         self.logger.info("Running setup tasks.")
         if not self.setup():
-            self.logger.critical(f"Something went wrong during setup, refusing to run.")
+            self.logger.critical("Something went wrong during setup, refusing to run.")
             return
 
-        self.logger.info(f"Collecting results from benchmark.")
+        self.logger.info("Collecting results from benchmark.")
         yield from self.collect()
 
-        self.logger.info(f"Cleaning up")
+        self.logger.info("Cleaning up")
         if not self.cleanup():
-            self.logger.critical(f"Something went wrong during cleanup.")
+            self.logger.critical("Something went wrong during cleanup.")
             return

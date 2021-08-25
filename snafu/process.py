@@ -42,8 +42,8 @@ def get_process_sample(
     """
     Run the given command as a subprocess, retrying if the command fails.
 
-    Essentially just a wrapper around :py:class:`~snafu.process.LiveProcess` that will retry running a
-    subprocess if it fails, returning a :py:class:`~snafu.process.ProcessSample` detailing the results.
+    Essentially just a wrapper around :py:func:`subprocess.run` that will retry running a subprocess if
+    it fails, returning a :py:class:`~snafu.process.ProcessSample` detailing the results.
 
     This function expects a logger because it is expected that it will be used by benchmarks, which should
     be logging their progress anyways.

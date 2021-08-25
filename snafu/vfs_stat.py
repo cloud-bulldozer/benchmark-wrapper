@@ -1,8 +1,8 @@
 #  module to calculate filesystem statistics from statvfs info
 #  in a form suitable for inclusion in Elasticsearch documents
 
-import os
 import json
+import os
 import sys
 
 bytes_per_GiB = 1024.0 * 1024.0 * 1024.0

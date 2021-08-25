@@ -5,8 +5,8 @@
 #
 #   http://www.apache.org/licenses/LICENSE-2.0
 #
-import os
 import logging
+import os
 
 from . import trigger_smallfile
 

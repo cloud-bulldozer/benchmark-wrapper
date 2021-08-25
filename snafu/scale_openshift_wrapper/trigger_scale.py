@@ -11,14 +11,15 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from openshift.dynamic import DynamicClient
-from kubernetes import client, config
-import subprocess
+import json
 import logging
+import subprocess
 import time
 from shutil import which
+
+from kubernetes import client, config
+from openshift.dynamic import DynamicClient
 from packaging import version
-import json
 
 logger = logging.getLogger("snafu")
 

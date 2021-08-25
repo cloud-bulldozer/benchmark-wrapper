@@ -45,10 +45,14 @@ repos:
     rev: v0.910
     hooks:
       - id: mypy
+        additional_dependencies:
+          - types-PyYAML
+          - types-python-dateutil
+          - types-redis
+          - types-requests
+          - types-setuptools
         args:
         - --ignore-missing-imports
-        - --install-types
-        - --non-interactive
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.21.2

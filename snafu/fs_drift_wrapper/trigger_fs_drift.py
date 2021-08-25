@@ -1,10 +1,10 @@
 import json
 import os
-import subprocess
 import re
+import subprocess
 import time
 
-regex = "counters.([0-9]{2}).[0-9,\.,\-,a-z,A-Z]*.json"  # noqa
+regex = r"counters.([0-9]{2}).[0-9,\.,\-,a-z,A-Z]*.json"  # noqa
 counters_regex_prog = re.compile(regex)
 
 
@@ -14,7 +14,7 @@ class FsDriftWrapperException(Exception):
 
 class _trigger_fs_drift:
     """
-        Will execute with the provided arguments and return normalized results for indexing
+    Will execute with the provided arguments and return normalized results for indexing
     """
 
     def __init__(self, logger, yaml_input_file, cluster_name, working_dir, result_dir, user, uuid, sample):

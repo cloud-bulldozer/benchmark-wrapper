@@ -1,10 +1,11 @@
 #!/usr/bin/python
 
+import argparse
+import sys
 import time
 import traceback
-import sys
+
 import redis
-import argparse
 
 
 def run_subscriber(redis_host, redis_port, benchmark):

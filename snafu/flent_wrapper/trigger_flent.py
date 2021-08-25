@@ -13,12 +13,12 @@
 
 import gzip
 import json
+import logging
 import re
 import subprocess
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
+
 from dateutil import parser
-import logging
 
 logger = logging.getLogger("snafu")
 

@@ -11,10 +11,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import subprocess
 import logging
 import os
 import re
+import subprocess
 from datetime import datetime
 
 logger = logging.getLogger("snafu")

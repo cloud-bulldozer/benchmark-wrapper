@@ -1,6 +1,5 @@
 import redis
 
-
 # function to synchronize start / end of benchmark across all pods
 
 

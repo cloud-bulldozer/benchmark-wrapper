@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-import subprocess
 import datetime
 import logging
+import subprocess
+
 import yaml
 
 logger = logging.getLogger("snafu")

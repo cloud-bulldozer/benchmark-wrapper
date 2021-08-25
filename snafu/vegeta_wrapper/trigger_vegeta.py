@@ -11,12 +11,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import os
-import subprocess
 import json
-import socket
-import dateutil.parser
 import logging
+import os
+import socket
+import subprocess
+
+import dateutil.parser
 
 logger = logging.getLogger("snafu")
 

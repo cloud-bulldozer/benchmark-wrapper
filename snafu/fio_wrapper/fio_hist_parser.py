@@ -500,8 +500,8 @@ def compute_percentiles_from_logs(
 # --------- below are unit tests ------------
 
 if unittest2_imported:
-    import tempfile
     import shutil
+    import tempfile
     from os.path import join
 
     should_not_get_here = False

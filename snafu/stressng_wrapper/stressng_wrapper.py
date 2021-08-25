@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import os
 import argparse
+import os
 
 from .trigger_stressng import Trigger_stressng
 

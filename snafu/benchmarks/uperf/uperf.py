@@ -338,7 +338,7 @@ class Uperf(Benchmark):
             if sample.successful.stdout is None:
                 self.logger.critical(f"Uperf ran successfully, but didn't get stdout. Got results: {sample}")
                 return
-            
+
             self.logger.info(sample.successful.stdout)
 
             stdout: UperfStdout = self.parse_stdout(sample.successful.stdout)

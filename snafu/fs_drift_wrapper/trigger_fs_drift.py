@@ -98,7 +98,7 @@ class _trigger_fs_drift:
             raise FsDriftWrapperException("rsptime_stats return code %d" % e.returncode)
         self.logger.info("response time result {}".format(rsptime_file))
         with open(rsptime_file) as rf:
-            lines = [l.strip() for l in rf.readlines()]
+            lines = [line.strip() for line in rf.readlines()]
             start_grabbing = False
             for line in lines:
                 if line.startswith("time-since-start"):
@@ -145,7 +145,7 @@ class _trigger_fs_drift:
                 matched = counters_regex_prog.match(fn)
                 thread_id = matched.group(1)
                 with open(pathnm, "r") as f:
-                    records = [l.strip() for l in f.readlines()]
+                    records = [line.strip() for line in f.readlines()]
                 json_start = 0
                 self.logger.info("process %d records from rates-over-time file %s " % (len(records), fn))
                 for index, record in enumerate(records):

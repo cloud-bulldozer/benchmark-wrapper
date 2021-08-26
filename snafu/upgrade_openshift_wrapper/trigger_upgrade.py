@@ -176,7 +176,9 @@ class Trigger_upgrade:
             op_time = datetime.datetime.strptime(op.metadata.managedFields[field_len - 1].time, time_format)
             update_time = op_time - self.start_time
             op_time = op_time.strftime(time_format)
-            logger.info("Operator: {} finished update at {} and took {}".format(op_name, op_time, update_time))
+            logger.info(
+                "Operator: {} finished update at {} and took {}".format(op_name, op_time, update_time)
+            )
             op_data = {
                 "operator": op_name,
                 "end_time": op_time,

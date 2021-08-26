@@ -77,7 +77,7 @@ def parse_hist_file(logfn, buckets_per_interval, log_hist_msec):
     previous_ts_ms_write = -1
 
     with open(logfn, "r") as f:
-        records = [l.strip() for l in f.readlines()]
+        records = [line.strip() for line in f.readlines()]
     intervals = []
     last_time_ms = -1
     last_direction = -1
@@ -500,8 +500,8 @@ def compute_percentiles_from_logs(
 # --------- below are unit tests ------------
 
 if unittest2_imported:
-    import tempfile
     import shutil
+    import tempfile
     from os.path import join
 
     should_not_get_here = False

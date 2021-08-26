@@ -45,10 +45,14 @@ repos:
     rev: v0.910
     hooks:
       - id: mypy
+        additional_dependencies:
+          - types-PyYAML
+          - types-python-dateutil
+          - types-redis
+          - types-requests
+          - types-setuptools
         args:
         - --ignore-missing-imports
-        - --install-types
-        - --non-interactive
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.21.2
@@ -60,7 +64,7 @@ ci:
         [pre-commit.ci] auto fixes from pre-commit.com hooks
 
         for more information, see https://pre-commit.ci
-    autofix_prs: true
+    autofix_prs: false
     autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
     autoupdate_schedule: weekly
     skip: []

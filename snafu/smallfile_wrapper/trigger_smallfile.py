@@ -1,12 +1,13 @@
+import json
+import os
+import socket
+import subprocess
 import time
 from datetime import datetime
-import os
-import json
-import subprocess
-import socket
-from snafu.vfs_stat import get_vfs_stat_dict
+
 from snafu.utils.request_cache_drop import http_timeout
 from snafu.utils.sync_pods_with_redis import redis_sync_pods
+from snafu.vfs_stat import get_vfs_stat_dict
 
 
 class SmallfileWrapperException(Exception):
@@ -15,7 +16,7 @@ class SmallfileWrapperException(Exception):
 
 class _trigger_smallfile:
     """
-        execute with provided arguments and return results for indexing
+    execute with provided arguments and return results for indexing
     """
 
     def __init__(

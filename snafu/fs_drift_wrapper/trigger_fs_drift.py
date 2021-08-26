@@ -1,10 +1,10 @@
 import json
 import os
-import subprocess
 import re
+import subprocess
 import time
 
-regex = "counters.([0-9]{2}).[0-9,\.,\-,a-z,A-Z]*.json"  # noqa
+regex = r"counters.([0-9]{2}).[0-9,\.,\-,a-z,A-Z]*.json"  # noqa
 counters_regex_prog = re.compile(regex)
 
 
@@ -14,7 +14,7 @@ class FsDriftWrapperException(Exception):
 
 class _trigger_fs_drift:
     """
-        Will execute with the provided arguments and return normalized results for indexing
+    Will execute with the provided arguments and return normalized results for indexing
     """
 
     def __init__(self, logger, yaml_input_file, cluster_name, working_dir, result_dir, user, uuid, sample):
@@ -98,7 +98,7 @@ class _trigger_fs_drift:
             raise FsDriftWrapperException("rsptime_stats return code %d" % e.returncode)
         self.logger.info("response time result {}".format(rsptime_file))
         with open(rsptime_file) as rf:
-            lines = [l.strip() for l in rf.readlines()]
+            lines = [line.strip() for line in rf.readlines()]
             start_grabbing = False
             for line in lines:
                 if line.startswith("time-since-start"):
@@ -145,7 +145,7 @@ class _trigger_fs_drift:
                 matched = counters_regex_prog.match(fn)
                 thread_id = matched.group(1)
                 with open(pathnm, "r") as f:
-                    records = [l.strip() for l in f.readlines()]
+                    records = [line.strip() for line in f.readlines()]
                 json_start = 0
                 self.logger.info("process %d records from rates-over-time file %s " % (len(records), fn))
                 for index, record in enumerate(records):

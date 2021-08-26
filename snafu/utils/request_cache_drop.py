@@ -5,9 +5,9 @@
 # HTTP GET from here.
 # if no environment variables are defined, nothing happens
 
-import os
 import http.client
 import logging
+import os
 import time
 
 

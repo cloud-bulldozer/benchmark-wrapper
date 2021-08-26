@@ -11,18 +11,19 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import sys
 import datetime
-import time
-from time import sleep
+import json
+import logging
+import os
 import random
 import string
-import logging
-import boto3
-import json
 import subprocess
+import sys
+import time
 import uuid
-import os
+from time import sleep
+
+import boto3
 from kafka import KafkaConsumer, TopicPartition
 
 logger = logging.getLogger("snafu")
@@ -255,7 +256,7 @@ class Trigger_log_generator:
             "Running log test with %d byte size for %d minutes at a rate of %d messages per second"
             % (self.size, self.duration, self.messages_per_second)
         )
-        logger.info("Test UUID is %s on cluster %s" % (self.uuid, self.cluster_name))
+        logger.info("Test UUID is {} on cluster {}".format(self.uuid, self.cluster_name))
 
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
         start_time = time.time()

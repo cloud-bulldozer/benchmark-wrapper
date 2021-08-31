@@ -82,10 +82,10 @@ class Fio_Analyzer:
                     self.sumdoc[sample][rw][bs_value]["write"] = 0
                     self.sumdoc[sample][rw][bs_value]["read"] = 0
 
-                self.sumdoc[sample][rw][bs_value]["write"] += int(
+                self.sumdoc[sample][rw][bs_value]["write"] += float(
                     fio_result["document"]["fio"]["write"]["iops"]
                 )
-                self.sumdoc[sample][rw][bs_value]["read"] += int(
+                self.sumdoc[sample][rw][bs_value]["read"] += float(
                     fio_result["document"]["fio"]["read"]["iops"]
                 )
 

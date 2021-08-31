@@ -154,7 +154,7 @@ class Config:
         self.params: argparse.Namespace = argparse.Namespace()
         self.parser: configargparse.ArgumentParser = configargparse.get_argument_parser()
         self.group = self.parser.add_argument_group(tool_name)
-        self.env_to_params: Dict[str, str] = dict()
+        self.env_to_params: Dict[str, str] = {}
 
     def __getattr__(self, attr):
         """If given ``attr`` doesn't already exist in instance, try to pull from ``params``."""
@@ -167,7 +167,7 @@ class Config:
         Will add in environment variables from the OS environment.
         """
 
-        env: Dict[str, str] = dict()
+        env: Dict[str, str] = {}
         env.update(os.environ)
         for env_var, dest in self.env_to_params.items():
             try:

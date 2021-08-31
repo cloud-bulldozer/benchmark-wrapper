@@ -16,13 +16,13 @@ repos:
       - id: check-ast
 
   - repo: https://github.com/psf/black
-    rev: 21.7b0
+    rev: 21.8b0
     hooks:
       - id: black
         args: ['--line-length', '110']
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.9.2
+    rev: 5.9.3
     hooks:
       - id: isort
         args:
@@ -30,14 +30,14 @@ repos:
         - --color
         - --line-length=110
 
-  - repo: https://gitlab.com/PyCQA/flake8
+  - repo: https://github.com/PyCQA/flake8
     rev: '3.9.2'
     hooks:
       - id: flake8
         additional_dependencies: ['pep8-naming', 'flake8-docstrings']
 
   - repo: https://github.com/PyCQA/pylint
-    rev: v2.9.5
+    rev: v2.10.2
     hooks:
       - id: pylint
 
@@ -55,7 +55,7 @@ repos:
         - --ignore-missing-imports
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.21.2
+    rev: v2.25.0
     hooks:
       - id: pyupgrade
 

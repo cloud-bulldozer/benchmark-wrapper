@@ -229,7 +229,7 @@ def get_valid_es_document(action, index, index_args):
     else:
         es_index = index_args.prefix
     es_valid_document = {"_index": es_index, "_op_type": "create", "_source": action, "_id": ""}
-    logger.debug(f"Run ID is {index_args.run_id}")
+    logger.debug("Run ID is %s" % {index_args.run_id})
     es_valid_document["run_id"] = action["run_id"] = index_args.run_id
     es_valid_document["_id"] = hashlib.sha256(str(action).encode()).hexdigest()
     document_size_bytes = sys.getsizeof(es_valid_document)

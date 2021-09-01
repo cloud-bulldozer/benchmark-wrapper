@@ -24,16 +24,16 @@ backports.zoneinfo==0.2.1
     #   tzlocal
 bleach==4.1.0
     # via nbconvert
-boto3==1.18.44
+boto3==1.18.55
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-botocore==1.21.44
+botocore==1.21.55
     # via
     #   -r requirements/py37-reqs/install.txt
     #   boto3
     #   s3transfer
-cachetools==4.2.2
+cachetools==4.2.4
     # via
     #   -r requirements/py37-reqs/install.txt
     #   google-auth
@@ -49,7 +49,7 @@ charset-normalizer==2.0.6
     # via
     #   -r requirements/py37-reqs/install.txt
     #   requests
-configargparse==1.5.2
+configargparse==1.5.3
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
@@ -61,11 +61,11 @@ dataclasses==0.6
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-dateparser==1.0.0
+dateparser==1.1.0
     # via
     #   -r requirements/py37-reqs/install.txt
     #   prometheus-api-client
-debugpy==1.4.3
+debugpy==1.5.0
     # via ipykernel
 decorator==5.1.0
     # via ipython
@@ -75,6 +75,10 @@ dictdiffer==0.9.0
     # via
     #   -r requirements/py37-reqs/install.txt
     #   openshift
+distro==1.6.0
+    # via
+    #   -r requirements/py37-reqs/install.txt
+    #   snafu (setup.cfg)
 docutils==0.16
     # via
     #   -r requirements/py37-reqs/install.txt
@@ -96,7 +100,7 @@ flent==2.0.1
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-google-auth==2.1.0
+google-auth==2.2.1
     # via
     #   -r requirements/py37-reqs/install.txt
     #   kubernetes
@@ -117,7 +121,7 @@ ipykernel==6.4.1
     # via
     #   notebook
     #   snafu (setup.cfg)
-ipython==7.27.0
+ipython==7.28.0
     # via
     #   ipykernel
     #   snafu (setup.cfg)
@@ -128,7 +132,7 @@ ipython-genutils==0.2.0
     #   notebook
 jedi==0.18.0
     # via ipython
-jinja2==3.0.1
+jinja2==3.0.2
     # via
     #   -r requirements/py37-reqs/install.txt
     #   myst-parser
@@ -142,9 +146,9 @@ jmespath==0.10.0
     #   -r requirements/py37-reqs/install.txt
     #   boto3
     #   botocore
-jsonschema==3.2.0
+jsonschema==4.0.1
     # via nbformat
-jupyter-client==7.0.3
+jupyter-client==7.0.6
     # via
     #   ipykernel
     #   nbclient
@@ -186,7 +190,7 @@ myst-parser==0.15.2
     # via snafu (setup.cfg)
 nbclient==0.5.4
     # via nbconvert
-nbconvert==6.1.0
+nbconvert==6.2.0
     # via
     #   nbsphinx
     #   notebook
@@ -291,7 +295,7 @@ python-string-utils==1.0.0
     # via
     #   -r requirements/py37-reqs/install.txt
     #   openshift
-pytz==2021.1
+pytz==2021.3
     # via
     #   -r requirements/py37-reqs/install.txt
     #   babel
@@ -311,7 +315,7 @@ redis==3.5.3
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-regex==2021.8.28
+regex==2021.9.30
     # via
     #   -r requirements/py37-reqs/install.txt
     #   dateparser
@@ -353,7 +357,6 @@ six==1.16.0
     # via
     #   -r requirements/py37-reqs/install.txt
     #   bleach
-    #   jsonschema
     #   kubernetes
     #   openshift
     #   python-dateutil
@@ -418,7 +421,7 @@ tzlocal==3.0
     # via
     #   -r requirements/py37-reqs/install.txt
     #   dateparser
-urllib3==1.26.6
+urllib3==1.26.7
     # via
     #   -r requirements/py37-reqs/install.txt
     #   botocore
@@ -433,7 +436,7 @@ websocket-client==1.2.1
     # via
     #   -r requirements/py37-reqs/install.txt
     #   kubernetes
-zipp==3.5.0
+zipp==3.6.0
     # via
     #   -r requirements/py37-reqs/install.txt
     #   importlib-metadata

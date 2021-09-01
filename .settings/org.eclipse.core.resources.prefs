@@ -1,0 +1,6 @@
+eclipse.preferences.version=1
+encoding//snafu/benchmarks/_load_benchmarks.py=utf-8
+encoding//snafu/benchmarks/systemd_analyze/__init__.py=utf-8
+encoding//snafu/benchmarks/systemd_analyze/systemd_analyze.py=utf-8
+encoding//snafu/benchmarks/uperf/__init__.py=utf-8
+encoding//snafu/benchmarks/uperf/uperf.py=utf-8

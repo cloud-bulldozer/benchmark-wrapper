@@ -181,6 +181,7 @@ def main():
     )
 
 
+
 def process_generator(index_args, parser):
     benchmark_wrapper_object_generator = generate_wrapper_object(index_args, parser)
 

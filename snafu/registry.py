@@ -9,11 +9,10 @@ registry dict when the class is created.
 After snafu loads up and all the classes are created, the registry dict can be accessed at
 ``registry.TOOLS``. Key names will be tool names, values will be their wrapper classes.
 """
-from typing import Dict
 from abc import ABCMeta
+from typing import Dict
 
-
-TOOLS: Dict[str, object] = dict()
+TOOLS: Dict[str, object] = {}
 
 
 class ToolRegistryMeta(ABCMeta):
@@ -34,12 +33,12 @@ class ToolRegistryMeta(ABCMeta):
     'my_awesome_tool'
     """
 
-    def __new__(cls, clsname, superclasses, attributedict):
+    def __new__(cls, name, bases, namespace, **kwargs):
         """Called when a new class is created."""
 
-        new_class = super().__new__(cls, clsname, superclasses, attributedict)
-        if attributedict.get("tool_name", None) is None:
+        new_class = super().__new__(cls, name, bases, namespace)
+        if namespace.get("tool_name", None) is None:
             raise KeyError("When using ToolRegistryMeta, please set the 'tool_name' class attribute.")
-        TOOLS[attributedict["tool_name"]] = new_class
+        TOOLS[namespace["tool_name"]] = new_class
 
         return new_class

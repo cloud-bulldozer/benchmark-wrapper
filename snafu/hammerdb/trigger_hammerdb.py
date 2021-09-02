@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-import subprocess
 import datetime
 import logging
+import subprocess
 
 logger = logging.getLogger("snafu")
 
@@ -217,9 +217,9 @@ class Trigger_hammerdb:
                 print("Test driver: {}".format(entry["driver"]))
                 print("Runtime: {}".format(entry["runtime"]))
                 print("Rampup time: {}".format(entry["rampup"]))
-                print("Worker(s): {}".format((current_worker)))
+                print("Worker(s): {}".format(current_worker))
                 print("Total samples: {}".format(entry["samples"]))
-                print("Current sample {}".format((current_sample + 1)))
+                print("Current sample {}".format(current_sample + 1))
                 print("HammerDB results (TPM):")
                 print(
                     """

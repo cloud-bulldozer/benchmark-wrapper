@@ -4,10 +4,8 @@
 import dataclasses
 import datetime
 import logging
-import queue
 import subprocess
-import threading
-from typing import Any, Iterable, List, Mapping, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 
 @dataclasses.dataclass
@@ -30,152 +28,7 @@ class ProcessSample:
     attempts: Optional[int] = None
     timeout: Optional[int] = None
     failed: List[ProcessRun] = dataclasses.field(default_factory=list)
-    successful: ProcessRun = ProcessRun()
-
-
-class LiveProcess:
-    r"""
-    Open a subprocess and get live access to stdout and stderr.
-
-    Context manager that runs the given command on entry, cleans up on exit, and creates
-    a ProcessRun object summarizing the results. The process's stdout and stderr will be captured and
-    exposed via the ``stdout`` and ``stderr`` :py:class:`queue.Queue` attributes.
-
-    By default a pipe for stdout and stderr are created and given to the created subprocess. If ``stdout``,
-    ``stderr`` or ``capture_output`` options are given by the user through kwargs, then no automatic pipe
-    creation will be performed.
-
-    Parameters
-    ----------
-    cmd : str or list of str
-        Command to run. Can be string or list or string if using :py:mod:`shlex`
-    timeout : int, optional
-        When cleaning up the running process, this value specifies time in seconds to wait for
-        process to finish before killing it.
-    **kwargs
-        Additional kwargs given will be passed directly to the :py:class:`subprocess.Popen` call used in the
-        background to launch the command.
-
-    Attributes
-    ----------
-    cmd : str or list of str
-        Command to execute
-    timeout : int or None
-        Timeout value in seconds, if given
-    kwargs : mapping
-        kwargs to pass to :py:class:subprocess.Popen`
-    attempt : ProcessRun
-        ProcessRun instance describing the run process
-    process : subprocess.Popen
-        Popen object created for the run command
-    start_time : datetime.datetime
-        Datetime object representing approximate time that the process was started
-    end_time : datetime.datetime
-        Datetime object representing approximate time that the process exited
-
-    Examples
-    --------
-    >>> from snafu.process import LiveProcess
-    >>> with LiveProcess("echo 'test'; sleep 0.5; echo 'test2'", shell=True) as lp:
-    ...     print(lp.stdout.get())
-    ...     print(lp.stdout.get())  # will block until another line is ready
-    ...     run = lp.attempt
-    ...
-    b'test\n'
-    b'test2\n'
-    >>> run.stdout  # decoded for us
-    'test\ntest2\n'
-    """
-
-    def __init__(self, cmd: Union[str, List[str]], timeout: Optional[int] = None, **kwargs):
-        """Create instance attributes with None for defaults as needed and check pipe arguments in kwargs."""
-        self.cmd: Union[str, List[str]] = cmd
-        self.timeout: Optional[int] = timeout
-        self.kwargs: Mapping[str, Any] = kwargs
-        self.stdout: queue.Queue = queue.Queue()
-        self.stderr: queue.Queue = queue.Queue()
-        self.attempt: Optional[ProcessRun] = ProcessRun()
-        self.process: Optional[subprocess.Popen] = None
-        self.start_time: Optional[datetime.datetime] = None
-        self.end_time: Optional[datetime.datetime] = None
-
-        self._cleaned: bool = False
-        self._stdout: bytes = b""
-        self._stderr: bytes = b""
-        self._threads: Optional[List[threading.Thread]] = None
-
-        self._check_pipes(self.kwargs)
-
-    @staticmethod
-    def _check_pipes(kwargs):
-        if (
-            not kwargs.get("stdout", False)
-            and not kwargs.get("stderr", False)
-            and not kwargs.get("capture_output", False)
-        ):
-            kwargs["stdout"] = subprocess.PIPE
-            kwargs["stderr"] = subprocess.PIPE
-
-    def _enqueue_line_from_fh(self, file_handler, queue_attr, store):
-        if file_handler is not None:
-            for line in iter(file_handler.readline, b""):
-                queue_attr.put(line)
-                # use this method since running in separate thread
-                setattr(self, store, getattr(self, store) + line)
-
-    def start(self):
-        """Start the subprocess and create threads for capturing output."""
-
-        self.start_time = datetime.datetime.utcnow()
-        self.process = subprocess.Popen(self.cmd, **self.kwargs)  # pylint: disable=R1732
-        self._threads = [
-            threading.Thread(
-                target=self._enqueue_line_from_fh,
-                args=(self.process.stdout, self.stdout, "_stdout"),
-                daemon=True,
-            ),
-            threading.Thread(
-                target=self._enqueue_line_from_fh,
-                args=(self.process.stderr, self.stderr, "_stderr"),
-                daemon=True,
-            ),
-        ]
-
-        for thread in self._threads:
-            thread.start()
-
-    def __enter__(self):
-        """Call start method and return self."""
-        self.start()
-        return self
-
-    def cleanup(self):
-        """Cleanup the subprocess with a timeout and populate the ProcessRun instance at ``attempt``."""
-        if not self._cleaned:
-            if self.timeout is not None:
-                try:
-                    self.process.wait(timeout=self.timeout)
-                    self.attempt.hit_timeout = False
-                except subprocess.TimeoutExpired:
-                    self.attempt.hit_timeout = True
-                    self.process.kill()
-                    self.process.wait()
-            else:
-                self.process.wait()
-
-            self.end_time = datetime.datetime.utcnow()
-            for thread in self._threads:
-                thread.join()
-
-            self._cleaned = True
-            self.attempt.stdout = self._stdout.decode("utf-8")
-            self.attempt.stderr = self._stderr.decode("utf-8")
-            self.attempt.rc = self.process.returncode
-            self.attempt.time_seconds = (self.end_time - self.start_time).total_seconds()
-
-    def __exit__(self, *args, **kwargs):
-        """Call cleanup method on exit of context."""
-        self.cleanup()
+    successful: Optional[ProcessRun] = None
 
 
 def get_process_sample(
@@ -189,8 +42,8 @@ def get_process_sample(
     """
     Run the given command as a subprocess, retrying if the command fails.
 
-    Essentially just a wrapper around :py:class:`~snafu.process.LiveProcess` that will retry running a
-    subprocess if it fails, returning a :py:class:`~snafu.process.ProcessSample` detailing the results.
+    Essentially just a wrapper around :py:func:`subprocess.run` that will retry running a subprocess if
+    it fails, returning a :py:class:`~snafu.process.ProcessSample` detailing the results.
 
     This function expects a logger because it is expected that it will be used by benchmarks, which should
     be logging their progress anyways.
@@ -201,12 +54,12 @@ def get_process_sample(
         Command to run. Can be string or list of strings if using :py:mod:`shlex`
     logger : logging.Logger
         Logger to use in order to log progress.
-    retries : int
+    retries : int, optional
         Number of retries to perform. Defaults to zero, which means that the function will run the process
         once, not retrying on failure.
-    expected_rc : int
+    expected_rc : int, optional
         Expected return code of the process. Will be used to determine if the process ran successfully or not.
-    timeout : int
+    timeout : int, optional
         Time in seconds to wait for process to complete before killing it.
     kwargs
         Extra kwargs will be passed to :py:class:`~snafu.process.LiveProcess`
@@ -223,13 +76,41 @@ def get_process_sample(
     tries: int = 0
     tries_plural: str = ""
 
+    if (
+        kwargs.get("capture_output", False)
+        or {"stdout", "stderr", "capture_output"}.intersection(set(kwargs)) == set()
+    ):
+        kwargs["stdout"] = subprocess.PIPE
+        kwargs["stderr"] = subprocess.PIPE
+
+    # Keeps python 3.6 compatibility
+    if "capture_output" in kwargs:
+        del kwargs["capture_output"]
+
     while tries <= retries:
         tries += 1
         logger.debug(f"On try {tries}")
 
-        with LiveProcess(cmd, timeout=timeout, **kwargs) as proc:
-            proc.cleanup()
-            attempt: ProcessRun = proc.attempt
+        attempt = ProcessRun()
+        start_time = datetime.datetime.utcnow()
+        try:
+            proc = subprocess.run(cmd, check=False, timeout=timeout, **kwargs)
+        except subprocess.TimeoutExpired as timeout_error:
+            attempt.hit_timeout = True
+            attempt.time_seconds = timeout_error.timeout
+            stdout = timeout_error.stdout
+            stderr = timeout_error.stderr
+        else:
+            attempt.time_seconds = (datetime.datetime.utcnow() - start_time).total_seconds()
+            attempt.hit_timeout = False
+            attempt.rc = proc.returncode
+            stdout = proc.stdout
+            stderr = proc.stderr
+
+        if stdout is not None:
+            attempt.stdout = stdout.decode("utf-8")
+        if stderr is not None:
+            attempt.stderr = stderr.decode("utf-8")
 
         logger.debug(f"Finished running. Got attempt: {attempt}")
         logger.debug(f"Got return code {attempt.rc}, expected {expected_rc}")

@@ -22,7 +22,7 @@ _data_direction = {0: "read", 1: "write", 2: "trim"}
 
 class _trigger_fio:
     """
-        Will execute fio with the provided arguments and return normalized results for indexing
+    Will execute fio with the provided arguments and return normalized results for indexing
     """
 
     def __init__(
@@ -335,13 +335,13 @@ class _trigger_fio:
 
             # check to determine if logs can be parsed, if not fail
             try:
-                if self.fio_jobs_dict[job]["filename_format"] != "f.\$jobnum.\$filenum":  # noqa
-                    logger.error("filename_format is not 'f.\$jobnum.\$filenum'")  # noqa
+                if self.fio_jobs_dict[job]["filename_format"] != r"f.\$jobnum.\$filenum":  # noqa
+                    logger.error(r"filename_format is not 'f.\$jobnum.\$filenum'")  # noqa
                     exit(1)
             except KeyError:
                 try:
-                    if self.fio_jobs_dict["global"]["filename_format"] != "f.\$jobnum.\$filenum":  # noqa
-                        logger.error("filename_format is not 'f.\$jobnum.\$filenum'")  # noqa
+                    if self.fio_jobs_dict["global"]["filename_format"] != r"f.\$jobnum.\$filenum":  # noqa
+                        logger.error(r"filename_format is not 'f.\$jobnum.\$filenum'")  # noqa
                         exit(1)
                 except:  # noqa
                     logger.error("Error getting filename_format")

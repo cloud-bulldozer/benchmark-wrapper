@@ -11,9 +11,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import time
 import logging
 import subprocess
+import time
+
 from ttp import ttp
 
 logger = logging.getLogger("snafu")
@@ -21,7 +22,7 @@ logger = logging.getLogger("snafu")
 
 class Trigger_dns_perf:
     def __init__(self, args):
-        """ Initialize the arguments defined """
+        """Initialize the arguments defined"""
 
         self.uuid = args.uuid
         self.cluster_name = args.cluster_name
@@ -32,7 +33,7 @@ class Trigger_dns_perf:
         self.clients = args.clients
 
     def _json_payload(self, data, timestamp, elapsed_time):
-        """ Generates a json payload with the metrics of interest.
+        """Generates a json payload with the metrics of interest.
         This is the results document, it gets updated with metrics from the dns-perf run.
         """
 
@@ -50,7 +51,7 @@ class Trigger_dns_perf:
         return payload
 
     def run(self):
-        """ Runs dns-perf workload and returns the stdout """
+        """Runs dns-perf workload and returns the stdout"""
 
         command = "dnsperf -l {} -s {} -Q {} -d {} -c {}".format(
             self.run_time, self.server_address, self.queries_per_second, self.data_file, self.clients
@@ -61,14 +62,14 @@ class Trigger_dns_perf:
         )
         (output, err) = out.communicate()
         if out.returncode != 0:
-            logger.error("Failed to run %s, error: %s" % (command, err))
+            logger.error("Failed to run {}, error: {}".format(command, err))
             exit(1)
         logger.info("Raw result: \n{}".format(output))
         return output
 
     def _parse_stdout(self, stdout):
-        """ Parses the dns-perf run stdout.
-            ttp template to parse the dns-perf stdout.
+        """Parses the dns-perf run stdout.
+        ttp template to parse the dns-perf stdout.
         """
 
         template = """

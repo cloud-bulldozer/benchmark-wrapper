@@ -119,10 +119,10 @@ class Trigger_pgbench:
             if line in config:
                 config.remove(line)
             if re.search("tps", results[idx][0]):
-                cons = re.findall(".*\((....)uding.*", results[idx][1])  # noqa
+                cons = re.findall(r".*\((....)uding.*", results[idx][1])  # noqa
                 if cons:
                     results[idx][0] = "tps_{}_con_est".format(cons[0]).strip()
-                    results[idx][1] = self._num_convert(re.sub(" \(.*", "", results[idx][1]).strip())  # noqa
+                    results[idx][1] = self._num_convert(re.sub(r" \(.*", "", results[idx][1]).strip())  # noqa
             elif re.search("latency", results[idx][0]):
                 results[idx][0] += "_ms"
                 results[idx][1] = self._num_convert(results[idx][1].split(" ", 1)[0])

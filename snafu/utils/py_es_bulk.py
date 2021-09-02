@@ -4,15 +4,16 @@ such opinions for creating templates (put_template()) and bulk indexing
 (streaming_bulk).
 """
 
-import time
 import json
 import logging
 import math
-
-from random import SystemRandom
+import time
 from collections import Counter, deque
+from random import SystemRandom
 
-from elasticsearch import VERSION as es_VERSION, helpers, exceptions as es_excs
+from elasticsearch import VERSION as es_VERSION
+from elasticsearch import exceptions as es_excs
+from elasticsearch import helpers
 
 _es_logger = "elasticsearch"
 

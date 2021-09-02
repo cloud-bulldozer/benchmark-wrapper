@@ -86,6 +86,7 @@ jobs:
             export org_secret="${{ secrets.QUAY_ORG }}"
             export org=${org_secret:-cloud-bulldozer}
             echo "::set-output name=org::$org"
+            echo "Using organization: $org"
 
   build_push:
     needs: create_matrix

@@ -21,7 +21,7 @@ jobs:
       - name: Install tox
         run: pip install tox
       - name: Run version update
-        run: tox -e py3${{ matrix.pyver }}-requirements
+        run: tox -e py3${{ matrix.pyver }}-reqs
       - name: Save git diff
         run: |
           git diff --output diff.patch

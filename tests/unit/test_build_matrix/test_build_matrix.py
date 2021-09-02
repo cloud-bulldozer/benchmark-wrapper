@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Test functionality of ci/build_matrix.py"""
 import dataclasses
-import importlib
+import importlib.util
 import json
 import string
 import sys
@@ -17,10 +17,10 @@ sys.modules["build_matrix"] = build_matrix
 _bm_spec.loader.exec_module(build_matrix)
 
 
-with open(Path(__file__).parent.joinpath("git_diff_test.txt")) as git_diff_test:
+with open(Path(__file__).parent.joinpath("git_diff_test.txt"), encoding="utf8") as git_diff_test:
     EXAMPLE_GIT_DIFF = git_diff_test.read()
 
-with open(Path(__file__).parent.joinpath("find_df_test.txt")) as find_df_test:
+with open(Path(__file__).parent.joinpath("find_df_test.txt"), encoding="utf8") as find_df_test:
     EXAMPLE_DF_LIST = find_df_test.read()
 
 

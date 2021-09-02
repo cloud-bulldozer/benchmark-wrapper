@@ -55,9 +55,9 @@ building and pushing multi-arch image manifests to quay. The output looks like t
     }
 }
 """
-import json
 import argparse
 import dataclasses
+import json
 import pathlib
 import re
 import shlex
@@ -81,7 +81,7 @@ BONES = (
 IGNORES = (r"Dockerfile\.ppc64le$",)
 
 
-def get_git_diff(upstream_branch: str) -> Set[str]:
+def get_git_diff(upstream_branch: str) -> str:
     """
     Run git-diff against upstream branch.
 
@@ -100,7 +100,9 @@ def get_git_diff(upstream_branch: str) -> Set[str]:
 
     subprocess.run(shlex.split(f"git fetch origin {upstream_branch}"), check=True)
     completed_process = subprocess.run(
-        shlex.split(f"git diff origin/{upstream_branch} --name-only"), check=True, stdout=subprocess.PIPE,
+        shlex.split(f"git diff origin/{upstream_branch} --name-only"),
+        check=True,
+        stdout=subprocess.PIPE,
     )
     return completed_process.stdout.decode("utf-8")
 
@@ -158,7 +160,7 @@ def parse_dockerfile_list(df_list: str) -> Set[str]:
         Set of all unique dockerfile paths parsed from given input.
     """
 
-    result = list()
+    result = []
     for dockerfile in df_list.strip().split("\n"):
         dockerfile = dockerfile.strip()
         ignored = False
@@ -185,7 +187,7 @@ class MatrixEntry:
     image_name: str
     benchmark: str
     env_var: str
-    archs: str
+    archs: Iterable[str]
     changed: bool
     tags: Iterable[str]
 
@@ -288,8 +290,8 @@ class MatrixBuilder:
         self.upstream_branch = upstream_branch
         self.dockerfile_set = dockerfile_set
         self.changed_set = changed_set
-        self.manifest_matrix: Dict[str, List[Dict[str, str]]] = dict()
-        self.build_matrix: Dict[str, List[Dict[str, str]]] = dict()
+        self.manifest_matrix: Dict[str, List[Dict[str, Union[str, bool]]]] = {}
+        self.build_matrix: Dict[str, List[Dict[str, Union[str, bool]]]] = {}
 
         self.reset()
 
@@ -354,7 +356,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("tags", nargs="+", help="Tags to apply to the built images")
     parser.add_argument(
-        "--upstream", default="master", help="Upstream branch to compare against. Defaults to 'master'",
+        "--upstream",
+        default="master",
+        help="Upstream branch to compare against. Defaults to 'master'",
     )
     parser.add_argument("--changed-only", action="store_true", help="Only output changed Dockerfiles")
     parser.add_argument(

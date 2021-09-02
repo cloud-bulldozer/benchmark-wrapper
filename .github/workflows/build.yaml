@@ -20,6 +20,7 @@ jobs:
     outputs:
       build_matrix: ${{ steps.set-build-matrix.outputs.matrix }}
       manifest_matrix: ${{ steps.set-manifest-matrix.outputs.matrix }}
+      quay_org: ${{ steps.set-quay-org.outputs.org }}
     env:
       changed_only: ''
     steps:
@@ -79,12 +80,21 @@ jobs:
       - name: Sanity check by parsing manifest matrix using fromJSON
         run: echo ${{ fromJSON(steps.set-manifest-matrix.outputs.matrix) }}
 
+      - name: Set quay organization
+        id: set-quay-org
+        run: |
+            export org_secret="${{ secrets.QUAY_ORG }}"
+            export org=${org_secret:-cloud-bulldozer}
+            echo "::set-output name=org::$org"
+
   build_push:
     needs: create_matrix
     runs-on: ubuntu-20.04
     strategy:
       matrix: ${{ fromJSON(needs.create_matrix.outputs.build_matrix) }}
       fail-fast: false
+    env:
+      quay_org: ${{ needs.create_matrix.outputs.quay_org }}
     name: Build ${{ matrix.benchmark }} on ${{ matrix.arch }}
     steps:
       - uses: actions/checkout@v2
@@ -93,14 +103,6 @@ jobs:
             cat << EOF
             ${{ toJSON(matrix) }}
             EOF
-      - name: Set quay organization to cloud-bulldozer
-        if: secrets.QUAY_ORG == null
-        run: |
-            echo QUAY_ORG=cloud-bulldozer >> $GITHUB_ENV
-      - name: Set quay organization to value in QUAY_ORG secret
-        if: secrets.QUAY_ORG != null
-        run: |
-            echo QUAY_ORG=${{ secrets.QUAY_ORG }} >> $GITHUB_ENV
       - name: Update apt cache
         run: sudo apt update
       - name: Install podman and qemu-user-static
@@ -118,7 +120,7 @@ jobs:
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
-          registry: quay.io/${{ env.QUAY_ORG }}
+          registry: quay.io/${{ env.quay_org }}
           username: ${{ secrets.QUAY_USER }}
           password: ${{ secrets.QUAY_TOKEN }}
       - name: Print image URL
@@ -133,6 +135,8 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.create_matrix.outputs.manifest_matrix) }}
       fail-fast: false
+    env:
+      quay_org: ${{ needs.create_matrix.outputs.quay_org }}
     name: Push Manifest ${{ matrix.image_name }}:${{ matrix.tag }}
     steps:
       - uses: actions/checkout@v2
@@ -151,7 +155,7 @@ jobs:
             --password ${{ secrets.QUAY_TOKEN }}
       - name: Create manifest
         run: |
-            manifest="quay.io/${{ env.QUAY_ORG }}/${{ matrix.image_name }}:${{ matrix.tag }}"
+            manifest="quay.io/${{ env.quay_org }}/${{ matrix.image_name }}:${{ matrix.tag }}"
             echo "Updating manifest ${manifest} ..."
             podman manifest create ${manifest}
             for suffix in ${{ matrix.tag_suffixes }}

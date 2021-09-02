@@ -10,11 +10,12 @@ from pathlib import Path
 
 # Load the build_matrix.py file using importlib.
 # See https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly for reference.
+# @learnitall: mypy has a hard time understanding types in these next couple lines, add ignores as needed
 _bm_source_path = Path(__file__).parent.parent.parent.parent.joinpath("ci", "build_matrix.py").resolve()
 _bm_spec = importlib.util.spec_from_file_location("build_matrix", _bm_source_path)
 build_matrix = importlib.util.module_from_spec(_bm_spec)
 sys.modules["build_matrix"] = build_matrix
-_bm_spec.loader.exec_module(build_matrix)
+_bm_spec.loader.exec_module(build_matrix)  # type: ignore
 
 
 with open(Path(__file__).parent.joinpath("git_diff_test.txt"), encoding="utf8") as git_diff_test:

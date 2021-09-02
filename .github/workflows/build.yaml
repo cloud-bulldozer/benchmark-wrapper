@@ -93,6 +93,14 @@ jobs:
             cat << EOF
             ${{ toJSON(matrix) }}
             EOF
+      - name: Set quay organization to cloud-bulldozer
+        if: secrets.QUAY_ORG == null
+        run: |
+            echo QUAY_ORG=cloud-bulldozer >> $GITHUB_ENV
+      - name: Set quay organization to value in QUAY_ORG secret
+        if: secrets.QUAY_ORG != null
+        run: |
+            echo QUAY_ORG=${{ secrets.QUAY_ORG }} >> $GITHUB_ENV
       - name: Update apt cache
         run: sudo apt update
       - name: Install podman and qemu-user-static
@@ -110,7 +118,7 @@ jobs:
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
-          registry: quay.io/cloud-bulldozer
+          registry: quay.io/${{ env.QUAY_ORG }}
           username: ${{ secrets.QUAY_USER }}
           password: ${{ secrets.QUAY_TOKEN }}
       - name: Print image URL
@@ -143,7 +151,7 @@ jobs:
             --password ${{ secrets.QUAY_TOKEN }}
       - name: Create manifest
         run: |
-            manifest="quay.io/cloud-bulldozer/${{ matrix.image_name }}:${{ matrix.tag }}"
+            manifest="quay.io/${{ env.QUAY_ORG }}/${{ matrix.image_name }}:${{ matrix.tag }}"
             echo "Updating manifest ${manifest} ..."
             podman manifest create ${manifest}
             for suffix in ${{ matrix.tag_suffixes }}

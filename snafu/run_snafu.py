@@ -11,27 +11,30 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import datetime
+import hashlib
+import json
+import logging
+
 # This wrapper assumes the following in fiojob
 # per_job_logs=true
 #
 import os
+import ssl
 import sys
+import time
+from distutils.util import strtobool
+
 import configargparse
 import elasticsearch
-import time
-import datetime
-import logging
-import hashlib
 import urllib3
-import json
-import ssl
-from distutils.util import strtobool
+
+from snafu import benchmarks
 from snafu.utils.common_logging import setup_loggers
 from snafu.utils.get_prometheus_data import get_prometheus_data
-from snafu.utils.wrapper_factory import wrapper_factory
-from snafu.utils.request_cache_drop import drop_cache
 from snafu.utils.py_es_bulk import streaming_bulk
-from snafu import benchmarks
+from snafu.utils.request_cache_drop import drop_cache
+from snafu.utils.wrapper_factory import wrapper_factory
 
 logger = logging.getLogger("snafu")
 
@@ -173,7 +176,9 @@ def main():
     # get time delta for indexing run
     tdelta = end_t - start_t
     total_capacity_bytes = index_args.document_size_capacity_bytes
-    logger.info("Duration of execution - %s, with total size of %s bytes" % (tdelta, total_capacity_bytes))
+    logger.info(
+        "Duration of execution - {}, with total size of {} bytes".format(tdelta, total_capacity_bytes)
+    )
 
 
 def process_generator(index_args, parser):

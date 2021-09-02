@@ -1,9 +1,10 @@
-import os
 import json
 import logging
-import urllib3
-from datetime import datetime
+import os
 import time
+from datetime import datetime
+
+import urllib3
 from prometheus_api_client import PrometheusConnect
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

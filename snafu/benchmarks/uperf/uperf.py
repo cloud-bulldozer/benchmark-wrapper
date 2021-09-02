@@ -82,7 +82,7 @@ class UperfConfig:
     def new(cls, stdout: UperfStdout, config: Config):
         """Create a new instance given instances of :py:mod:`~snafu.config.Config` and UperfStdout."""
 
-        kwargs: Dict[str, Any] = dict()
+        kwargs: Dict[str, Any] = {}
         for fields in dataclasses.fields(cls):
             val = getattr(stdout, fields.name, None)
             if val is None:
@@ -206,7 +206,7 @@ class Uperf(Benchmark):
             "read_message_size": int,
             "num_threads": int,
         }
-        parsed_profile_name: Dict[str, Optional[Union[str, int]]] = dict()
+        parsed_profile_name: Dict[str, Optional[Union[str, int]]] = {}
         if len(vals) != 5:
             self.logger.warning(
                 f"Unable to parse detected profile name: {profile_name}. Expected format of "

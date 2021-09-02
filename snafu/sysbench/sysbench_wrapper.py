@@ -11,10 +11,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import os
-import uuid
-import time
 import logging
+import os
+import time
+import uuid
 
 from . import trigger_sysbench
 
@@ -31,7 +31,11 @@ class sysbench_wrapper:
             "-s", "--sample", type=int, default=1, help="number of times to run benchmark, defaults to 1"
         )
         parser.add_argument(
-            "-d", "--delay", type=int, default=0, help="add delay(seconds) in between samples, defaults to 0",
+            "-d",
+            "--delay",
+            type=int,
+            default=0,
+            help="add delay(seconds) in between samples, defaults to 0",
         )
 
         self.args = parser.parse_args()

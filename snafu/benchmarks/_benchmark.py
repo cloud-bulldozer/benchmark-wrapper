@@ -41,7 +41,7 @@ class BenchmarkResult:
     def to_jsonable(self) -> Dict[str, Any]:
         """Transform dataclass into exportable JSON doc."""
 
-        result: Dict[str, Any] = dict()
+        result: Dict[str, Any] = {}
         result.update(self.config)
         result.update(self.data)
         result.update(self.metadata)
@@ -64,7 +64,7 @@ class LabelParserAction(FuncAction):
     @staticmethod
     def func(arg: str) -> Dict[str, str]:
         """Parse given arg by splitting on ',', then on '='."""
-        labels = dict()
+        labels = {}
         for pair in arg.strip().split(","):
             pair_split = pair.split("=")
 
@@ -95,7 +95,7 @@ class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
             "--labels",
             help="Extra labels to add in results exported by benchmark. Format: key1=value1,key2=value2,...",
             dest="labels",
-            default=dict(),
+            default={},
             action=LabelParserAction,
         ),
         ConfigArgument("--cluster-name", dest="cluster_name", env_var="clustername", default=None),
@@ -118,7 +118,7 @@ class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
         Uses the metadata attribute as a list of keys to pull from the config.
         """
 
-        metadata: Dict[str, str] = dict()
+        metadata: Dict[str, str] = {}
         for key in self.metadata:
             value = getattr(self.config, key, None)
             if value is not None:

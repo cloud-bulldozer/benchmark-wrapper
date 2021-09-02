@@ -11,10 +11,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import logging
-import time
 import datetime
+import logging
 import subprocess
+import time
+
 from kubernetes import client, config
 from openshift.dynamic import DynamicClient
 
@@ -82,12 +83,12 @@ class Trigger_upgrade:
 
         # If an image location was passed
         if self.toimage:
-            cmd = ("oc adm upgrade --to-image={0} --allow-explicit-upgrade=true --force").format(self.toimage)
+            cmd = ("oc adm upgrade --to-image={} --allow-explicit-upgrade=true --force").format(self.toimage)
         # Upgrade to the latest build available in the channel if set
         elif self.latest:
             cmd = "oc adm upgrade --to-latest=true --allow-upgrade-with-warnings=true --force=true"
         elif self.version:
-            cmd = ("oc adm upgrade --to={0}").format(self.version)
+            cmd = ("oc adm upgrade --to={}").format(self.version)
         logger.info(cmd)
         p = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -175,7 +176,9 @@ class Trigger_upgrade:
             op_time = datetime.datetime.strptime(op.metadata.managedFields[field_len - 1].time, time_format)
             update_time = op_time - self.start_time
             op_time = op_time.strftime(time_format)
-            logger.info("Operator: %s finished update at %s and took %s" % (op_name, op_time, update_time))
+            logger.info(
+                "Operator: {} finished update at {} and took {}".format(op_name, op_time, update_time)
+            )
             op_data = {
                 "operator": op_name,
                 "end_time": op_time,
@@ -218,7 +221,7 @@ class Trigger_upgrade:
         if self.end_version != desired_version:
             logger.error("Cluster did not upgrade to desired version")
             logger.error(
-                "Cluster version is %s and desired version is %s" % (self.end_version, desired_version)
+                "Cluster version is {} and desired version is {}".format(self.end_version, desired_version)
             )
             exit(1)
         logger.info("Finished upgrading the cluster to version %s" % (desired_version))

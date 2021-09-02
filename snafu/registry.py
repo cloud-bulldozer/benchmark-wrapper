@@ -12,7 +12,7 @@ After snafu loads up and all the classes are created, the registry dict can be a
 from abc import ABCMeta
 from typing import Dict
 
-TOOLS: Dict[str, object] = dict()
+TOOLS: Dict[str, object] = {}
 
 
 class ToolRegistryMeta(ABCMeta):

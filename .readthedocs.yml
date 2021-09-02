@@ -21,4 +21,4 @@ build:
 python:
    version: 3.7
    install:
-     - requirements: requirements/docs/py37-requirements.txt
+     - requirements: requirements/py37-reqs/docs.txt

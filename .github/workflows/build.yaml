@@ -20,7 +20,6 @@ jobs:
     outputs:
       build_matrix: ${{ steps.set-build-matrix.outputs.matrix }}
       manifest_matrix: ${{ steps.set-manifest-matrix.outputs.matrix }}
-      quay_org: ${{ steps.set-quay-org.outputs.org }}
     env:
       changed_only: ''
     steps:
@@ -80,22 +79,12 @@ jobs:
       - name: Sanity check by parsing manifest matrix using fromJSON
         run: echo ${{ fromJSON(steps.set-manifest-matrix.outputs.matrix) }}
 
-      - name: Set quay organization
-        id: set-quay-org
-        run: |
-            export org_secret="${{ secrets.QUAY_ORG }}"
-            export org=${org_secret:-cloud-bulldozer}
-            echo "::set-output name=org::$org"
-            echo "Using organization: $org"
-
   build_push:
     needs: create_matrix
     runs-on: ubuntu-20.04
     strategy:
       matrix: ${{ fromJSON(needs.create_matrix.outputs.build_matrix) }}
       fail-fast: false
-    env:
-      quay_org: ${{ needs.create_matrix.outputs.quay_org }}
     name: Build ${{ matrix.benchmark }} on ${{ matrix.arch }}
     steps:
       - uses: actions/checkout@v2
@@ -104,6 +93,12 @@ jobs:
             cat << EOF
             ${{ toJSON(matrix) }}
             EOF
+      - name: Set quay organization
+        run: |
+            export org_secret="${{ secrets.QUAY_ORG }}"
+            export org=${org_secret:-cloud-bulldozer}
+            echo "Using organization: $org"
+            echo "quay_org=$org" >> $GITHUB_ENV
       - name: Update apt cache
         run: sudo apt update
       - name: Install podman and qemu-user-static
@@ -136,8 +131,6 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.create_matrix.outputs.manifest_matrix) }}
       fail-fast: false
-    env:
-      quay_org: ${{ needs.create_matrix.outputs.quay_org }}
     name: Push Manifest ${{ matrix.image_name }}:${{ matrix.tag }}
     steps:
       - uses: actions/checkout@v2
@@ -146,6 +139,12 @@ jobs:
             cat << EOF
             ${{ toJSON(matrix) }}
             EOF
+      - name: Set quay organization
+        run: |
+            export org_secret="${{ secrets.QUAY_ORG }}"
+            export org=${org_secret:-cloud-bulldozer}
+            echo "Using organization: $org"
+            echo "quay_org=$org" >> $GITHUB_ENV
       - name: Update apt cache
         run: sudo apt update
       - name: Install podman and qemu-user-static

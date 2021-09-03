@@ -9,110 +9,84 @@ import pytest
 
 import snafu.process
 
+LOGGER = logging.getLogger("pytest-snafu-process")
 
-class TestLiveProcess:
-    """Test the LiveProcess context manager."""
 
-    @staticmethod
-    def test_check_pipes_method_only_modifies_if_no_user_given_values():
-        """Test that LiveProcess._check_pipes only modifies pipes in kwargs if user didn't specify pipes."""
+def test_get_process_sample_runs_a_command_and_gives_output():
+    """Test that get_process_sample can run a process and give us the expected process information."""
 
-        for key in ("stdout", "stderr", "capture_output"):
-            kwargs = {key: True}
-            proc = snafu.process.LiveProcess("", **kwargs)
-            assert proc.kwargs == {key: True}
+    tests = (
+        (
+            {"cmd": shlex.split("echo test")},
+            {"stdout": "test\n", "stderr": "", "rc": 0, "time_seconds": [0, 0.2]},
+        ),
+        (
+            {"cmd": "echo 'test'; sleep 0.5; echo 'test2'", "shell": True},
+            {"stdout": "test\ntest2\n", "stderr": "", "rc": 0, "time_seconds": [0.5, 1]},
+        ),
+        (
+            {"cmd": "echo 'test' >&2 | grep 'not here'", "shell": True},
+            {"stdout": "", "stderr": "test\n", "rc": 1, "time_seconds": [0, 0.2]},
+        ),
+        (
+            {"cmd": "echo 'test' >&2", "shell": True, "stderr": subprocess.STDOUT},
+            {"stdout": None, "stderr": None, "rc": 0, "time_seconds": [0, 0.2]},
+        ),
+        (
+            {
+                "cmd": "echo 'test' >&2",
+                "shell": True,
+                "stdout": subprocess.PIPE,
+                "stderr": subprocess.STDOUT,
+            },
+            {"stdout": "test\n", "stderr": None, "rc": 0, "time_seconds": [0, 0.2]},
+        ),
+    )
 
-        kwargs = {}
-        proc = snafu.process.LiveProcess("")
-        assert proc.kwargs.get("stdout", None) is not None and proc.kwargs.get("stderr", None) is not None
+    for kwargs, results in tests:
+        sample = snafu.process.get_process_sample(logger=LOGGER, **kwargs)
 
-    @staticmethod
-    def test_live_process_calls_start_on_enter_and_cleanup_on_exit(monkeypatch):
-        """Test that when we enter the LiveProcess CM we call start, and on exit we call cleanup."""
+        attempt = sample.successful if sample.success else sample.failed[0]
+        for key, val in results.items():
+            if key == "time_seconds":
+                assert val[0] < attempt.time_seconds < val[1]
+            else:
+                assert getattr(attempt, key) == val
 
-        def monkey_start(self):
-            self.monkey_start = True
 
-        def monkey_cleanup(self):
-            self.monkey_cleanup = True
+def test_get_process_sample_kills_and_does_cleanup_after_timeout():
+    """Test that get_process_sample will only kill a process after a timeout."""
 
-        monkeypatch.setattr("snafu.process.LiveProcess.start", monkey_start)
-        monkeypatch.setattr("snafu.process.LiveProcess.cleanup", monkey_cleanup)
+    sample = snafu.process.get_process_sample(shlex.split("sleep 0.5"), LOGGER, timeout=1)
+    assert sample.success
 
-        with snafu.process.LiveProcess("") as proc:
-            assert proc.monkey_start is True
-        assert proc.monkey_cleanup is True
+    assert 0 < sample.successful.time_seconds < 1
+    assert sample.successful.hit_timeout is False
 
-    @staticmethod
-    def test_live_process_runs_a_command_and_gives_output():
-        """Test that LiveProcess can run a process and give us the expected process information."""
+    sample = snafu.process.get_process_sample(shlex.split("sleep 2"), LOGGER, timeout=0.5)
+    assert not sample.success
+    assert 0 < sample.failed[0].time_seconds < 1
+    assert sample.failed[0].hit_timeout is True
 
-        tests = (
-            (
-                {"cmd": shlex.split("echo test")},
-                {"stdout": "test\n", "stderr": "", "rc": 0, "time_seconds": [0, 0.2]},
-            ),
-            (
-                {"cmd": "echo 'test'; sleep 0.5; echo 'test2'", "shell": True},
-                {"stdout": "test\ntest2\n", "stderr": "", "rc": 0, "time_seconds": [0.5, 1]},
-            ),
-            (
-                {"cmd": "echo 'test' >&2 | grep 'not here'", "shell": True},
-                {"stdout": "", "stderr": "test\n", "rc": 1, "time_seconds": [0, 0.2]},
-            ),
-            (
-                {"cmd": "echo 'test' >&2", "shell": True, "stderr": subprocess.STDOUT},
-                {"stdout": "", "stderr": "", "rc": 0, "time_seconds": [0, 0.2]},
-            ),
-            (
-                {
-                    "cmd": "echo 'test' >&2",
-                    "shell": True,
-                    "stdout": subprocess.PIPE,
-                    "stderr": subprocess.STDOUT,
-                },
-                {"stdout": "test\n", "stderr": "", "rc": 0, "time_seconds": [0, 0.2]},
-            ),
+
+def test_get_sample_process_captures_output_by_default():
+    """Test that get_sample_process will enable stdout and stderr capture by default."""
+
+    cmd = 'echo "hey there!"'
+    result: snafu.process.ProcessSample = snafu.process.get_process_sample(cmd, LOGGER, shell=True, retries=0)
+    assert result.successful.stdout == "hey there!\n"
+
+    no_capture_args = {
+        "capture_output": False,
+        "stdout": None,
+        "stderr": None,
+    }
+    for arg, val in no_capture_args.items():
+        print(arg, val)
+        result: snafu.process.ProcessSample = snafu.process.get_process_sample(
+            cmd, LOGGER, shell=True, retries=0, **{arg: val}
         )
-
-        for kwargs, results in tests:
-            with snafu.process.LiveProcess(**kwargs) as proc:
-                pass
-
-            attempt = proc.attempt
-            for key, val in results.items():
-                if key == "time_seconds":
-                    assert val[0] < attempt.time_seconds < val[1]
-                else:
-                    assert getattr(attempt, key) == val
-
-    @staticmethod
-    def test_live_process_kills_and_does_cleanup_after_timeout():
-        """Test that LiveProcess will only kill a process after a timeout."""
-
-        with snafu.process.LiveProcess(shlex.split("sleep 0.5"), timeout=1) as proc:
-            pass
-        assert 0 < proc.attempt.time_seconds < 1
-        assert proc.attempt.hit_timeout is False
-
-        with snafu.process.LiveProcess(shlex.split("sleep 2"), timeout=0.5) as proc:
-            pass
-        assert 0 < proc.attempt.time_seconds < 1
-        assert proc.attempt.hit_timeout is True
-
-
-def test_get_process_sample_will_use_live_process(monkeypatch):
-    """Assert that get_process_sample will use LiveProcess in the background."""
-
-    class MyError(Exception):  # pylint: disable=C0115
-        pass
-
-    def live_process_monkey(*args, **kwargs):
-        raise MyError
-
-    monkeypatch.setattr("snafu.process.LiveProcess", live_process_monkey)
-    with pytest.raises(MyError):
-        snafu.process.get_process_sample("TEST_USES_LIVE_PROCESS", logging.getLogger())
+        assert result.successful.stdout is None
 
 
 def test_get_process_sample_will_rerun_failed_process(tmpdir):
@@ -128,7 +102,7 @@ def test_get_process_sample_will_rerun_failed_process(tmpdir):
     cmd = f'echo -n "a" >> {test_file_path} ; grep "aaa" {test_file_path}'
 
     result: snafu.process.ProcessSample = snafu.process.get_process_sample(
-        cmd, logging.getLogger(), shell=True, retries=2, expected_rc=0
+        cmd, LOGGER, shell=True, retries=2, expected_rc=0
     )
 
     assert result.success is True
@@ -144,7 +118,7 @@ def test_get_process_sample_sets_failed_if_no_tries_succeed():
     """Test that get_process_sample will set the "success" attribute to False if no tries are successful."""
 
     result: snafu.process.ProcessSample = snafu.process.get_process_sample(
-        shlex.split("test 1 == 0"), logging.getLogger(), retries=0, expected_rc=0
+        shlex.split("test 1 == 0"), LOGGER, retries=0, expected_rc=0
     )
     assert result.success is False
 
@@ -176,7 +150,7 @@ def test_sample_process_yields_appropriate_number_of_samples(tmpdir):
     cmd = f'echo -n "a" >> {test_file_path} ; grep "aaa" {test_file_path}'
 
     samples = snafu.process.sample_process(
-        cmd, logging.getLogger(), shell=True, retries=0, expected_rc=0, num_samples=3, timeout=10
+        cmd, LOGGER, shell=True, retries=0, expected_rc=0, num_samples=3, timeout=10
     )
     for i, sample in enumerate(samples):
         if i == 2:

@@ -5,39 +5,54 @@ Holds function for automagically importing all benchmark modules in ``snafu.benc
 
 Assumes that each module under ``snafu.benchmarks`` contains a class that subclasses ``Benchmark``.
 """
-import sys
+import importlib
+import logging
 import os
 import pkgutil
-import importlib
+import sys
 import traceback
-import logging
 from dataclasses import dataclass
-from typing import Dict, Tuple, Type, List, Union
 from types import TracebackType
+from typing import Dict, List, Tuple, Type, Union
 
-
-_EXC_INFO_TYPE = Union[Tuple[Type[BaseException], BaseException, TracebackType], Tuple[None, None, None]]
+_ExcInfoType = Union[Tuple[Type[BaseException], BaseException, TracebackType], Tuple[None, None, None]]
 
 
 @dataclass
 class DetectedBenchmarks:
+    """Dataclass representation of benchmark modules that were detected and attempted to be imported."""
+
     imported: List[str]
     failed: List[str]
-    errors: Dict[str, _EXC_INFO_TYPE]
+    errors: Dict[str, _ExcInfoType]
 
     def log(self, logger: logging.Logger, level: int = logging.DEBUG, show_tb: bool = False) -> None:
+        """
+        Log benchmark modules that were successfully imported and that failed to import
+
+        Parameters
+        ----------
+        logger : python logger
+            Logger to send log messages to
+        level : int, optional
+            Log level of generated log messages. Defaults to debug.
+        show_tb : bool, optional
+            If ``True``, will include captured tracebacks in the logs. Defaults to ``False``
+        """
+
         logger.log(
             level,
             f"Successfully imported {len(self.imported)} benchmark modules: {', '.join(self.imported)}",
         )
         logger.log(
-            level, f"Failed to import {len(self.failed)} benchmark modules: {', '.join(self.failed)}",
+            level,
+            f"Failed to import {len(self.failed)} benchmark modules: {', '.join(self.failed)}",
         )
         if show_tb and len(self.errors) > 0:
-            logger.log(level, f"Got the following errors:")
+            logger.log(level, "Got the following errors:")
             for benchmark, exc_info in self.errors.items():
-                tb = "".join(traceback.format_exception(*exc_info))
-                logger.log(level, f"Benchmark module {benchmark} failed to import:\n{tb}")
+                tb_str = "".join(traceback.format_exception(*exc_info))
+                logger.log(level, f"Benchmark module {benchmark} failed to import:\n{tb_str}")
 
 
 def load_benchmarks() -> DetectedBenchmarks:
@@ -64,7 +79,6 @@ def load_benchmarks() -> DetectedBenchmarks:
                 imported.append(module)
             except ImportError:
                 failed.append(module)
-                exc_type, exc_value, exc_traceback = sys.exc_info()
                 errors.append(sys.exc_info())
 
     return DetectedBenchmarks(imported=imported, failed=failed, errors=dict(zip(failed, errors)))

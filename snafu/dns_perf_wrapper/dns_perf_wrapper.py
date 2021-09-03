@@ -12,14 +12,15 @@
 #   limitations under the License.
 
 
-import os
 import argparse
+import os
+
 from .trigger_dns_perf import Trigger_dns_perf
 
 
 class dns_perf_wrapper:
     def __init__(self, parent_parser):
-        """ Initialize supported arguments """
+        """Initialize supported arguments"""
 
         parser_object = argparse.ArgumentParser(
             description="DNS perf workload Wrapper script",

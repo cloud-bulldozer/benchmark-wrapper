@@ -11,8 +11,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import os
 import argparse
+import os
 
 from .trigger_oslat import Trigger_oslat
 

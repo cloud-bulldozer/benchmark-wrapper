@@ -1,12 +1,12 @@
 ---
 repos:
   - repo: git://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.1.1
+    rev: v1.1.10
     hooks:
       - id: remove-tabs
 
   - repo: git://github.com/pre-commit/pre-commit-hooks
-    rev: v2.0.0
+    rev: v4.0.1
     hooks:
       - id: trailing-whitespace
       - id: check-merge-conflict
@@ -16,15 +16,57 @@ repos:
       - id: check-ast
 
   - repo: https://github.com/psf/black
-    rev: 19.10b0
+    rev: 21.8b0
     hooks:
       - id: black
         args: ['--line-length', '110']
 
-  - repo: https://gitlab.com/PyCQA/flake8
-    rev: '3.7.8'
+  - repo: https://github.com/pycqa/isort
+    rev: 5.9.3
+    hooks:
+      - id: isort
+        args:
+        - --profile=black
+        - --color
+        - --line-length=110
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: '3.9.2'
     hooks:
       - id: flake8
-        additional_dependencies: ['pep8-naming']
-        # Ignore all format-related checks as Black takes care of those.
-        args: ['--ignore', 'E123,E125,E731,E722,W503,W605', '--select', 'E,W,F', '--max-line-length=110']
+        additional_dependencies: ['pep8-naming', 'flake8-docstrings']
+
+  - repo: https://github.com/PyCQA/pylint
+    rev: v2.10.2
+    hooks:
+      - id: pylint
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.910
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-PyYAML
+          - types-python-dateutil
+          - types-redis
+          - types-requests
+          - types-setuptools
+        args:
+        - --ignore-missing-imports
+        - --no-strict-optional
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.25.0
+    hooks:
+      - id: pyupgrade
+
+ci:
+    autofix_commit_msg: |
+        [pre-commit.ci] auto fixes from pre-commit.com hooks
+
+        for more information, see https://pre-commit.ci
+    autofix_prs: false
+    autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+    autoupdate_schedule: weekly
+    skip: []
+    submodules: false

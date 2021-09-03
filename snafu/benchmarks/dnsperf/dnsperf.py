@@ -145,6 +145,7 @@ class Dnsperf(Benchmark):
 
     def setup(self) -> bool:
         """Setup dnsperf benchmark."""
+
         self.logger.info("Setting up dnsperf benchmark.")
         self.config.parse_args()
         if not self.config.load_sequence:

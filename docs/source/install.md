@@ -37,3 +37,5 @@ The build context for these Dockerfiles is the project root, so be sure to take 
 $ cd benchmark-wrapper
 $ podman build . -t my-uperf-container -f snafu/benchmarks/uperf/Dockerfile
 ```
+
+These images are automatically built on merges to our main branch and published to quay over at [quay.io/cloud-bulldozer](https://quay.io/organization/cloud-bulldozer).

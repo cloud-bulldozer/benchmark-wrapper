@@ -14,6 +14,8 @@ on:
         description: 'Run all builds regardless of changes?'
         default: 'false'
         required: false
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   create_matrix:
@@ -24,6 +26,12 @@ jobs:
       manifest_matrix: ${{ steps.set-manifest-matrix.outputs.matrix }}
     env:
       changed_only: ''
+      version_tag: ''
+    if: >-
+        (
+            github.event_name != 'pull_request' ||
+            (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ok to test'))
+        )
     steps:
       - uses: actions/checkout@v2
       - name: Setup Python 3.8
@@ -49,11 +57,15 @@ jobs:
                 (github.event_name == 'workflow_run' && toJSON(github.event.workflow_run.inputs.run_all) == false)
             )
         run: echo changed_only='--changed-only' >> $GITHUB_ENV
+      - name: Set version tag to latest
+        if: github.event_name == 'push' && endsWith(github.ref, 'master')
+        run: >-
+            echo version_tag='latest' >> $GITHUB_ENV
 
       - name: Build job matrices
         run: >-
             echo matrix=`python ci/build_matrix.py --upstream ${{ env.UPSTREAM_BRANCH }}
-            --manifest ${{ env.changed_only }} latest ${{ github.sha }}` >> $GITHUB_ENV
+            --manifest ${{ env.changed_only }} ${{ env.version_tag }} ${{ github.sha }}` >> $GITHUB_ENV
 
       - name: Set build matrix
         id: set-build-matrix

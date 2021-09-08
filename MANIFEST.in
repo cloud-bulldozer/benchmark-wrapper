@@ -1,1 +1,4 @@
 include version.txt
+include requirements/install/*.txt
+include requirements/docs/*.txt
+include requirements/tests/*.txt

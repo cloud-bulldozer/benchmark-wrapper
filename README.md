@@ -33,6 +33,14 @@ git clone https://github.com/cloud-bulldozer/benchmark-wrapper.git
 sudo pip3 install /path-to-benchmark-wrapper/benchmark-wrapper
 ```
 
+If you are using a specific version of python and would like stable, reproducable builds, use the included `install.txt` files under the `requirements` directory. These are [pip requirements files](https://pip.pypa.io/en/stable/cli/pip_install/#requirements-file-format), generated using [pip-compile](https://pypi.org/project/pip-tools/), that specify version-locked dependencies for benchmark-wrapper that are tested and known to work for the given version of Python. For instance, to install on Python 3.6:
+
+```
+git clone https://github.com/cloud-bulldozer/benchmark-wrapper.git
+sudo pip3 install -r benchmark-wrapper/requirements/py36-reqs/install.txt
+sudo pip3 install ./benchmark-wrapper
+```
+
 ## - Configure ##
 Benchmark-wrapper uses several environment variable to provide user context and interfaces to ES.
 

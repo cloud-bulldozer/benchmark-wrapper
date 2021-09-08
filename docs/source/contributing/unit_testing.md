@@ -22,7 +22,7 @@ There are eight distinct environments that Tox is configured for (through the ``
 
 ``tox -e py{36,37,38,39}-{unit,docs}``
 
-For instance, using ``py36-unit`` will run unit tests for Python 3.6, while ``py38-docs`` will run a documentation build test for Python 3.8.
+For instance, using ``py36-unit`` will run unit tests for Python 3.6, while ``py38-docs`` will run a documentation build test for Python 3.8. To ensure reproducability across test runs, dependencies are installed using the included pip requirements files named ``tests.txt`` for each Python version. These requirements files are built on top of the ``install.txt``requirements files and include extra packages needed for testing.
 
 
 ## Writing Unit Tests

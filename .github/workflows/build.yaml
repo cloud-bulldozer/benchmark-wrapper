@@ -9,9 +9,11 @@ on:
       diff_branch:
         description: 'Upstream branch for determining changes'
         default: 'master'
+        required: false
       run_all:
         description: 'Run all builds regardless of changes?'
         default: 'false'
+        required: false
 
 jobs:
   create_matrix:

@@ -14,7 +14,11 @@ Note that:
 * The build matrix Python script will dynamically discover all available Dockerfiles within the benchmark-wrapper repository and then only select those that need to be built based on what has changed.
 *  Right now we support `x86_64` are currently working on `arm64` images.
 
-That was a lot of words... here is an example.
+Here's a diagram summarizing all those words:
+
+![Docker Image Build Workflow](./gha-build-workflow.svg)
+
+And now let's work through an example, just to drive it all home.
 
 Let's say that I push two changes to the main branch, one within the uperf wrapper under `snafu/benchmarks/uperf` and one within the fio wrapper under `snafu/fio_wrapper`. Our GHA Workflow will start by kicking off a job to execute the build matrix Python script. The script will discover that the fio and uperf benchmarks have changed and that their Docker images need to be rebuilt. Four jobs will then be kicked off to do the following in parallel with [fail-fast](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idstrategyfail-fast) disabled:
 

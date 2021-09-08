@@ -49,6 +49,18 @@ class _trigger_smallfile:
         self.redis_timeout_th = int(redis_timeout_th)
         self.clients = int(clients)
         self.host = socket.gethostname()
+        self.logger.info(
+            "working dir. %s, sample %d, uuid %s, redis_host %s, redis_timeout %d, redis_timeout_th %d %%, clients %d"
+            % (
+                self.working_dir,
+                self.sample,
+                self.uuid,
+                self.redis_host,
+                self.redis_timeout,
+                self.redis_timeout_th,
+                self.clients,
+            )
+        )
 
     def ensure_dir_exists(self, directory):
         if not os.path.exists(directory):

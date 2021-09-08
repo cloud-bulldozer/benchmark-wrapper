@@ -50,7 +50,10 @@ class _trigger_smallfile:
         self.clients = int(clients)
         self.host = socket.gethostname()
         self.logger.info(
-            "working dir. %s, sample %d, uuid %s, redis_host %s, redis_timeout %d, redis_timeout_th %d %%, clients %d"
+            (
+                "working dir. %s, sample %d, uuid %s, redis_host %s, "
+                + "redis_timeout %d, redis_timeout_th %d %%, clients %d"
+            )
             % (
                 self.working_dir,
                 self.sample,

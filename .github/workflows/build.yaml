@@ -15,7 +15,7 @@ on:
         default: 'false'
         required: false
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, labeled, reopened]
 
 jobs:
   create_matrix:
@@ -29,8 +29,12 @@ jobs:
       version_tag: ''
     if: >-
         (
-            github.event_name != 'pull_request' ||
-            (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ok to test'))
+          github.event_name != 'pull_request' || (
+            github.event_name == 'pull_request' && (
+                contains(github.event.pull_request.labels.*.name, 'ok to test') ||
+                github.event.label.name == 'ok to test'
+            )
+          )
         )
     steps:
       - uses: actions/checkout@v2

@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import time
+
 from snafu.vfs_stat import get_vfs_stat_dict
 
 regex = r"counters.([0-9]{2}).[0-9,\.,\-,a-z,A-Z]*.json"

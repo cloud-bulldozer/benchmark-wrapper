@@ -143,6 +143,7 @@ jobs:
           tags: ${{ matrix.tags }}
           dockerfiles: ${{ matrix.dockerfile }}
       - name: Push ${{ matrix.dockerfile }}
+        id: push-image
         if: >-
           (github.event_name == 'push' && endsWith(github.ref, 'master')) ||
           (github.event_name == 'workflow_dispatch' && github.event.inputs.push == 'true')

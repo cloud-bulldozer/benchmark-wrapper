@@ -199,10 +199,10 @@ jobs:
             podman manifest create ${manifest}
             for suffix in ${{ matrix.tag_suffixes }}
             do
-                if podman image exists ${manifest}${suffix}
+                echo "Adding ${manifest}${suffix} to the manifest ..."
+                if podman manifest add ${manifest} ${manifest}${suffix}
                 then
-                    echo "Adding ${manifest}${suffix} to the manifest ..."
-                    podman manifest add ${manifest} ${manifest}${suffix}
+                    echo "Image successfully added to the manifest"
                 else
                     echo "Image ${manifest}${suffix} couldn't be found, not adding to manifest"
                     echo "Did the build succeed?"

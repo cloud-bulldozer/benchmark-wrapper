@@ -57,8 +57,9 @@ jobs:
       - name: Enable changed-only parameter for matrix build
         if: >-
             (
-                github.event_name != 'workflow_run' ||
-                (github.event_name == 'workflow_run' && toJSON(github.event.workflow_run.inputs.run_all) == false)
+              (github.event_name == 'pull_request') ||
+              (github.event_name == 'push' && !(endsWith(github.ref, 'master'))) ||
+              (github.event_name == 'workflow_dispatch' && github.event.inputs.run_all == 'false')
             )
         run: echo changed_only='--changed-only' >> $GITHUB_ENV
       - name: Set version tag to latest

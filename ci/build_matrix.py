@@ -72,11 +72,13 @@ BONES = (
     r"ci/",
     r".github/workflows",
     r"MANIFEST.in",
-    r"setup*",
-    r"snafu/benchmarks/_*.py",
-    r"snafu/*.py",
+    r"setup.py",
+    r"setup.cfg",
+    r"snafu/benchmarks/_[a-z]*.py",
+    r"snafu/[a-z]*.py",
     r"tox.ini",
     r"version.txt",
+    r"requirements/",
 )
 IGNORES = (r"Dockerfile\.ppc64le$",)
 

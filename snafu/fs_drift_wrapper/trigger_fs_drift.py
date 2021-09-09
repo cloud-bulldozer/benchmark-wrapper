@@ -3,8 +3,9 @@ import os
 import re
 import subprocess
 import time
+from snafu.vfs_stat import get_vfs_stat_dict
 
-regex = r"counters.([0-9]{2}).[0-9,\.,\-,a-z,A-Z]*.json"  # noqa
+regex = r"counters.([0-9]{2}).[0-9,\.,\-,a-z,A-Z]*.json"
 counters_regex_prog = re.compile(regex)
 
 
@@ -68,6 +69,7 @@ class _trigger_fs_drift:
             self.logger.exception(e)
             raise FsDriftWrapperException("fs-drift.py non-zero process return code %d" % e.returncode)
         self.logger.info("completed sample {} , results in {}".format(self.sample, json_output_file))
+        fsdict = get_vfs_stat_dict(self.working_dir)
         with open(json_output_file) as f:
             data = json.load(f)
             params = data["parameters"]
@@ -75,6 +77,7 @@ class _trigger_fs_drift:
             threads = data["results"]["in-thread"]
             for tid in threads.keys():
                 thrd = threads[tid]
+                thrd["fsdict"] = fsdict
                 thrd["date"] = timestamp
                 thrd["thr-id"] = tid
                 thrd["sample"] = self.sample

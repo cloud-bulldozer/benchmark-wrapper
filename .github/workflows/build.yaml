@@ -208,6 +208,16 @@ jobs:
                     echo "Did the build succeed?"
                 fi
             done
-            echo "Pushing manifest to quay ..."
-            podman manifest push ${manifest} ${manifest}
+
+            manifest_json=`podman manifest inspect ${manifest}`
+            echo "Manifest details: "
+            echo $manifest_json
+
+            if echo $manifest_json | jq .manifests -e
+            then
+                echo "Pushing manifest to quay ..."
+                podman manifest push ${manifest} ${manifest}
+            else
+                echo "Got an empty manifest, not pushing to quay."
+            fi
             echo "Done!"

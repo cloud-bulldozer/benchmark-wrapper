@@ -10,6 +10,13 @@ import os
 
 from . import trigger_fs_drift
 
+# this could become common class in snafu/utils later
+
+
+class SnafuStorageException(Exception):
+    pass
+
+
 logger = logging.getLogger("snafu")
 
 
@@ -30,7 +37,7 @@ class fs_drift_wrapper:
         self.args = parser.parse_args()
 
         if not self.args.top:
-            raise SnafuSmfException("must supply directory where you access files")
+            raise SnafuStorageException("must supply directory where you access files")
         self.cluster_name = os.environ["clustername"] if "clustername" in os.environ else ""
         self.uuid = os.environ["uuid"] if "uuid" in os.environ else ""
         self.user = os.environ["test_user"] if "test_user" in os.environ else ""

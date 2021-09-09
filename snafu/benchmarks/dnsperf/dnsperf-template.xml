@@ -14,6 +14,4 @@ Version {{ dnsperf_version }}
 
   Run time (s):         {{ rtt_sum | to_float }}
   Queries per second:   {{ throughput_mean | to_float }}
-  Average Latency (s):  {{ rtt_mean | to_float }} (min {{ rtt_min | to_float }}, max {{ rtt_max | to_float }})
-  Latency StdDev (s):   {{ rtt_sd | to_float }}
 </group>

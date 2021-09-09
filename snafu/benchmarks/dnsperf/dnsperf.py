@@ -8,10 +8,9 @@ from typing import Iterable, Optional, Tuple, Union
 
 import dateutil.parser
 import dateutil.tz
-import numpy as np
+import pandas as pd
 import toolz
 from pydantic import BaseModel
-from scipy import stats as scistats
 from ttp import ttp
 
 from snafu.benchmarks import Benchmark, BenchmarkResult
@@ -32,20 +31,14 @@ class DnsRttSample(BaseModel):
     response_state: str
 
 
-class DnsperfSample(BaseModel):
+class DnsperfSummary(BaseModel):
     """The summary statistics from a dnsperf execution."""
 
     throughput_mean: float
     queries_sent: int
     queries_completed: int
     runtime_length: float
-    rtt_max: float
-    rtt_mean: float
-    rtt_min: float
-    rtt_sd: float
     rtt_sum: float
-    rtt_median: Optional[float] = None
-    rtt_mad: Optional[float] = None
     load_mean: Optional[float] = None
 
     class Config:
@@ -54,13 +47,9 @@ class DnsperfSample(BaseModel):
         validate_assignment = True
         allow_mutation = True
 
-    def summarize(self, rtt_samples: Tuple[DnsRttSample, ...]):
+    def summarize(self):
         """Calculate remaining statistics from benchmark data."""
         self.load_mean = self.queries_sent / self.runtime_length
-        rtts = np.array(tuple(i.rtt_s for i in rtt_samples), dtype=np.float64)
-        self.rtt_median = np.median(rtts)
-        # the round trip times are measured to the 6th decimal place
-        self.rtt_mad = round(scistats.median_abs_deviation(rtts), 6)
 
 
 class DnsperfMetadata(BaseModel):
@@ -195,29 +184,38 @@ class Dnsperf(Benchmark):
             if isinstance(load_limit, int):
                 cmd = [*cmd, "-Q", str(load_limit)]
 
-            sample: ProcessSample = get_process_sample(cmd, self.logger)
+            process_sample: ProcessSample = get_process_sample(cmd, self.logger)
 
-            if not sample.success:
-                self.logger.critical(f"dnsperf failed to complete! Got results: {sample}\n")
+            if not process_sample.success:
+                self.logger.critical(f"dnsperf failed to complete! Got results: {process_sample}\n")
                 return
-            if sample.successful.stdout is None:
+            if process_sample.successful.stdout is None:
                 self.logger.critical(
-                    "dnsperf ran successfully, but did not get output on stdout.\n" f"Got results: {sample}\n"
+                    "dnsperf ran successfully, but did not get output on stdout.\n"
+                    f"Got results: {process_sample}\n"
                 )
                 return
 
             metadata: DnsperfMetadata
             rtt_samples: Tuple[DnsRttSample, ...]
-            data: DnsperfSample
-            metadata, data, rtt_samples = self.parse_process_output(sample.successful.stdout, load_limit)
-            data.summarize(rtt_samples)
-            yield self.create_new_result(data=dict(data), config=dict(metadata), tag="results")
+            summary: DnsperfSummary
+            metadata, summary, rtt_samples = self.parse_process_output(
+                process_sample.successful.stdout, load_limit
+            )
+            summary.summarize()
+            dataframe = (
+                pd.DataFrame.from_dict([dict(sample) for sample in rtt_samples]).groupby("fqdn").sample(n=1)
+            )
+            for sample in dataframe.to_dict("records"):
+                yield self.create_new_result(
+                    data=dict(summary, **sample), config=dict(metadata), tag="results"
+                )
 
         self.logger.info("ran succesfully!\n")
 
     def parse_process_output(
         self, stdout: str, load_limit: Number
-    ) -> Tuple[DnsperfMetadata, DnsperfSample, Tuple[DnsRttSample, ...]]:
+    ) -> Tuple[DnsperfMetadata, DnsperfSummary, Tuple[DnsRttSample, ...]]:
         """Parse string output from the dnsperf benchmark."""
 
         output_parser = ttp(data=stdout, template=self.output_template)
@@ -229,5 +227,5 @@ class Dnsperf(Benchmark):
             end_time=datetime.datetime.now().astimezone(),
             load_limit=str(load_limit),
         )
-        data: DnsperfSample = DnsperfSample(**result["stats"], **result["config"])
-        return (metadata, data, tuple(DnsRttSample(**item) for item in result["data"]))
+        data: DnsperfSummary = DnsperfSummary(**result["stats"], **result["config"])
+        return metadata, data, tuple(DnsRttSample(**item) for item in result["data"])

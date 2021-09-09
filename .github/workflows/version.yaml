@@ -1,0 +1,84 @@
+name: Update Requirement Files
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'setup.cfg'
+  schedule:
+    - cron: '0 0 * * 1'
+jobs:
+  update_requirements:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pyver: [6, 7, 8, 9]
+    name: Update Req Files -- Python 3.${{ matrix.pyver }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.${{ matrix.pyver }}
+      - name: Install tox
+        run: pip install tox
+      - name: Run version update
+        run: tox -e py3${{ matrix.pyver }}-reqs
+      - name: Save git diff
+        run: |
+          git diff --output diff.patch
+          if [ `wc -l diff.patch | cut -d ' ' -f 1` -eq 0 ]
+          then
+              echo PATCH_LINES="false" >> $GITHUB_ENV
+          else
+              echo PATCH_LINES="true" >> $GITHUB_ENV
+          fi
+          mv diff.patch diff.py3${{ matrix.pyver }}.patch
+      - name: Upload artifact
+        if: fromJSON(env.PATCH_LINES)
+        uses: actions/upload-artifact@v2
+        with:
+          name: diff-py3${{ matrix.pyver }}
+          path: diff.py3${{ matrix.pyver}}.patch
+  detect_changes:
+    runs-on: ubuntu-latest
+    name: Submit PR on changes
+    needs: update_requirements
+    env:
+      PATCH_DIR: patch_files_${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download diff files
+        uses: actions/download-artifact@v2
+        with:
+          path: ${{ env.PATCH_DIR }}
+      - name: Check if diff files exist
+        run: |
+          if [ -d "${{ env.PATCH_DIR }}" ]
+          then
+              echo APPLY_DIFF="true" >> $GITHUB_ENV
+          else
+              echo APPLY_DIFF="false" >> $GITHUB_ENV
+          fi
+      - name: Apply patch files
+        if: fromJSON(env.APPLY_DIFF)
+        run: |
+            find ${{ env.PATCH_DIR }}/ -name "*.patch" -exec mv {} ./${{ env.PATCH_DIR  }} \;
+            git apply ${{ env.PATCH_DIR }}/*.patch
+            rm -fr ${{ env.PATCH_DIR }}
+      - name: Open PR
+        uses: peter-evans/create-pull-request@v3
+        id: pr
+        with:
+          commit-message: "chore: Update Requirements Files"
+          branch: ci/update-reqs-files
+          delete-branch: true
+          title: "(CI chore): Update Requirements Files"
+          draft: false
+          body: |
+            Update requirement files with new package versions.
+
+            Triggered by workflow run [${{ github.run_id }}@${{ github.repository }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+      - name: Check outputs
+        run: |
+          echo "Pull Request Number - ${{ steps.pr.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.pr.outputs.pull-request-url }}"

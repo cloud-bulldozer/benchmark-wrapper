@@ -59,7 +59,7 @@ jobs:
             (
                 github.event_name == 'pull_request' ||
                 (github.event_name == 'push' && !(endsWith(github.ref, 'master'))) ||
-                (github.event_name == 'workflow_run' && toJSON(github.event.workflow_run.inputs.run_all) == false)
+                (github.event_name == 'workflow_dispatch' && toJSON(github.event.workflow_dispatch.inputs.run_all) == false)
             )
         run: echo changed_only='--changed-only' >> $GITHUB_ENV
       - name: Set version tag to latest

@@ -1,1 +1,1 @@
-include version.txt dnsperf-template.xml
+include version.txt snafu/benchmarks/dnsperf/dnsperf-template.xml

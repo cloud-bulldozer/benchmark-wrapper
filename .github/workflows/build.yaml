@@ -162,8 +162,10 @@ jobs:
       - create_matrix
       - build_push
     if: >-
-        (github.event_name == 'push' && endsWith(github.ref, 'master')) ||
-        (github.event_name == 'workflow_dispatch' && github.event.inputs.push == 'true')
+        always() && !cancelled() && (
+          (github.event_name == 'push' && endsWith(github.ref, 'master')) ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.push == 'true')
+        )
     runs-on: ubuntu-20.04
     strategy:
       matrix: ${{ fromJSON(needs.create_matrix.outputs.manifest_matrix) }}

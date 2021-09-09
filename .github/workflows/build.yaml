@@ -6,6 +6,14 @@ on:
       - master
   workflow_dispatch:
     inputs:
+      push:
+        description: 'Push images to quay?'
+        default: 'false'
+        required: false
+      tag:
+        description: 'Tag to assign to built images'
+        default: 'manual'
+        required: false
       diff_branch:
         description: 'Upstream branch for determining changes'
         default: 'master'
@@ -26,7 +34,7 @@ jobs:
       manifest_matrix: ${{ steps.set-manifest-matrix.outputs.matrix }}
     env:
       changed_only: ''
-      version_tag: ''
+      version_tag: '${{ github.sha }}'
     if: >-
         (
           github.event_name != 'pull_request' || (
@@ -54,7 +62,7 @@ jobs:
             else
                 echo UPSTREAM_BRANCH=master >> $GITHUB_ENV
             fi
-      - name: Enable changed-only parameter for matrix build
+      - name: Enable changed-only parameter for matrix build as appropriate
         if: >-
             (
               (github.event_name == 'pull_request') ||
@@ -62,15 +70,19 @@ jobs:
               (github.event_name == 'workflow_dispatch' && github.event.inputs.run_all == 'false')
             )
         run: echo changed_only='--changed-only' >> $GITHUB_ENV
-      - name: Set version tag to latest
+      - name: Set version tag to latest if on master branch
         if: github.event_name == 'push' && endsWith(github.ref, 'master')
         run: >-
             echo version_tag='latest' >> $GITHUB_ENV
+      - name: Set version tag to given input if manually triggered
+        if: github.event_name == 'workflow_dispatch'
+        run: >-
+            echo version_tag='${{ github.event.inputs.tag }}' >> $GITHUB_ENV
 
       - name: Build job matrices
         run: >-
             echo matrix=`python ci/build_matrix.py --upstream ${{ env.UPSTREAM_BRANCH }}
-            --manifest ${{ env.changed_only }} ${{ env.version_tag }} ${{ github.sha }}` >> $GITHUB_ENV
+            --manifest ${{ env.changed_only }} ${{ env.version_tag }}` >> $GITHUB_ENV
 
       - name: Set build matrix
         id: set-build-matrix
@@ -131,6 +143,9 @@ jobs:
           tags: ${{ matrix.tags }}
           dockerfiles: ${{ matrix.dockerfile }}
       - name: Push ${{ matrix.dockerfile }}
+        if: >-
+          (github.event_name == 'push' && endsWith(github.ref, 'master')) ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.push == 'true')
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ steps.build-image.outputs.image }}
@@ -139,13 +154,16 @@ jobs:
           username: ${{ secrets.QUAY_USER }}
           password: ${{ secrets.QUAY_TOKEN }}
       - name: Print image URL
+        if: steps.push-image.outcome != 'Skipped'
         run: echo "Image pushed to ${{ steps.push-image.outputs.registry-paths }}"
 
   update_manifest:
     needs:
       - create_matrix
       - build_push
-    if: always()
+    if: >-
+        (github.event_name == 'push' && endsWith(github.ref, 'master')) ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.push == 'true')
     runs-on: ubuntu-20.04
     strategy:
       matrix: ${{ fromJSON(needs.create_matrix.outputs.manifest_matrix) }}

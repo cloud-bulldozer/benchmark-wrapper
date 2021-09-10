@@ -1,5 +1,4 @@
 name: Build Images
-
 on:
   push:
     branches:
@@ -37,7 +36,9 @@ jobs:
           )
         )
     steps:
+
       - uses: actions/checkout@v2
+
       - name: Setup Python 3.8
         uses: actions/setup-python@v2
         with:
@@ -46,6 +47,7 @@ jobs:
       - name: Echo manual trigger params
         if: github.event_name == 'workflow_dispatch'
         run: echo "${{ toJSON(github.event.inputs) }}"
+
       - name: Set upstream branch
         run: |
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]
@@ -54,18 +56,20 @@ jobs:
             else
                 echo UPSTREAM_BRANCH=master >> $GITHUB_ENV
             fi
+
       - name: Enable changed-only parameter for matrix build
+        run: echo changed_only='--changed-only' >> $GITHUB_ENV
         if: >-
             (
               (github.event_name == 'pull_request') ||
               (github.event_name == 'push' && !(endsWith(github.ref, 'master'))) ||
               (github.event_name == 'workflow_dispatch' && github.event.inputs.run_all == 'false')
             )
-        run: echo changed_only='--changed-only' >> $GITHUB_ENV
+
       - name: Set version tag to latest
-        if: github.event_name == 'push' && endsWith(github.ref, 'master')
         run: >-
             echo version_tag='latest' >> $GITHUB_ENV
+        if: github.event_name == 'push' && endsWith(github.ref, 'master')
 
       - name: Build job matrices
         run: >-
@@ -77,11 +81,13 @@ jobs:
         run: |
             export build_matrix=`echo '${{ env.matrix }}' | jq -c '.build'`
             echo "::set-output name=matrix::$build_matrix"
+
       - name: Echo build matrix variable
         run: |
             cat << EOF
             ${{ steps.set-build-matrix.outputs.matrix }}
             EOF
+
       - name: Sanity check by parsing build matrix using fromJSON
         run: echo ${{ fromJSON(steps.set-build-matrix.outputs.matrix) }}
 
@@ -90,11 +96,13 @@ jobs:
         run: |
             export manifest_matrix=`echo '${{ env.matrix }}' | jq -c '.manifest'`
             echo "::set-output name=matrix::$manifest_matrix"
+
       - name: Echo manifest matrix variable
         run: |
             cat << EOF
             ${{ steps.set-manifest-matrix.outputs.matrix }}
             EOF
+
       - name: Sanity check by parsing manifest matrix using fromJSON
         run: echo ${{ fromJSON(steps.set-manifest-matrix.outputs.matrix) }}
 
@@ -106,22 +114,28 @@ jobs:
       fail-fast: false
     name: Build ${{ matrix.benchmark }} on ${{ matrix.arch }}
     steps:
+
       - uses: actions/checkout@v2
+
       - name: Echo Matrix Permutation
         run: |
             cat << EOF
             ${{ toJSON(matrix) }}
             EOF
+
       - name: Set quay organization
         run: |
             export org_secret="${{ secrets.QUAY_ORG }}"
             export org=${org_secret:-cloud-bulldozer}
             echo "Using organization: $org"
             echo "quay_org=$org" >> $GITHUB_ENV
+
       - name: Update apt cache
         run: sudo apt update
+
       - name: Install podman and qemu-user-static
         run: sudo apt install -y podman qemu-user-static
+
       - name: Build ${{ matrix.containerfile }}
         id: build-image
         uses: redhat-actions/buildah-build@v2
@@ -130,6 +144,7 @@ jobs:
           image: ${{ matrix.image_name }}
           tags: ${{ matrix.tags }}
           dockerfiles: ${{ matrix.dockerfile }}
+
       - name: Push ${{ matrix.dockerfile }}
         uses: redhat-actions/push-to-registry@v2
         with:
@@ -138,40 +153,50 @@ jobs:
           registry: quay.io/${{ env.quay_org }}
           username: ${{ secrets.QUAY_USER }}
           password: ${{ secrets.QUAY_TOKEN }}
+        if: github.event_name != "pull_request"
+
       - name: Print image URL
         run: echo "Image pushed to ${{ steps.push-image.outputs.registry-paths }}"
+        if: github.event_name != "pull_request"
 
   update_manifest:
     needs:
       - create_matrix
       - build_push
-    if: always()
+    if: github.event_name != "pull_request"
     runs-on: ubuntu-20.04
     strategy:
       matrix: ${{ fromJSON(needs.create_matrix.outputs.manifest_matrix) }}
       fail-fast: false
     name: Push Manifest ${{ matrix.image_name }}:${{ matrix.tag }}
     steps:
+
       - uses: actions/checkout@v2
+
       - name: Echo Matrix Permutation
         run: |
             cat << EOF
             ${{ toJSON(matrix) }}
             EOF
+
       - name: Set quay organization
         run: |
             export org_secret="${{ secrets.QUAY_ORG }}"
             export org=${org_secret:-cloud-bulldozer}
             echo "Using organization: $org"
             echo "quay_org=$org" >> $GITHUB_ENV
+
       - name: Update apt cache
         run: sudo apt update
+
       - name: Install podman and qemu-user-static
         run: sudo apt install -y podman qemu-user-static
+
       - name: Login to quay
         run: >-
             podman login quay.io --username ${{ secrets.QUAY_USER }}
             --password ${{ secrets.QUAY_TOKEN }}
+
       - name: Create manifest
         run: |
             manifest="quay.io/${{ env.quay_org }}/${{ matrix.image_name }}:${{ matrix.tag }}"

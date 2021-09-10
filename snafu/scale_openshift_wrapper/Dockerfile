@@ -8,6 +8,7 @@ RUN curl -L $(curl -s https://api.github.com/repos/openshift/rosa/releases/lates
 RUN curl -L $(curl -s https://api.github.com/repos/openshift-online/ocm-cli/releases/latest | jq -r ".assets[] | select(.name == \"ocm-linux-amd64\") | .browser_download_url") --output /usr/bin/ocm
 RUN chmod +x /usr/bin/rosa && chmod +x /usr/bin/ocm
 RUN mkdir -p /.config/ocm
+RUN chmod 777 /.config/ocm
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN mkdir -p /opt/snafu/
 COPY . /opt/snafu/

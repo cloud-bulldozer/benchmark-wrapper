@@ -95,7 +95,7 @@ class UperfConfig:
 class UperfStat:
     """Parsed Uperf Statistic."""
 
-    uperf_ts: str
+    timestamp: str
     bytes: int
     norm_byte: int
     ops: int
@@ -279,7 +279,7 @@ class Uperf(Benchmark):
                 norm_ltcy = ((timestamp - prev_timestamp) / norm_ops) * 1000
 
             datapoint = UperfStat(
-                uperf_ts=datetime.datetime.fromtimestamp(int(timestamp) / 1000).isoformat(),
+                timestamp=datetime.datetime.now(),
                 bytes=num_bytes,
                 norm_byte=num_bytes - prev_bytes,
                 ops=ops,

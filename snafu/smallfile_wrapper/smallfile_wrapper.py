@@ -52,7 +52,7 @@ class smallfile_wrapper:
 
         self.redis_host = os.environ["redis_host"] if "redis_host" in os.environ else None
         self.redis_timeout = os.environ["redis_timeout"] if "redis_timeout" in os.environ else 60
-        self.redis_timeout_th = os.environ["redis_timeout_th"] if "redis_timeout_th" in os.environ else 25
+        self.redis_timeout_th = os.environ["redis_timeout_th"] if "redis_timeout_th" in os.environ else 200
         self.clients = os.environ["clients"] if "clients" in os.environ else 1
         if not self.args.top:
             raise SnafuStorageException("must supply directory where you access files")

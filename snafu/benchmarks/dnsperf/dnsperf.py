@@ -56,6 +56,8 @@ class DnsperfMetadata(BaseModel):
     """Metadata to (re)create a dnsperf execution."""
 
     address: str
+    cache_negative_size: int
+    cache_positive_size: int
     client_threads: int
     dnsperf_version: str
     end_time: datetime.datetime
@@ -95,7 +97,7 @@ class Dnsperf(Benchmark):
             required=True,
             help="filepath to a list of DNS queries",
         ),
-        ConfigArgument("-l", "--load-sequence", dest="load_sequence", type=int, nargs="+", default=[]),
+        ConfigArgument("-l", "--load-sequence", dest="load_sequence", nargs="+", default=[]),
         ConfigArgument(
             "-a",
             "--address",
@@ -125,6 +127,20 @@ class Dnsperf(Benchmark):
             dest="transport_mode",
             help="set transport mode: udp, tcp, dot",
             default="udp",
+        ),
+        ConfigArgument(
+            "-p",
+            "--cache-positive-size",
+            help="Size of the positive response (i.e. 'NOERROR') cache",
+            dest="cache_positive_size",
+            default=9984,
+        ),
+        ConfigArgument(
+            "-n",
+            "--cache-negative-size",
+            help="Size of the negative response (i.e. 'NXDOMAIN') cache",
+            dest="cache_negative_size",
+            default=9984,
         ),
         ConfigArgument("--network-policy", dest="networkpolicy", env_var="networkpolicy"),
         ConfigArgument("--network-type", dest="network_type", env_var="network_type"),
@@ -203,10 +219,9 @@ class Dnsperf(Benchmark):
                 process_sample.successful.stdout, load_limit
             )
             summary.summarize()
-            dataframe = (
-                pd.DataFrame.from_dict([dict(sample) for sample in rtt_samples]).groupby("fqdn").sample(n=1)
-            )
-            for sample in dataframe.to_dict("records"):
+            dataframe = pd.DataFrame.from_dict([dict(sample) for sample in rtt_samples])
+
+            for sample in dataframe.groupby("fqdn").sample(n=1).to_dict("records"):
                 yield self.create_new_result(
                     data=dict(summary, **sample), config=dict(metadata), tag="results"
                 )

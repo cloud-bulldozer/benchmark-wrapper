@@ -10,6 +10,13 @@ import os
 
 from . import trigger_fs_drift
 
+# this could become common class in snafu/utils later
+
+
+class SnafuStorageException(Exception):
+    pass
+
+
 logger = logging.getLogger("snafu")
 
 
@@ -29,26 +36,27 @@ class fs_drift_wrapper:
         parser.add_argument("-y", "--yaml-input-file", help="fs-drift parameters passed via YAML input file")
         self.args = parser.parse_args()
 
-        self.server = ""
-
-        self.cluster_name = "mycluster"
-        if "clustername" in os.environ:
-            self.cluster_name = os.environ["clustername"]
-
-        self.uuid = ""
-        if "uuid" in os.environ:
-            self.uuid = os.environ["uuid"]
-
-        self.user = ""
-        if "test_user" in os.environ:
-            self.user = os.environ["test_user"]
-
         if not self.args.top:
-            raise SnafuSmfException("must supply directory where you access flies")  # noqa
+            raise SnafuStorageException("must supply directory where you access files")
+        self.cluster_name = os.environ["clustername"] if "clustername" in os.environ else ""
+        self.uuid = os.environ["uuid"] if "uuid" in os.environ else ""
+        self.user = os.environ["test_user"] if "test_user" in os.environ else ""
         self.samples = self.args.samples
         self.working_dir = self.args.top
         self.result_dir = self.args.dir
         self.yaml_input_file = self.args.yaml_input_file
+        logger.info(
+            ("cluster_name %s user %s uuid %s samples %d" + "working_dir %s result_dir %s yaml_input_file %s")
+            % (
+                self.cluster_name,
+                self.user,
+                self.uuid,
+                self.samples,
+                self.working_dir,
+                self.result_dir,
+                self.yaml_input_file,
+            )
+        )
 
     def run(self):
         if not os.path.exists(self.result_dir):

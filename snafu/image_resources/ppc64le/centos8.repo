@@ -1,5 +1,0 @@
-[centos8]
-name=CentOS-8
-baseurl=http://mirror.centos.org/centos/8/BaseOS/ppc64le/os/
-enabled=0
-gpgcheck=0

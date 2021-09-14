@@ -12,11 +12,11 @@ backports.zoneinfo==0.2.1
     # via
     #   -r requirements/py36-reqs/install.txt
     #   tzlocal
-boto3==1.18.34
+boto3==1.18.40
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-botocore==1.21.34
+botocore==1.21.40
     # via
     #   -r requirements/py36-reqs/install.txt
     #   boto3
@@ -259,7 +259,7 @@ toml==0.10.2
     #   tox
 tox==3.24.3
     # via snafu (setup.cfg)
-ttp==0.7.2
+ttp==0.8.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)

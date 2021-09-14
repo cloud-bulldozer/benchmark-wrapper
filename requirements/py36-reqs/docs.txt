@@ -24,11 +24,11 @@ backports.zoneinfo==0.2.1
     #   tzlocal
 bleach==4.1.0
     # via nbconvert
-boto3==1.18.34
+boto3==1.18.40
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-botocore==1.21.34
+botocore==1.21.40
     # via
     #   -r requirements/py36-reqs/install.txt
     #   boto3
@@ -65,7 +65,7 @@ dateparser==1.0.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   prometheus-api-client
-decorator==5.0.9
+decorator==5.1.0
     # via
     #   ipython
     #   traitlets
@@ -358,7 +358,7 @@ six==1.16.0
     #   traitlets
 snowballstemmer==2.1.0
     # via sphinx
-sphinx==4.1.2
+sphinx==4.2.0
     # via
     #   myst-parser
     #   nbsphinx
@@ -382,7 +382,7 @@ statistics==1.0.3.5
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-terminado==0.11.1
+terminado==0.12.1
     # via notebook
 testpath==0.5.0
     # via nbconvert
@@ -403,7 +403,7 @@ traitlets==4.3.3
     #   nbformat
     #   nbsphinx
     #   notebook
-ttp==0.7.2
+ttp==0.8.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)

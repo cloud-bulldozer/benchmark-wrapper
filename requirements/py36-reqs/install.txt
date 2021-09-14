@@ -6,9 +6,9 @@
 #
 backports.zoneinfo==0.2.1
     # via tzlocal
-boto3==1.18.34
+boto3==1.18.40
     # via snafu (setup.cfg)
-botocore==1.21.34
+botocore==1.21.40
     # via
     #   boto3
     #   s3transfer
@@ -131,7 +131,7 @@ six==1.16.0
     #   python-dateutil
 statistics==1.0.3.5
     # via snafu (setup.cfg)
-ttp==0.7.2
+ttp==0.8.0
     # via snafu (setup.cfg)
 typing-extensions==3.10.0.2
     # via importlib-metadata

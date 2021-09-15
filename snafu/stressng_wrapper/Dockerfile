@@ -4,7 +4,7 @@ FROM registry.access.redhat.com/ubi8:latest
 COPY snafu/image_resources/centos8.repo /etc/yum.repos.d/centos8.repo
 COPY snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
 RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm python39 && dnf clean all
-RUN dnf install -y --enablerepo=centos8 --enablerepo=centos8-appstream --enablerepo=epel --nodocs stress-ng python39-requests \
+RUN dnf install -y --enablerepo=centos8 --enablerepo=centos8-appstream --enablerepo=epel --nodocs stress-ng \
     procps-ng iproute net-tools ethtool nmap iputils && dnf clean all
 
 COPY . /opt/snafu

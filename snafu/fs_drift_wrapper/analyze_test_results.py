@@ -5,7 +5,6 @@
 import json
 import os
 import sys
-from datetime import datetime
 
 import numpy
 
@@ -40,12 +39,6 @@ hit_generator = fetch_es_test_results.next_result(es, index_name, uuid)
 for hit in hit_generator:
     src = hit["_source"]
     uuid_found = src["uuid"]
-    if uuid_found != uuid:
-        # raise SMFStatException('elastic search returned result with uuid %s instead of %s' %
-        # (uuid_found, uuid))
-        wrong_uuid += 1
-        continue
-
     if debug:
         print(json.dumps(src, indent=2))
     sample = int(src["sample"])
@@ -85,7 +78,7 @@ for hit in hit_generator:
     # thread layer (can be multiple threads per pod)
     try:
         any_prev_tupl = sample_threads[thrd_id]
-        raise SMFStatException("2 samples with same optype and thread ID should not happen: %s" % str(src))
+        raise FSDStatException("2 samples with same host/pod and thread ID should not happen: %s" % str(src))
     except KeyError:
         # this is the NORMAL case
         tupl = (elapsed, files, files_per_sec, MiB_per_sec, iops)
@@ -106,8 +99,7 @@ for s in sorted(sample_list_keys):
         pods_per_run = len(sample_pods_keys)
     elif len(sample_pods_keys) < pods_per_run:
         print(
-            "WARNING: only %d pods found in optype %s sample %d, expected %d"
-            % (len(sample_pods_keys), optype, s, pods_per_run)
+            "WARNING: only %d pods found in sample %d, expected %d" % (len(sample_pods_keys), s, pods_per_run)
         )
     total_files = 0
     total_files_per_sec = 0.0

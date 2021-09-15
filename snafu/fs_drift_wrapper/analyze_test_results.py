@@ -89,7 +89,7 @@ for hit in hit_generator:
 
 print("")
 
-print("   sample, pod,                            thread, files, files/sec, MiB/s, IOPS, elapsed, %dev")
+print("   sample, pod,                                  thread, files, files/sec, MiB/s, IOPS, elapsed, %dev")
 sample_list_keys = sorted(sample_dict.keys())
 fps_samples = []
 for s in sorted(sample_list_keys):
@@ -118,7 +118,7 @@ for s in sorted(sample_list_keys):
             total_iops += iops
             total_files += files
             print(
-                "%2d, %-40s, %3s, %d, %f, %f, %f, %f"
+                "%2d, %-40s, %8s, %d, %f, %f, %f, %f"
                 % (s, p, t, files, files_per_sec, MB_per_sec, iops, elapsed)
             )
             elapsed_times.append(elapsed)
@@ -128,7 +128,7 @@ for s in sorted(sample_list_keys):
     sample_pods["_elapsed_mean"] = mean_elapsed = sum(elapsed_times) / len(elapsed_times)
     sample_pods["_elapsed_pctdev"] = pctdev = numpy.std(numpy.array(elapsed_times)) * 100.0 / mean_elapsed
     print(
-        "%2d, %-40s, %3s, %d, %f, %f, %f, %f, %f"
+        "%2d, %-40s, %8s, %d, %f, %f, %f, %f, %f"
         % (
             s,
             "all-pods",

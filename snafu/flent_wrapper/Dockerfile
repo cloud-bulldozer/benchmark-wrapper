@@ -21,7 +21,7 @@ RUN cd iperf2-code && git checkout bf687b4aac023b303cea08bd1a7248d62ad70f47 && .
 FROM registry.access.redhat.com/ubi8:latest
 
 COPY /snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
-RUN dnf install -y --nodocs git python3-pip iputils redis --enablerepo=centos8-appstream && dnf clean all
+RUN dnf install -y --nodocs git python39-pip iputils redis --enablerepo=centos8-appstream && dnf clean all
 
 RUN pip3 install flent
 

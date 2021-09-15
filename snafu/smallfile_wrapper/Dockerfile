@@ -1,6 +1,6 @@
 FROM registry.access.redhat.com/ubi8:latest
 
-RUN dnf install -y --nodocs git python3-pip
+RUN dnf install -y --nodocs git python39-pip
 RUN ln -s /usr/bin/python3 /usr/bin/python
 ADD https://api.github.com/repos/distributed-system-analysis/smallfile/git/refs/heads/master /tmp/bustcache
 RUN git clone https://github.com/distributed-system-analysis/smallfile /opt/smallfile

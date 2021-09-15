@@ -1,7 +1,7 @@
 FROM registry.access.redhat.com/ubi8:latest
 
 # install requirements
-RUN dnf -y install --nodocs git wget procps python3 vim python3-pip pciutils && dnf clean all
+RUN dnf -y install --nodocs git wget procps python39 vim python39-pip pciutils && dnf clean all
 COPY snafu/image_resources/centos8.repo /etc/yum.repos.d/centos8.repo
 COPY snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
 RUN dnf install -y --nodocs hostname iproute net-tools ethtool nmap iputils https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && dnf clean all

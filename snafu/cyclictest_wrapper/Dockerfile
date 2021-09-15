@@ -1,6 +1,6 @@
 FROM registry.centos.org/centos:8
 USER root
-RUN dnf install -y --nodocs python3 python3-pip python3-devel numactl-devel perl \
+RUN dnf install -y --nodocs python39-pip python39-devel numactl-devel perl \
     epel-release procps-ng iproute net-tools ethtool nmap iputils
 RUN dnf -y install https://www.rpmfind.net/linux/centos/8-stream/AppStream/x86_64/os/Packages/rt-tests-1.9-2.el8.x86_64.rpm
 RUN dnf -y --enablerepo=extras install --nodocs wget tmux stress-ng \

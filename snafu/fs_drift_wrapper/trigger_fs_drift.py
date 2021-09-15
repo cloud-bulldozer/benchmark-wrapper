@@ -1,9 +1,9 @@
 import json
 import os
 import re
+import socket
 import subprocess
 import time
-import socket
 
 from snafu.vfs_stat import get_vfs_stat_dict
 

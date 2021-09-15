@@ -56,8 +56,6 @@ class DnsperfMetadata(BaseModel):
     """Metadata to (re)create a dnsperf execution."""
 
     address: str
-    cache_negative_size: int
-    cache_positive_size: int
     client_threads: int
     dnsperf_version: str
     end_time: datetime.datetime
@@ -70,7 +68,16 @@ class DnsperfMetadata(BaseModel):
     start_time: datetime.datetime
     timeout_length: float
     transport_mode: str
+    cache_negative_hit_rate_mean: Optional[float] = None
+    cache_negative_size: Optional[int] = None
+    cache_negative_ttl: Optional[int] = None
+    cache_positive_hit_rate_mean: Optional[float] = None
+    cache_positive_size: Optional[int] = None
+    cache_positive_ttl: Optional[int] = None
     cluster_name: Optional[str] = None
+    cluster_node_quantity: Optional[int] = None
+    dns_servers_per_node: Optional[int] = None
+    dns_clients_per_node: Optional[int] = None
     platform: Optional[str] = None
     networkpolicy: Optional[str] = None
     node_id: Optional[str] = None
@@ -221,7 +228,7 @@ class Dnsperf(Benchmark):
             summary.summarize()
             dataframe = pd.DataFrame.from_dict([dict(sample) for sample in rtt_samples])
 
-            for sample in dataframe.groupby("fqdn").sample(n=1).to_dict("records"):
+            for sample in dataframe.groupby(["fqdn", "response_state"]).sample(n=1).to_dict("records"):
                 yield self.create_new_result(
                     data=dict(summary, **sample), config=dict(metadata), tag="results"
                 )

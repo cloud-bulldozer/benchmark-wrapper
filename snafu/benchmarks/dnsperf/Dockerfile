@@ -4,7 +4,6 @@ RUN dnf -y install --nodocs \
         epel-release \
         openssl-devel \
         python38 \
-        sysstat \
         yum-plugin-copr
 RUN dnf -y install --nodocs ck-devel
 RUN dnf -y copr enable @dnsoarc/dnsperf
@@ -16,3 +15,4 @@ RUN rm --force --recursive /var/cache/yum && \
 
 COPY . /opt/snafu
 RUN python -m pip install --editable /opt/snafu
+WORKDIR /opt/snafu

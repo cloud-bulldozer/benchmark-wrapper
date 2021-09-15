@@ -8,12 +8,14 @@ RUN mkdir /tmp/install
 WORKDIR /root
 RUN wget https://github.com/HewlettPackard/netperf/archive/netperf-2.7.0.tar.gz && tar -xzf netperf-2.7.0.tar.gz
 WORKDIR /root/netperf-netperf-2.7.0
+# Workaround: We need to download latest version of config.guess to make configure able to detect other CPU architectures correctly
+RUN curl 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD' -o config.guess
 RUN sed -i 's/inline void demo_interval_display(double actual_interval)/void demo_interval_display(double actual_interval)/g' src/netlib.c && sed -i 's/inline void demo_interval_tick(uint32_t units)/void demo_interval_tick(uint32_t units)/g' src/netlib.c
-RUN ./configure --enable-demo --prefix=/tmp/install && make && make install
+RUN ./configure --enable-demo --prefix=/tmp/install && make -j $(nprocs) && make install
 
 # Build iperf2
 WORKDIR /root
-RUN git clone -n https://git.code.sf.net/p/iperf2/code iperf2-code --depth=1
+RUN git clone -n https://git.code.sf.net/p/iperf2/code iperf2-code
 # A specific commit must be specified because the following one introduced a breaking change for flent
 RUN cd iperf2-code && git checkout bf687b4aac023b303cea08bd1a7248d62ad70f47 && ./configure --prefix=/tmp/install && make && make install
 

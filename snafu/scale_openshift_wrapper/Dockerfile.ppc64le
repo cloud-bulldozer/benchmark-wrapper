@@ -6,6 +6,5 @@ RUN dnf install -y --nodocs redis --enablerepo=centos8-appstream && dnf clean al
 RUN curl -L https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp/latest/openshift-client-linux.tar.gz | tar xz -C /usr/bin/ oc
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN python3 -m pip install --upgrade cython numpy importlib_metadata 'urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1' && python3 -m pip install --upgrade scipy pandas
-RUN mkdir -p /opt/snafu/
 COPY . /opt/snafu/
 RUN pip3 install -e /opt/snafu/

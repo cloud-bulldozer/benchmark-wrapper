@@ -1,4 +1,4 @@
-FROM quay.io/centos/centos:stream8
+FROM registry.centos.org/centos:8
 USER root
 RUN dnf install -y --nodocs python39 python39-devel numactl-devel perl \
     epel-release procps-ng iproute net-tools ethtool nmap iputils dumb-init rt-tests \

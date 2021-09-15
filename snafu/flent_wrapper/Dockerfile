@@ -13,7 +13,7 @@ RUN ./configure --enable-demo --prefix=/tmp/install && make && make install
 
 # Build iperf2
 WORKDIR /root
-RUN git clone -n https://git.code.sf.net/p/iperf2/code iperf2-code
+RUN git clone -n https://git.code.sf.net/p/iperf2/code iperf2-code --depth=1
 # A specific commit must be specified because the following one introduced a breaking change for flent
 RUN cd iperf2-code && git checkout bf687b4aac023b303cea08bd1a7248d62ad70f47 && ./configure --prefix=/tmp/install && make && make install
 
@@ -21,7 +21,7 @@ RUN cd iperf2-code && git checkout bf687b4aac023b303cea08bd1a7248d62ad70f47 && .
 FROM registry.access.redhat.com/ubi8:latest
 
 COPY /snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
-RUN dnf install -y --nodocs git python39-pip iputils redis --enablerepo=centos8-appstream && dnf clean all
+RUN dnf install -y --nodocs python39 git iputils redis --enablerepo=centos8-appstream && dnf clean all
 
 RUN pip3 install flent
 
@@ -31,6 +31,6 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 COPY --from=builder /tmp/install/bin/* /bin/
 
 # Add snafu
-RUN mkdir -p /opt/snafu/
 COPY . /opt/snafu/
+RUN pip3 install --upgrade pip
 RUN pip3 install -e /opt/snafu/

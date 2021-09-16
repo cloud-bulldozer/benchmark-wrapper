@@ -8,8 +8,7 @@ from sys import argv
 from datetime import datetime, timezone
 from elasticsearch import Elasticsearch
 import json
-
-dev_es_url = "https://search-perfscale-dev-chmf5l4sh66lvxbnadi4bznl3a.us-west-2.es.amazonaws.com"
+import fetch_es_test_results
 
 NOTOK=1
 
@@ -62,10 +61,7 @@ def compute_query():
         query_times = timestamp_range
     return query_times
 
-
-cert_verify = False if os.getenv("ES_NO_VERIFY_CERT") else True
-es_url = os.getenv('ES_SERVER', default=dev_es_url)
-es = Elasticsearch([es_url], verify_certs=cert_verify)
+es = fetch_es_test_results.connect_es()
 
 hits_so_far = 0
 skipped = 0

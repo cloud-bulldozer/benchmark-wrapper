@@ -1,5 +1,9 @@
 # common code to fetch Elasticsearch benchmark-operator test results
 # for analysis by benchmark-specific scripts
+# NOTE: at present you must set environment variable
+# PYTHONPATH=your-benchmark-wrapper-clone-directory
+# so that the import statement "import snafu.utils.fetch_es_test_wrapper" works
+# I don't like that but not sure why.
 
 import os
 

@@ -1,6 +1,14 @@
-#!/usr/bin/python3
+# uncomment the next line to enable running script directly from the shell
+##/usr/bin/python3
+#
 # script to pull uuids of tests from an index for a time range
 # and list them with clustername and user so we can find relevant tests
+#
+# parameters:
+# 1: elastic search result index name
+# 2: name of timestamp field within the index documents
+# 3: (optional) start time, in datetime_format variable below
+# 4: (optional) end time, in datetime_format format variable below
 
 import os
 import sys
@@ -39,7 +47,6 @@ def compute_query():
     match_all = {"size": 100, "query": {"match_all": {}}}
     query_times = match_all
     if len(argv) > 3:
-        # FIXME: this does not work
         starting_time_str = argv[3]
         ending_time_str = "now"
         if len(argv) > 4:

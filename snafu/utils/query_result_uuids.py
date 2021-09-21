@@ -59,6 +59,7 @@ def compute_query():
 
 es = snafu.utils.fetch_es_test_results.connect_es()
 
+
 def get_uuid_tuples():
     # dictionary of all tests found
     uuid_table_out = {}
@@ -114,7 +115,7 @@ def get_uuid_tuples():
                 start_time = timestamp
                 end_time = timestamp
                 uuid_table_out[uuid] = (start_time, end_time, cluster_name, user)
-    
+
         res = es.scroll(scroll_id=scroll_id, scroll="60s")
     return uuid_table_out
 
@@ -140,4 +141,3 @@ sorted_list = sorted(unsorted_list, key=extract_timestamp)
 for el in sorted_list:
     (start_time, end_time, u, found_cname, found_user) = el
     print("[ {}, {} ] {} {} {}".format(start_time, end_time, u, found_cname, found_user))
-

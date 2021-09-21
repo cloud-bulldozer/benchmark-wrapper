@@ -127,8 +127,8 @@ for hit in hit_generator:
 # now validate data
 
 print(
-        "  op-type,      block-size,  sample,      pod,           process,        "
-        + "iops, bw (KiB/s), elapsed-time (sec), %deviation"
+    "  op-type,      block-size,  sample,      pod,           process,        "
+    + "iops, bw (KiB/s), elapsed-time (sec), %deviation"
 )
 try:
     for optype in sorted(optype_dict.keys()):

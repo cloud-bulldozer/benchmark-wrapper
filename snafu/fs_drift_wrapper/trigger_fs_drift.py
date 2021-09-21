@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import socket
 import subprocess
 import time
 
@@ -28,6 +29,8 @@ class _trigger_fs_drift:
         self.uuid = uuid
         self.sample = sample
         self.cluster_name = cluster_name
+        # for K8S this is really a pod ID, not a host
+        self.host = socket.gethostname()
 
     def ensure_dir_exists(self, directory):
         if not os.path.exists(directory):
@@ -81,6 +84,7 @@ class _trigger_fs_drift:
                 thrd["fsdict"] = fsdict
                 thrd["date"] = timestamp
                 thrd["thr-id"] = tid
+                thrd["host"] = self.host
                 thrd["sample"] = self.sample
                 thrd["cluster_name"] = self.cluster_name
                 thrd["uuid"] = self.uuid

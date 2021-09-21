@@ -15,7 +15,7 @@ import sys
 from datetime import datetime, timezone
 from sys import argv
 
-import fetch_es_test_results
+import snafu.utils.fetch_es_test_results
 
 NOTOK = 1
 
@@ -31,16 +31,6 @@ if len(argv) < 3:
 
 index_name = argv[1]
 timestamp_fieldname = argv[2]
-# used by strptime()
-datetime_format = "%Y-%m-%dT%H:%M:%S.%f%z"
-
-# dictionary of all tests found
-uuid_table = {}
-
-starting_time = None
-ending_time = None
-
-debug = os.getenv("DEBUG")
 
 
 def compute_query():
@@ -67,8 +57,15 @@ def compute_query():
     return query_times
 
 
-es = fetch_es_test_results.connect_es()
+es = snafu.utils.fetch_es_test_results.connect_es()
 
+# used by strptime()
+datetime_format = "%Y-%m-%dT%H:%M:%S.%f%z"
+
+# dictionary of all tests found
+uuid_table = {}
+
+debug = os.getenv("DEBUG")
 hits_so_far = 0
 skipped = 0
 index_time_query = compute_query()
@@ -102,10 +99,6 @@ while len(res["hits"]["hits"]) > 0:
         except TypeError:
             timestamp_float_sec = timestamp_field_value / 1000.0
             timestamp = datetime.fromtimestamp(timestamp_float_sec, tz=timezone.utc)
-        # if (starting_time != None and timestamp < starting_time) or \
-        #   (ending_time != None and timestamp > ending_time):
-        #    skipped += 1
-        #    continue
         try:
             update = False
             (start_time, end_time, found_cname, found_user) = uuid_table[uuid]

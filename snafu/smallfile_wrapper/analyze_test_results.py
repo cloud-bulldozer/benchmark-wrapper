@@ -12,7 +12,7 @@ import sys
 
 import numpy
 
-from snafu.utils.fetch_es_test_results import connect_es, next_result
+from snafu.utils.fetch_es_test_results import connect_es, result_generator_for_uuid
 
 KiB_per_MiB = 1 << 10
 
@@ -43,7 +43,7 @@ max_sample = 0
 threads_per_pod = None
 pods_per_run = 0
 
-hit_generator = next_result(es, index_name, uuid)
+hit_generator = result_generator_for_uuid(es, index_name, uuid)
 for hit in hit_generator:
     src = hit["_source"]
     uuid_found = src["uuid"]

@@ -14,7 +14,7 @@ import sys
 
 import numpy
 
-from snafu.utils.fetch_es_test_results import connect_es, next_result
+from snafu.utils.fetch_es_test_results import connect_es, result_generator_for_uuid
 
 NOTOK = 1
 KiB_per_MiB = 1 << 10
@@ -47,7 +47,7 @@ threads_per_pod = None
 pods_per_run = 0
 prev_job_options = None
 
-hit_generator = next_result(es, index_name, uuid)
+hit_generator = result_generator_for_uuid(es, index_name, uuid)
 for hit in hit_generator:
     src = hit["_source"]
     # print(json.dumps(src, indent=2))

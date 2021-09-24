@@ -116,7 +116,15 @@ class Trigger_upgrade:
             the_time = datetime.datetime.strptime(
                 clusterversion.get().attributes.items[0].status.history[0].completionTime, time_format
             )
-            return init_version, desired_version, platform, the_time, the_time, (the_time - the_time)
+            return (
+                init_version,
+                desired_version,
+                desired_version,
+                platform,
+                the_time,
+                the_time,
+                (the_time - the_time),
+            )
 
         c_state = "incomplete"
         c_version = "0.0.0"
@@ -161,7 +169,7 @@ class Trigger_upgrade:
         total_time = end_time - start_time
         logger.info("Total upgrade time: %s" % total_time)
 
-        return init_version, new_version, platform, start_time, end_time, total_time
+        return init_version, desired_version, new_version, platform, start_time, end_time, total_time
 
     def get_timings(self):
         logger.info("Getting timing stats from cluster Operators")
@@ -199,6 +207,7 @@ class Trigger_upgrade:
         self.timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
         (
             self.init_version,
+            self.desired_version,
             self.end_version,
             self.platform,
             self.start_time,
@@ -218,10 +227,12 @@ class Trigger_upgrade:
         docs.append(self._json_payload(data))
         for item in docs:
             yield item, ""
-        if self.end_version != desired_version:
+        if self.end_version != self.desired_version:
             logger.error("Cluster did not upgrade to desired version")
             logger.error(
-                "Cluster version is {} and desired version is {}".format(self.end_version, desired_version)
+                "Cluster version is {} and desired version is {}".format(
+                    self.end_version, self.desired_version
+                )
             )
             exit(1)
-        logger.info("Finished upgrading the cluster to version %s" % (desired_version))
+        logger.info("Finished upgrading the cluster to version %s" % (self.desired_version))

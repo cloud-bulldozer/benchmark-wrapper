@@ -13,6 +13,10 @@ from . import trigger_smallfile
 logger = logging.getLogger("snafu")
 
 
+class SnafuStorageException(Exception):
+    pass
+
+
 class smallfile_wrapper:
     def __init__(self, parser):
         # collect arguments
@@ -48,10 +52,10 @@ class smallfile_wrapper:
 
         self.redis_host = os.environ["redis_host"] if "redis_host" in os.environ else None
         self.redis_timeout = os.environ["redis_timeout"] if "redis_timeout" in os.environ else 60
-        self.redis_timeout_th = os.environ["redis_timeout_th"] if "redis_timeout_th" in os.environ else 25
+        self.redis_timeout_th = os.environ["redis_timeout_th"] if "redis_timeout_th" in os.environ else 200
         self.clients = os.environ["clients"] if "clients" in os.environ else 1
         if not self.args.top:
-            raise SnafuSmfException("must supply directory where you access flies")  # noqa
+            raise SnafuStorageException("must supply directory where you access files")
         self.samples = self.args.samples
         self.working_dir = self.args.top
         self.result_dir = self.args.dir

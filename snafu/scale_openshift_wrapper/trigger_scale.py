@@ -173,7 +173,10 @@ class Trigger_scale:
         worker_count = (
             len(
                 nodes.get(
-                    label_selector="node-role.kubernetes.io/worker,!node-role.kubernetes.io/master"
+                    label_selector="node-role.kubernetes.io/worker,"
+                    "!node-role.kubernetes.io/master,"
+                    "!node-role.kubernetes.io/infra,"
+                    "!node-role.kubernetes.io/workload"
                 ).attributes.items
             )
             or 0

@@ -12,11 +12,11 @@ backports.zoneinfo==0.2.1
     # via
     #   -r requirements/py36-reqs/install.txt
     #   tzlocal
-boto3==1.18.40
+boto3==1.18.44
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-botocore==1.21.40
+botocore==1.21.44
     # via
     #   -r requirements/py36-reqs/install.txt
     #   boto3
@@ -31,7 +31,7 @@ certifi==2021.5.30
     #   elasticsearch
     #   kubernetes
     #   requests
-charset-normalizer==2.0.4
+charset-normalizer==2.0.6
     # via
     #   -r requirements/py36-reqs/install.txt
     #   requests
@@ -76,7 +76,7 @@ flent==2.0.1
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-google-auth==2.0.2
+google-auth==2.1.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   kubernetes
@@ -257,7 +257,7 @@ toml==0.10.2
     #   pytest
     #   pytest-cov
     #   tox
-tox==3.24.3
+tox==3.24.4
     # via snafu (setup.cfg)
 ttp==0.8.0
     # via
@@ -278,7 +278,7 @@ urllib3==1.26.6
     #   elasticsearch
     #   kubernetes
     #   requests
-virtualenv==20.7.2
+virtualenv==20.8.0
     # via tox
 websocket-client==1.2.1
     # via

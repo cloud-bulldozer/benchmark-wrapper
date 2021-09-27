@@ -58,6 +58,7 @@ class DnsperfMetadata(BaseModel):
     address: str
     client_threads: int
     dnsperf_version: str
+    duration: float
     end_time: datetime.datetime
     # the load limit number is parsed to a string,
     # so that it can be stored as a discrete
@@ -68,6 +69,7 @@ class DnsperfMetadata(BaseModel):
     start_time: datetime.datetime
     timeout_length: float
     transport_mode: str
+    block: Optional[int] = None
     cache_negative_hit_rate_mean: Optional[float] = None
     cache_negative_size: Optional[int] = None
     cache_negative_ttl: Optional[int] = None
@@ -75,15 +77,22 @@ class DnsperfMetadata(BaseModel):
     cache_positive_size: Optional[int] = None
     cache_positive_ttl: Optional[int] = None
     cluster_name: Optional[str] = None
-    cluster_node_quantity: Optional[int] = None
+    control_plane_node_quantity: Optional[int] = None
+    data_plane_node_quantity: Optional[int] = None
+    distributed_computing_platform: Optional[str] = None
     dns_servers_per_node: Optional[int] = None
-    dns_clients_per_node: Optional[int] = None
-    platform: Optional[str] = None
+    dns_software_name: Optional[str] = None
+    dns_software_version: Optional[str] = None
     networkpolicy: Optional[str] = None
     node_id: Optional[str] = None
     network_type: Optional[str] = None
+    replicate: Optional[int] = None
+    trial: Optional[int] = None
     user: Optional[str] = None
     uuid: Optional[str] = None
+
+    openshift_cluster_version: Optional[str] = None
+    kubernetes_cluster_version: Optional[str] = None
 
 
 class Dnsperf(Benchmark):
@@ -98,9 +107,9 @@ class Dnsperf(Benchmark):
     args = (
         ConfigArgument(
             "-q",
-            "--queries",
+            "--query-path",
             dest="query_filepath",
-            env_var="queries",
+            env_var="query_path",
             required=True,
             help="filepath to a list of DNS queries",
         ),
@@ -134,7 +143,9 @@ class Dnsperf(Benchmark):
             help="Length of time dnsperf will create load",
             default=".01",
         ),
-        ConfigArgument("--timeout", help="Length of timeout in seconds", dest="timeout_length", default="5"),
+        ConfigArgument(
+            "--timeout-length", help="Length of timeout in seconds", dest="timeout_length", default="5"
+        ),
         ConfigArgument(
             "-m",
             "--transport-mode",
@@ -171,9 +182,15 @@ class Dnsperf(Benchmark):
             type=int,
         ),
         ConfigArgument(
-            "--cluster-node-quantity",
-            help="Quantity of nodes in cluster",
-            dest="cluster_node_quantity",
+            "--control-plane-node-quantity",
+            help="Quantity of control plane nodes in cluster",
+            dest="control_plane_node_quantity",
+            type=int,
+        ),
+        ConfigArgument(
+            "--data-plane-node-quantity",
+            help="Quantity of data plane nodes in cluster",
+            dest="data_plane_node_quantity",
             type=int,
         ),
         ConfigArgument(
@@ -183,15 +200,25 @@ class Dnsperf(Benchmark):
             default=1,
             type=int,
         ),
+        ConfigArgument("--dns-software-name", dest="dns_software_name", type=str),
+        ConfigArgument("--dns-software-version", dest="dns_software_version", type=str),
+        ConfigArgument("--openshift-cluster-version", dest="openshift_cluster_version", type=str),
+        ConfigArgument("--kubernetes-cluster-version", dest="kubernetes_cluster_version", type=str),
         ConfigArgument(
-            "--dns-clients-per-node",
-            help="Ratio of DNS clients per compute node",
-            dest="dns_clients_per_node",
-            default=1,
-            type=int,
+            "--repetitions", dest="repetitions", type=int, default=1, help="Quantity of measures to repeat"
+        ),
+        ConfigArgument("--replicate", dest="replicate", type=int, default=1, help="Index of experiment run"),
+        ConfigArgument("--block", dest="block", type=int, default=1, help="Experiment block index number"),
+        ConfigArgument(
+            "--trial", dest="trial", type=int, default=1, help="Experiment trial index within this block"
         ),
         ConfigArgument("--network-policy", dest="networkpolicy", env_var="networkpolicy"),
         ConfigArgument("--network-type", dest="network_type", env_var="network_type"),
+        ConfigArgument(
+            "--distributed-computing-platform",
+            dest="distributed_computing_platform",
+            help="Distributed computing platform",
+        ),
         ConfigArgument("--pod-id", dest="pod_id", default=None),
         ConfigArgument("--node-id", dest="node_id", default=None),
     )
@@ -266,18 +293,18 @@ class Dnsperf(Benchmark):
         summary.summarize()
         dataframe = (
             pd.DataFrame.from_dict([dict(sample) for sample in rtt_samples])
-            .groupby(["fqdn", "response_state"])
-            .sample(n=1)
+            .groupby(["fqdn"])
+            .sample(n=self.config.repetitions)
         )
-        metadata.cache_positive_hit_rate_mean = min(
-            self.config.cache_positive_size
-            / dataframe[dataframe["response_state"] == "NOERROR"]["fqdn"].count(),
-            1,
+
+        positive_hits: int = dataframe[dataframe["response_state"] == "NOERROR"]["fqdn"].count()
+        metadata.cache_positive_hit_rate_mean = (
+            min(self.config.cache_positive_size / positive_hits, 1) if positive_hits else 0
         )
-        metadata.cache_negative_hit_rate_mean = min(
-            self.config.cache_negative_size
-            / dataframe[dataframe["response_state"] == "NXDOMAIN"]["fqdn"].count(),
-            1,
+
+        negative_hits: int = dataframe[dataframe["response_state"] == "NXDOMAIN"]["fqdn"].count()
+        metadata.cache_negative_hit_rate_mean = (
+            min(self.config.cache_negative_size / negative_hits, 1) if negative_hits else 0
         )
 
         for sample in dataframe.to_dict("records"):
@@ -294,9 +321,11 @@ class Dnsperf(Benchmark):
         output_parser.parse()
         result = output_parser.result()[0][0]
         result["config"]["start_time"] = dateutil.parser.parse(result["config"]["start_time"]).astimezone()
+        end_time = datetime.datetime.now().astimezone()
         metadata: DnsperfMetadata = DnsperfMetadata(
             **toolz.merge(self.config.params.__dict__, result["config"]),
-            end_time=datetime.datetime.now().astimezone(),
+            end_time=end_time,
+            duration=(end_time - result["config"]["start_time"]).total_seconds() / 60,
         )
         data: DnsperfSummary = DnsperfSummary(**result["stats"], **result["config"])
         return metadata, data, tuple(DnsRttSample(**item) for item in result["data"])

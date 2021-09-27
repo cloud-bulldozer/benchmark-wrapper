@@ -157,7 +157,7 @@ class _trigger_fio:
                                 log_line_values = str(log_line).split(", ")
                                 if len(log_line_values) == 5:
                                     timestamp_ms = int(fio_starttime[host]) + int(log_line_values[0])
-                                    newtime = datetime.fromtimestamp(timestamp_ms / 1000.0)
+                                    newtime = datetime.utcfromtimestamp(timestamp_ms / 1000.0)
                                     log_dict = {
                                         "uuid": self.uuid,
                                         "user": self.user,
@@ -198,7 +198,7 @@ class _trigger_fio:
                 if len(log_line_values) == 7 and not (any(len(str(x)) <= 0 for x in log_line_values)):
                     logger.debug(log_line_values)
                     timestamp_ms = int(longest_fio_startime) + int(log_line_values[0])
-                    newtime = datetime.fromtimestamp(timestamp_ms / 1000.0)
+                    newtime = datetime.utcfromtimestamp(timestamp_ms / 1000.0)
                     log_dict = {
                         "uuid": self.uuid,
                         "user": self.user,

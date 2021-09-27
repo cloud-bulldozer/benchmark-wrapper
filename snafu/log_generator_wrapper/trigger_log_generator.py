@@ -161,8 +161,8 @@ class Trigger_log_generator:
         header_json = "Content-Type: application/json"
         if self.es_token:
             header_auth = "Authorization: Bearer " + self.es_token
-        s_time = datetime.datetime.fromtimestamp(start_time - 60).strftime("%Y-%m-%dT%H:%M:%S")
-        e_time = datetime.datetime.fromtimestamp(end_time + 60).strftime("%Y-%m-%dT%H:%M:%S")
+        s_time = datetime.datetime.utcfromtimestamp(start_time - 60).strftime("%Y-%m-%dT%H:%M:%S")
+        e_time = datetime.datetime.utcfromtimestamp(end_time + 60).strftime("%Y-%m-%dT%H:%M:%S")
         data = {
             "query": {
                 "bool": {

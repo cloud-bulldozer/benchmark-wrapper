@@ -1,0 +1,224 @@
+name: Build Images
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+    inputs:
+      push:
+        description: 'Push images to quay?'
+        default: 'false'
+        required: false
+      tag:
+        description: 'Tag to assign to built images'
+        default: 'manual'
+        required: false
+      diff_branch:
+        description: 'Upstream branch for determining changes'
+        default: 'master'
+        required: false
+      run_all:
+        description: 'Run all builds regardless of changes?'
+        default: 'false'
+        required: false
+  pull_request:
+    types: [synchronize, labeled]
+
+jobs:
+  create_matrix:
+    runs-on: ubuntu-latest
+    name: Create Build Matrix
+    outputs:
+      build_matrix: ${{ steps.set-build-matrix.outputs.matrix }}
+      manifest_matrix: ${{ steps.set-manifest-matrix.outputs.matrix }}
+    env:
+      changed_only: ''
+      version_tag: '${{ github.sha }}'
+    if: >-
+        (
+          github.event_name != 'pull_request' || (
+            github.event_name == 'pull_request' && (
+                contains(github.event.pull_request.labels.*.name, 'ok to test') ||
+                github.event.label.name == 'ok to test'
+            )
+          )
+        )
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Echo manual trigger params
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "${{ toJSON(github.event.inputs) }}"
+      - name: Set upstream branch
+        run: |
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]
+            then
+                echo UPSTREAM_BRANCH=${{ github.event.inputs.diff_branch }} >> $GITHUB_ENV
+            else
+                echo UPSTREAM_BRANCH=master >> $GITHUB_ENV
+            fi
+      - name: Enable changed-only parameter for matrix build as appropriate
+        if: >-
+            (
+              (github.event_name == 'pull_request') ||
+              (github.event_name == 'push' && !(endsWith(github.ref, 'master'))) ||
+              (github.event_name == 'workflow_dispatch' && github.event.inputs.run_all == 'false')
+            )
+        run: echo changed_only='--changed-only' >> $GITHUB_ENV
+      - name: Set version tag to latest if on master branch
+        if: github.event_name == 'push' && endsWith(github.ref, 'master')
+        run: >-
+            echo version_tag='latest' >> $GITHUB_ENV
+      - name: Set version tag to given input if manually triggered
+        if: github.event_name == 'workflow_dispatch'
+        run: >-
+            echo version_tag='${{ github.event.inputs.tag }}' >> $GITHUB_ENV
+
+      - name: Build job matrices
+        run: >-
+            echo matrix=`python ci/build_matrix.py --upstream ${{ env.UPSTREAM_BRANCH }}
+            --manifest ${{ env.changed_only }} ${{ env.version_tag }}` >> $GITHUB_ENV
+
+      - name: Set build matrix
+        id: set-build-matrix
+        run: |
+            export build_matrix=`echo '${{ env.matrix }}' | jq -c '.build'`
+            echo "::set-output name=matrix::$build_matrix"
+      - name: Echo build matrix variable
+        run: |
+            cat << EOF
+            ${{ steps.set-build-matrix.outputs.matrix }}
+            EOF
+      - name: Sanity check by parsing build matrix using fromJSON
+        run: echo ${{ fromJSON(steps.set-build-matrix.outputs.matrix) }}
+
+      - name: Set manifest matrix
+        id: set-manifest-matrix
+        run: |
+            export manifest_matrix=`echo '${{ env.matrix }}' | jq -c '.manifest'`
+            echo "::set-output name=matrix::$manifest_matrix"
+      - name: Echo manifest matrix variable
+        run: |
+            cat << EOF
+            ${{ steps.set-manifest-matrix.outputs.matrix }}
+            EOF
+      - name: Sanity check by parsing manifest matrix using fromJSON
+        run: echo ${{ fromJSON(steps.set-manifest-matrix.outputs.matrix) }}
+
+  build_push:
+    needs: create_matrix
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix: ${{ fromJSON(needs.create_matrix.outputs.build_matrix) }}
+      fail-fast: false
+    name: Build ${{ matrix.benchmark }} on ${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Echo Matrix Permutation
+        run: |
+            cat << EOF
+            ${{ toJSON(matrix) }}
+            EOF
+      - name: Set quay organization
+        run: |
+            export org_secret="${{ secrets.QUAY_ORG }}"
+            export org=${org_secret:-cloud-bulldozer}
+            echo "Using organization: $org"
+            echo "quay_org=$org" >> $GITHUB_ENV
+      - name: Update apt cache
+        run: sudo apt update
+      - name: Install podman and qemu-user-static
+        run: sudo apt install -y podman qemu-user-static
+      - name: Build ${{ matrix.containerfile }}
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          arch: ${{ matrix.arch }}
+          image: ${{ matrix.image_name }}
+          tags: ${{ matrix.tags }}
+          dockerfiles: ${{ matrix.dockerfile }}
+      - name: Push ${{ matrix.dockerfile }}
+        id: push-image
+        if: >-
+          (github.event_name == 'push' && endsWith(github.ref, 'master')) ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.push == 'true')
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: quay.io/${{ env.quay_org }}
+          username: ${{ secrets.QUAY_USER }}
+          password: ${{ secrets.QUAY_TOKEN }}
+      - name: Print image URL
+        if: steps.push-image.outcome != 'skipped'
+        run: echo "Image pushed to ${{ steps.push-image.outputs.registry-paths }}"
+
+  update_manifest:
+    needs:
+      - create_matrix
+      - build_push
+    if: >-
+        always() && !cancelled() && (
+          (github.event_name == 'push' && endsWith(github.ref, 'master')) ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.push == 'true')
+        )
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix: ${{ fromJSON(needs.create_matrix.outputs.manifest_matrix) }}
+      fail-fast: false
+    name: Push Manifest ${{ matrix.image_name }}:${{ matrix.tag }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Echo Matrix Permutation
+        run: |
+            cat << EOF
+            ${{ toJSON(matrix) }}
+            EOF
+      - name: Set quay organization
+        run: |
+            export org_secret="${{ secrets.QUAY_ORG }}"
+            export org=${org_secret:-cloud-bulldozer}
+            echo "Using organization: $org"
+            echo "quay_org=$org" >> $GITHUB_ENV
+      - name: Update apt cache
+        run: sudo apt update
+      - name: Install podman and qemu-user-static
+        run: sudo apt install -y podman qemu-user-static
+      - name: Login to quay
+        run: >-
+            podman login quay.io --username ${{ secrets.QUAY_USER }}
+            --password ${{ secrets.QUAY_TOKEN }}
+      - name: Create manifest
+        run: |
+            manifest="quay.io/${{ env.quay_org }}/${{ matrix.image_name }}:${{ matrix.tag }}"
+            echo "Updating manifest ${manifest} ..."
+            podman manifest create ${manifest}
+            for suffix in ${{ matrix.tag_suffixes }}
+            do
+                echo "Adding ${manifest}${suffix} to the manifest ..."
+                if podman manifest add ${manifest} ${manifest}${suffix}
+                then
+                    echo "Image successfully added to the manifest"
+                else
+                    echo "Image ${manifest}${suffix} couldn't be found, not adding to manifest"
+                    echo "Did the build succeed?"
+                fi
+            done
+
+            manifest_json=`podman manifest inspect ${manifest}`
+            echo "Manifest details: "
+            echo $manifest_json
+
+            if echo $manifest_json | jq .manifests -e
+            then
+                echo "Pushing manifest to quay ..."
+                podman manifest push ${manifest} ${manifest}
+            else
+                echo "Got an empty manifest, not pushing to quay."
+            fi
+            echo "Done!"

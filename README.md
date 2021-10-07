@@ -54,13 +54,13 @@ export es=<http://es_address:es_port>
 ## - Run ##
 
 ```
-python3.7 ./snafu/run_snafu.py --tool <tool name>  followed by tool dependent parameters.
+python3.9 ./snafu/run_snafu.py --tool <tool name>  followed by tool dependent parameters.
 ```
 
 for example:
 
 ```
-python3.7 ./snafu/run_snafu.py --tool sysbench -f example__cpu_test.conf
+python3.9 ./snafu/run_snafu.py --tool sysbench -f example__cpu_test.conf
 ```
 
 ## Archiving data
@@ -72,13 +72,13 @@ To enable writing to an archive file users can use the --create-archive, if user
 For example:
 
 ```
-python3.7 ./snafu/run_snafu.py --tool sysbench -f example__cpu_test.conf --create-archive --archive-file /tmp/my_sysbench_data.archive
+python3.9 ./snafu/run_snafu.py --tool sysbench -f example__cpu_test.conf --create-archive --archive-file /tmp/my_sysbench_data.archive
 ```
 
 To index from an archive file users can invoke run_snafu as follows:
 
 ```
-python3.7 ./snafu/run_snafu.py --tool archive --archive-file /tmp/my_sysbench_data.archive
+python3.9 ./snafu/run_snafu.py --tool archive --archive-file /tmp/my_sysbench_data.archive
 ```
 
  **Note**: The archive file contains Elasticsearch friendly documents per line and is intended for future indexing, so it is not expect that users evaluate or review it manually.

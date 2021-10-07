@@ -1,6 +1,6 @@
 # Installation
 
-Installing benchmark-wrapper is all done through pip and git, requiring Python >= 3.6. For instance, to download benchmark-wrapper and install within a new virtual environment:
+Installing benchmark-wrapper is all done through pip and git, requiring Python >= 3.9. For instance, to download benchmark-wrapper and install within a new virtual environment:
 
 ```console
 $ git clone https://github.com/cloud-bulldozer/benchmark-wrapper
@@ -15,7 +15,7 @@ Or, if you want to just install benchmark-wrapper directly into your user site-p
 $ pip install git+https://github.com/cloud-bulldozer/benchmark-wrapper
 ```
 
-For reproducable installations, use the appropriate pip requirements files for your target version of Python. These requirement files are generating using [pip-compile](https://pypi.org/project/pip-tools/) and include dependencies pinned to a specific version. Only after testing are these versions upgraded, preventing errors arising from dependency resolution. As an example, to install benchmark-wrapper for Python 3.6:
+For reproducable installations, use the appropriate pip requirements files for your target version of Python. These requirement files are generating using [pip-compile](https://pypi.org/project/pip-tools/) and include dependencies pinned to a specific version. Only after testing are these versions upgraded, preventing errors arising from dependency resolution. As an example, to install benchmark-wrapper for Python 3.9:
 
 ```console
 $ git clone https://github.com/cloud-bulldozer/benchmark-wrapper

@@ -1,6 +1,6 @@
 FROM registry.fedoraproject.org/fedora:34
 USER root
-RUN dnf install -y --nodocs python39 python3-devel numactl-devel perl \
+RUN dnf install -y --nodocs python3 python3-pip python3-devel numactl-devel perl \
     procps-ng iproute net-tools ethtool nmap iputils dumb-init rt-tests \
     wget tmux && dnf clean all && rm -rf /var/cache/yum
 COPY . /opt/snafu

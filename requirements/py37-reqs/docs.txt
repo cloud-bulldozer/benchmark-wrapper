@@ -21,14 +21,15 @@ backcall==0.2.0
 backports.zoneinfo==0.2.1
     # via
     #   -r requirements/py37-reqs/install.txt
+    #   pytz-deprecation-shim
     #   tzlocal
 bleach==4.1.0
     # via nbconvert
-boto3==1.18.55
+boto3==1.19.2
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-botocore==1.21.55
+botocore==1.22.2
     # via
     #   -r requirements/py37-reqs/install.txt
     #   boto3
@@ -37,15 +38,15 @@ cachetools==4.2.4
     # via
     #   -r requirements/py37-reqs/install.txt
     #   google-auth
-certifi==2021.5.30
+certifi==2021.10.8
     # via
     #   -r requirements/py37-reqs/install.txt
     #   elasticsearch
     #   kubernetes
     #   requests
-cffi==1.14.6
+cffi==1.15.0
     # via argon2-cffi
-charset-normalizer==2.0.6
+charset-normalizer==2.0.7
     # via
     #   -r requirements/py37-reqs/install.txt
     #   requests
@@ -65,7 +66,7 @@ dateparser==1.1.0
     # via
     #   -r requirements/py37-reqs/install.txt
     #   prometheus-api-client
-debugpy==1.5.0
+debugpy==1.5.1
     # via ipykernel
 decorator==5.1.0
     # via ipython
@@ -100,11 +101,11 @@ flent==2.0.1
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-google-auth==2.2.1
+google-auth==2.3.0
     # via
     #   -r requirements/py37-reqs/install.txt
     #   kubernetes
-idna==3.2
+idna==3.3
     # via
     #   -r requirements/py37-reqs/install.txt
     #   requests
@@ -117,7 +118,7 @@ importlib-metadata==4.8.1
     #   ipykernel
     #   jsonschema
     #   snafu (setup.cfg)
-ipykernel==6.4.1
+ipykernel==6.4.2
     # via
     #   notebook
     #   snafu (setup.cfg)
@@ -146,7 +147,7 @@ jmespath==0.10.0
     #   -r requirements/py37-reqs/install.txt
     #   boto3
     #   botocore
-jsonschema==4.0.1
+jsonschema==4.1.2
     # via nbformat
 jupyter-client==7.0.6
     # via
@@ -206,9 +207,9 @@ nest-asyncio==1.5.1
     # via
     #   jupyter-client
     #   nbclient
-notebook==6.4.4
+notebook==6.4.5
     # via snafu (setup.cfg)
-numpy==1.21.2
+numpy==1.21.3
     # via
     #   -r requirements/py37-reqs/install.txt
     #   pandas
@@ -229,7 +230,7 @@ packaging==21.0
     #   bleach
     #   snafu (setup.cfg)
     #   sphinx
-pandas==1.3.3
+pandas==1.3.4
     # via
     #   -r requirements/py37-reqs/install.txt
     #   prometheus-api-client
@@ -253,7 +254,7 @@ prometheus-api-client==0.4.2
     #   snafu (setup.cfg)
 prometheus-client==0.11.0
     # via notebook
-prompt-toolkit==3.0.20
+prompt-toolkit==3.0.21
     # via ipython
 ptyprocess==0.7.0
     # via
@@ -276,7 +277,7 @@ pygments==2.10.0
     #   jupyterlab-pygments
     #   nbconvert
     #   sphinx
-pyparsing==2.4.7
+pyparsing==3.0.1
     # via
     #   -r requirements/py37-reqs/install.txt
     #   packaging
@@ -301,7 +302,11 @@ pytz==2021.3
     #   babel
     #   dateparser
     #   pandas
-pyyaml==5.4.1
+pytz-deprecation-shim==0.1.0.post0
+    # via
+    #   -r requirements/py37-reqs/install.txt
+    #   tzlocal
+pyyaml==6.0
     # via
     #   -r requirements/py37-reqs/install.txt
     #   kubernetes
@@ -315,7 +320,7 @@ redis==3.5.3
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-regex==2021.9.30
+regex==2021.10.23
     # via
     #   -r requirements/py37-reqs/install.txt
     #   dateparser
@@ -408,7 +413,7 @@ traitlets==5.1.0
     #   nbformat
     #   nbsphinx
     #   notebook
-ttp==0.8.0
+ttp==0.8.1
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
@@ -417,7 +422,11 @@ typing-extensions==3.10.0.2
     #   -r requirements/py37-reqs/install.txt
     #   importlib-metadata
     #   markdown-it-py
-tzlocal==3.0
+tzdata==2021.4
+    # via
+    #   -r requirements/py37-reqs/install.txt
+    #   pytz-deprecation-shim
+tzlocal==4.0.1
     # via
     #   -r requirements/py37-reqs/install.txt
     #   dateparser

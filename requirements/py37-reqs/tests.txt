@@ -11,12 +11,13 @@ backports.entry-points-selectable==1.1.0
 backports.zoneinfo==0.2.1
     # via
     #   -r requirements/py37-reqs/install.txt
+    #   pytz-deprecation-shim
     #   tzlocal
-boto3==1.18.55
+boto3==1.19.2
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-botocore==1.21.55
+botocore==1.22.2
     # via
     #   -r requirements/py37-reqs/install.txt
     #   boto3
@@ -25,13 +26,13 @@ cachetools==4.2.4
     # via
     #   -r requirements/py37-reqs/install.txt
     #   google-auth
-certifi==2021.5.30
+certifi==2021.10.8
     # via
     #   -r requirements/py37-reqs/install.txt
     #   elasticsearch
     #   kubernetes
     #   requests
-charset-normalizer==2.0.6
+charset-normalizer==2.0.7
     # via
     #   -r requirements/py37-reqs/install.txt
     #   requests
@@ -43,7 +44,7 @@ configparser==5.0.2
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-coverage[toml]==6.0
+coverage[toml]==6.0.2
     # via pytest-cov
 dataclasses==0.6
     # via
@@ -72,7 +73,7 @@ elasticsearch==7.13.4
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-filelock==3.3.0
+filelock==3.3.1
     # via
     #   tox
     #   virtualenv
@@ -80,11 +81,11 @@ flent==2.0.1
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-google-auth==2.2.1
+google-auth==2.3.0
     # via
     #   -r requirements/py37-reqs/install.txt
     #   kubernetes
-idna==3.2
+idna==3.3
     # via
     #   -r requirements/py37-reqs/install.txt
     #   requests
@@ -120,7 +121,7 @@ markupsafe==2.0.1
     # via
     #   -r requirements/py37-reqs/install.txt
     #   jinja2
-numpy==1.21.2
+numpy==1.21.3
     # via
     #   -r requirements/py37-reqs/install.txt
     #   pandas
@@ -141,7 +142,7 @@ packaging==21.0
     #   pytest
     #   snafu (setup.cfg)
     #   tox
-pandas==1.3.3
+pandas==1.3.4
     # via
     #   -r requirements/py37-reqs/install.txt
     #   prometheus-api-client
@@ -168,7 +169,7 @@ pyasn1-modules==0.2.8
     # via
     #   -r requirements/py37-reqs/install.txt
     #   google-auth
-pyparsing==2.4.7
+pyparsing==3.0.1
     # via
     #   -r requirements/py37-reqs/install.txt
     #   packaging
@@ -195,7 +196,11 @@ pytz==2021.3
     #   -r requirements/py37-reqs/install.txt
     #   dateparser
     #   pandas
-pyyaml==5.4.1
+pytz-deprecation-shim==0.1.0.post0
+    # via
+    #   -r requirements/py37-reqs/install.txt
+    #   tzlocal
+pyyaml==6.0
     # via
     #   -r requirements/py37-reqs/install.txt
     #   kubernetes
@@ -204,7 +209,7 @@ redis==3.5.3
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-regex==2021.9.30
+regex==2021.10.23
     # via
     #   -r requirements/py37-reqs/install.txt
     #   dateparser
@@ -259,7 +264,7 @@ tomli==1.2.1
     # via coverage
 tox==3.24.4
     # via snafu (setup.cfg)
-ttp==0.8.0
+ttp==0.8.1
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
@@ -267,7 +272,11 @@ typing-extensions==3.10.0.2
     # via
     #   -r requirements/py37-reqs/install.txt
     #   importlib-metadata
-tzlocal==3.0
+tzdata==2021.4
+    # via
+    #   -r requirements/py37-reqs/install.txt
+    #   pytz-deprecation-shim
+tzlocal==4.0.1
     # via
     #   -r requirements/py37-reqs/install.txt
     #   dateparser
@@ -278,7 +287,7 @@ urllib3==1.26.7
     #   elasticsearch
     #   kubernetes
     #   requests
-virtualenv==20.8.1
+virtualenv==20.9.0
     # via tox
 websocket-client==1.2.1
     # via

@@ -297,10 +297,10 @@ class Trigger_scale:
         # If we don't do this it will auto-complete a scale-down even though the workers
         # have not been eliminated yet
         new_worker_list = nodes.get(
-                    label_selector="node-role.kubernetes.io/worker,"
-                    "!node-role.kubernetes.io/master,"
-                    "!node-role.kubernetes.io/infra,"
-                    "!node-role.kubernetes.io/workload"
+            label_selector="node-role.kubernetes.io/worker,"
+            "!node-role.kubernetes.io/master,"
+            "!node-role.kubernetes.io/infra,"
+            "!node-role.kubernetes.io/workload"
         ).attributes.items
         for i in range(len(new_worker_list)):
             while i < len(new_worker_list) and new_worker_list[i].spec.unschedulable:
@@ -322,23 +322,25 @@ class Trigger_scale:
         logger.info("All workers schedulable")
 
         logger.inf("Verifying correct worker count")
-        current_workers = len(nodes.get(
-                    label_selector="node-role.kubernetes.io/worker,"
-                    "!node-role.kubernetes.io/master,"
-                    "!node-role.kubernetes.io/infra,"
-                    "!node-role.kubernetes.io/workload"
-        ).attributes.items)
+        current_workers = len(
+            nodes.get(
+                label_selector="node-role.kubernetes.io/worker,"
+                "!node-role.kubernetes.io/master,"
+                "!node-role.kubernetes.io/infra,"
+                "!node-role.kubernetes.io/workload"
+            ).attributes.items
+        )
         while current_workers != int(self.scale):
-                current_time = time.time()
-                if current_time >= end_time:
-                    logger.error("Timeout %d minutes exceeded" % self.timeout)
-                    exit(1)
+            current_time = time.time()
+            if current_time >= end_time:
+                logger.error("Timeout %d minutes exceeded" % self.timeout)
+                exit(1)
 
-                logger.debug(
-                    "Number of ready workers: %d. Waiting %d seconds for next check..."
-                    % (len(new_worker_list), self.poll_interval)
-                )
-                time.sleep(self.poll_interval)
+            logger.debug(
+                "Number of ready workers: %d. Waiting %d seconds for next check..."
+                % (len(new_worker_list), self.poll_interval)
+            )
+            time.sleep(self.poll_interval)
 
         logger.info("Correct worker count verified")
 

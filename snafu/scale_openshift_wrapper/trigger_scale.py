@@ -287,10 +287,20 @@ class Trigger_scale:
         # Ensure all workers are not listed as unschedulable
         # If we don't do this it will auto-complete a scale-down even though the workers
         # have not been eliminated yet
-        new_worker_list = nodes.get(label_selector="node-role.kubernetes.io/worker").attributes.items
+        new_worker_list = nodes.get(
+                    label_selector="node-role.kubernetes.io/worker,"
+                    "!node-role.kubernetes.io/master,"
+                    "!node-role.kubernetes.io/infra,"
+                    "!node-role.kubernetes.io/workload"
+        ).attributes.items
         for i in range(len(new_worker_list)):
             while i < len(new_worker_list) and new_worker_list[i].spec.unschedulable:
-                new_worker_list = nodes.get(label_selector="node-role.kubernetes.io/worker").attributes.items
+                new_worker_list = nodes.get(
+                    label_selector="node-role.kubernetes.io/worker,"
+                    "!node-role.kubernetes.io/master,"
+                    "!node-role.kubernetes.io/infra,"
+                    "!node-role.kubernetes.io/workload"
+                ).attributes.items
                 logger.debug(
                     "Number of ready workers: %d. Waiting %d seconds for next check..."
                     % (len(new_worker_list), self.poll_interval)
@@ -301,7 +311,10 @@ class Trigger_scale:
         worker_count = (
             len(
                 nodes.get(
-                    label_selector="node-role.kubernetes.io/worker,!node-role.kubernetes.io/master"
+                    label_selector="node-role.kubernetes.io/worker,"
+                    "!node-role.kubernetes.io/master,"
+                    "!node-role.kubernetes.io/infra,"
+                    "!node-role.kubernetes.io/workload"
                 ).attributes.items
             )
             or 0

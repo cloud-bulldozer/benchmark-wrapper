@@ -34,6 +34,7 @@ class Trigger_scale:
         self.poll_interval = args.poll_interval
         self.kubeconfig = args.kubeconfig
         self.is_rosa = False
+        self.timeout = int(args.timeout * 60)
         if args.rosa_cluster is not None:
             logger.info("Identified ROSA for scaling process")
             if args.rosa_token is None:
@@ -248,6 +249,8 @@ class Trigger_scale:
         logger.info("New worker per machine set %s" % (machine_spread))
 
         logger.info("Starting Patching of machine sets")
+        start_time = time.time()
+        end_time = start_time + self.timeout
         # Patch the machinesets
         if not self.is_rosa:
             for i in range(len(machineset_workers)):
@@ -269,6 +272,12 @@ class Trigger_scale:
             while new_machine_sets.status.readyReplicas != machine_spread[i]:
                 if new_machine_sets.status.readyReplicas is None and machine_spread[i] == 0:
                     break
+
+                current_time = time.time()
+                if current_time >= end_time:
+                    logger.error("Timeout %d minutes exceeded" % self.timeout)
+                    exit(1)
+
                 new_machine_sets = machinesets.get(
                     namespace="openshift-machine-api", name=machineset_worker_list[i].metadata.name
                 )
@@ -295,6 +304,10 @@ class Trigger_scale:
         ).attributes.items
         for i in range(len(new_worker_list)):
             while i < len(new_worker_list) and new_worker_list[i].spec.unschedulable:
+                current_time = time.time()
+                if current_time >= end_time:
+                    logger.error("Timeout %d minutes exceeded" % self.timeout)
+                    exit(1)
                 new_worker_list = nodes.get(
                     label_selector="node-role.kubernetes.io/worker,"
                     "!node-role.kubernetes.io/master,"
@@ -307,6 +320,27 @@ class Trigger_scale:
                 )
                 time.sleep(self.poll_interval)
         logger.info("All workers schedulable")
+
+        logger.inf("Verifying correct worker count")
+        current_workers = len(nodes.get(
+                    label_selector="node-role.kubernetes.io/worker,"
+                    "!node-role.kubernetes.io/master,"
+                    "!node-role.kubernetes.io/infra,"
+                    "!node-role.kubernetes.io/workload"
+        ).attributes.items)
+        while current_workers != int(self.scale):
+                current_time = time.time()
+                if current_time >= end_time:
+                    logger.error("Timeout %d minutes exceeded" % self.timeout)
+                    exit(1)
+
+                logger.debug(
+                    "Number of ready workers: %d. Waiting %d seconds for next check..."
+                    % (len(new_worker_list), self.poll_interval)
+                )
+                time.sleep(self.poll_interval)
+
+        logger.info("Correct worker count verified")
 
         worker_count = (
             len(
@@ -342,6 +376,7 @@ class Trigger_scale:
             workload_count,
             platform,
             action,
+            successful,
         ) = self._run_scale()
         end_time = time.time()
         elaspsed_time = end_time - start_time

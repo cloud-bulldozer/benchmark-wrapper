@@ -30,7 +30,7 @@ mechanism.
 ### Optional
 
 - `-c` / `--context`: CoreMark Pro's context argument. Defaults to `0`.
-- `-w` / `--workload`: CoreMark Pro's workload argument. Defaults to `1`.
+- `-w` / `--worker`: CoreMark Pro's worker argument. Defaults to `1`.
 - `-s` / `--sample`: Number of samples to run. Defaults to `1`.
 - `-r` / `--result-name`: The name of CoreMark Pro's result files. This includes the path relative to `--path` and does not include the extension. Defaults to `builds/linux64/gcc64/logs/linux64.gcc64`
 - `-i` / `--ingest`: Parses and ingest existing results in a CoreMark-Pro log directory. No support for multiple samples and `sample_starttime` is based on when benchmark-wrapper is run. Mainly used for debugging.
@@ -102,7 +102,7 @@ CoreMark-PRO                                       5708.35    5714.89       1.00
 {
     "_source": {
         "test_config": {
-            "workload": 0,                   # `--workload`
+            "worker": 0,                     # `--worker`
             "context": 1                     # `--context`
         },
         "sample_starttime": "2021-10.1..",   # Time when benchmark-wrapper was executed.
@@ -170,7 +170,7 @@ A `run_index` field was added to ensure performance runs with the same results a
     "_source": {
         ## Same as the `.mark` file
         "test_config": {
-            "workload": 0,
+            "worker": 0,
             "context": 1
         },
         "sample_starttime": "2021-10.1..",   # Time when benchmark-wrapper was executed.

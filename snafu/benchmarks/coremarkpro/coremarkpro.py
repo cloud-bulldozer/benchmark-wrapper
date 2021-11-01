@@ -38,10 +38,10 @@ class Coremarkpro(Benchmark):
             required=False,
         ),
         ConfigArgument(
-            "-w",
-            "--workloads",
-            help="CoreMark Pro's workloads",
-            dest="workload",
+            "-worker",
+            "--worker",
+            help="CoreMark Pro's worker",
+            dest="worker",
             type=int,
             default=0,
             required=False,
@@ -85,7 +85,7 @@ class Coremarkpro(Benchmark):
         Builds the command line arguments needed to run CoreMark Pro
         """
 
-        xcmd = f" -c{self.config.context} -w{self.config.workload}"
+        xcmd = f" -c{self.config.context} -w{self.config.worker}"
         return shlex.split(f"make TARGET=linux64 certify-all XCMD='{xcmd}'")
 
     def create_raw_results(self) -> Iterable[BenchmarkResult]:
@@ -221,7 +221,7 @@ class Coremarkpro(Benchmark):
             self.config.cluster_name = "mycluster"
 
         self.result_config["test_config"] = {
-            "workload": self.config.workload,
+            "worker": self.config.worker,
             "context": self.config.context,
         }
 

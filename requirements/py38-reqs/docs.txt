@@ -23,11 +23,11 @@ backports.zoneinfo==0.2.1
     #   tzlocal
 bleach==4.1.0
     # via nbconvert
-boto3==1.19.2
+boto3==1.19.8
     # via
     #   -r requirements/py38-reqs/install.txt
     #   snafu (setup.cfg)
-botocore==1.22.2
+botocore==1.22.8
     # via
     #   -r requirements/py38-reqs/install.txt
     #   boto3
@@ -99,7 +99,7 @@ flent==2.0.1
     # via
     #   -r requirements/py38-reqs/install.txt
     #   snafu (setup.cfg)
-google-auth==2.3.0
+google-auth==2.3.2
     # via
     #   -r requirements/py38-reqs/install.txt
     #   kubernetes
@@ -113,17 +113,16 @@ importlib-metadata==4.8.1
     # via
     #   -r requirements/py38-reqs/install.txt
     #   snafu (setup.cfg)
-ipykernel==6.4.2
+ipykernel==6.5.0
     # via
     #   notebook
     #   snafu (setup.cfg)
-ipython==7.28.0
+ipython==7.29.0
     # via
     #   ipykernel
     #   snafu (setup.cfg)
 ipython-genutils==0.2.0
     # via
-    #   ipykernel
     #   nbformat
     #   notebook
 jedi==0.18.0
@@ -149,7 +148,7 @@ jupyter-client==7.0.6
     #   ipykernel
     #   nbclient
     #   notebook
-jupyter-core==4.8.1
+jupyter-core==4.9.1
     # via
     #   jupyter-client
     #   nbconvert
@@ -219,7 +218,7 @@ openshift==0.11
     # via
     #   -r requirements/py38-reqs/install.txt
     #   snafu (setup.cfg)
-packaging==21.0
+packaging==21.2
     # via
     #   -r requirements/py38-reqs/install.txt
     #   bleach
@@ -247,7 +246,7 @@ prometheus-api-client==0.4.2
     # via
     #   -r requirements/py38-reqs/install.txt
     #   snafu (setup.cfg)
-prometheus-client==0.11.0
+prometheus-client==0.12.0
     # via notebook
 prompt-toolkit==3.0.21
     # via ipython
@@ -272,7 +271,7 @@ pygments==2.10.0
     #   jupyterlab-pygments
     #   nbconvert
     #   sphinx
-pyparsing==3.0.1
+pyparsing==2.4.7
     # via
     #   -r requirements/py38-reqs/install.txt
     #   packaging
@@ -335,7 +334,7 @@ rsa==4.7.2
     # via
     #   -r requirements/py38-reqs/install.txt
     #   google-auth
-ruamel.yaml==0.17.16
+ruamel.yaml==0.17.17
     # via
     #   -r requirements/py38-reqs/install.txt
     #   openshift
@@ -357,6 +356,7 @@ six==1.16.0
     # via
     #   -r requirements/py38-reqs/install.txt
     #   bleach
+    #   google-auth
     #   kubernetes
     #   openshift
     #   python-dateutil
@@ -396,7 +396,7 @@ tornado==6.1
     #   jupyter-client
     #   notebook
     #   terminado
-traitlets==5.1.0
+traitlets==5.1.1
     # via
     #   ipykernel
     #   ipython
@@ -412,11 +412,11 @@ ttp==0.8.1
     # via
     #   -r requirements/py38-reqs/install.txt
     #   snafu (setup.cfg)
-tzdata==2021.4
+tzdata==2021.5
     # via
     #   -r requirements/py38-reqs/install.txt
     #   pytz-deprecation-shim
-tzlocal==4.0.1
+tzlocal==4.1
     # via
     #   -r requirements/py38-reqs/install.txt
     #   dateparser

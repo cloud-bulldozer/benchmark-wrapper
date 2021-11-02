@@ -13,11 +13,11 @@ backports.zoneinfo==0.2.1
     #   -r requirements/py37-reqs/install.txt
     #   pytz-deprecation-shim
     #   tzlocal
-boto3==1.19.2
+boto3==1.19.8
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-botocore==1.22.2
+botocore==1.22.8
     # via
     #   -r requirements/py37-reqs/install.txt
     #   boto3
@@ -44,7 +44,7 @@ configparser==5.0.2
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-coverage[toml]==6.0.2
+coverage[toml]==6.1.1
     # via pytest-cov
 dataclasses==0.6
     # via
@@ -73,7 +73,7 @@ elasticsearch==7.13.4
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-filelock==3.3.1
+filelock==3.3.2
     # via
     #   tox
     #   virtualenv
@@ -81,7 +81,7 @@ flent==2.0.1
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-google-auth==2.3.0
+google-auth==2.3.2
     # via
     #   -r requirements/py37-reqs/install.txt
     #   kubernetes
@@ -136,7 +136,7 @@ openshift==0.11
     # via
     #   -r requirements/py37-reqs/install.txt
     #   snafu (setup.cfg)
-packaging==21.0
+packaging==21.2
     # via
     #   -r requirements/py37-reqs/install.txt
     #   pytest
@@ -169,7 +169,7 @@ pyasn1-modules==0.2.8
     # via
     #   -r requirements/py37-reqs/install.txt
     #   google-auth
-pyparsing==3.0.1
+pyparsing==2.4.7
     # via
     #   -r requirements/py37-reqs/install.txt
     #   packaging
@@ -228,7 +228,7 @@ rsa==4.7.2
     # via
     #   -r requirements/py37-reqs/install.txt
     #   google-auth
-ruamel.yaml==0.17.16
+ruamel.yaml==0.17.17
     # via
     #   -r requirements/py37-reqs/install.txt
     #   openshift
@@ -247,6 +247,7 @@ scipy==1.7.1
 six==1.16.0
     # via
     #   -r requirements/py37-reqs/install.txt
+    #   google-auth
     #   kubernetes
     #   openshift
     #   python-dateutil
@@ -260,7 +261,7 @@ toml==0.10.2
     # via
     #   pytest
     #   tox
-tomli==1.2.1
+tomli==1.2.2
     # via coverage
 tox==3.24.4
     # via snafu (setup.cfg)
@@ -272,11 +273,11 @@ typing-extensions==3.10.0.2
     # via
     #   -r requirements/py37-reqs/install.txt
     #   importlib-metadata
-tzdata==2021.4
+tzdata==2021.5
     # via
     #   -r requirements/py37-reqs/install.txt
     #   pytz-deprecation-shim
-tzlocal==4.0.1
+tzlocal==4.1
     # via
     #   -r requirements/py37-reqs/install.txt
     #   dateparser
@@ -287,7 +288,7 @@ urllib3==1.26.7
     #   elasticsearch
     #   kubernetes
     #   requests
-virtualenv==20.9.0
+virtualenv==20.10.0
     # via tox
 websocket-client==1.2.1
     # via

@@ -129,8 +129,8 @@ class _trigger_smallfile:
             data = json.load(f)
             timestamp = data["results"]["date"]
             params = data["params"]
-            for tid in data["results"]["in-thread"].keys():
-                thrd = data["results"]["in-thread"][tid]
+            for tid in data["results"]["thread"].keys():
+                thrd = data["results"]["thread"][tid]
                 thrd["params"] = params
                 thrd["fsinfo"] = fsdict
                 thrd["cluster_name"] = self.cluster_name
@@ -146,7 +146,7 @@ class _trigger_smallfile:
         # process response time data
 
         elapsed_time = float(data["results"]["elapsed"])
-        start_time = data["results"]["start-time"]
+        start_time = data["results"]["startTime"]
         cmd = [
             "smallfile_rsptimes_stats.py",
             "--time-interval",

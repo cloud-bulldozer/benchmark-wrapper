@@ -146,7 +146,7 @@ class _trigger_smallfile:
         # process response time data
 
         elapsed_time = float(data["results"]["elapsed"])
-        start_time = data["results"]["start-time"]
+        start_time = data["results"]["startTime"]
         cmd = [
             "smallfile_rsptimes_stats.py",
             "--time-interval",

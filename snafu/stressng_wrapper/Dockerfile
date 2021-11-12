@@ -9,6 +9,7 @@ RUN dnf install -y --enablerepo=centos8 --enablerepo=centos8-appstream --nodocs 
 
 RUN dnf clean all
 COPY . /opt/snafu
+RUN pip3 install --upgrade pip
 RUN pip3 install -e /opt/snafu/
 RUN ln -s /usr/bin/python3 /usr/bin/python
 

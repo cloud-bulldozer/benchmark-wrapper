@@ -23,6 +23,7 @@ FROM registry.access.redhat.com/ubi8:latest
 COPY /snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
 RUN dnf install -y --nodocs git python3-pip iputils redis --enablerepo=centos8-appstream && dnf clean all
 
+RUN pip3 install --upgrade pip
 RUN pip3 install flent
 
 RUN ln -s /usr/bin/python3 /usr/bin/python

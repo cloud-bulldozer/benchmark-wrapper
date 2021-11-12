@@ -24,6 +24,7 @@ RUN chmod +x /usr/local/bin/run*
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN mkdir -p /opt/snafu/
 COPY . /opt/snafu/
+RUN pip3 install --upgrade pip
 RUN pip3 install -e /opt/snafu/
 
 WORKDIR /opt/trex/v2.87

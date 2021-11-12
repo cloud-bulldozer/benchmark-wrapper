@@ -5,4 +5,5 @@ RUN dnf install -y --nodocs https://dl.fedoraproject.org/pub/epel/epel-release-l
 RUN dnf install -y --nodocs git java python3 python2 python3-pip procps-ng iproute net-tools ethtool nmap iputils && dnf clean all
 RUN ln -s /usr/bin/python3 /usr/bin/python
 COPY . /opt/snafu/
+RUN pip3 install --upgrade pip
 RUN pip3 install -e /opt/snafu/

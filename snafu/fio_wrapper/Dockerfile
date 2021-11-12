@@ -9,4 +9,5 @@ COPY --from=builder /fio-fio-3.27/fio /usr/local/bin/fio
 RUN dnf install -y --nodocs git python3-pip libaio zlib procps-ng iproute net-tools ethtool nmap iputils && dnf clean all
 RUN ln -s /usr/bin/python3 /usr/bin/python
 COPY . /opt/snafu
+RUN pip3 install --upgrade pip
 RUN pip3 install -e /opt/snafu/

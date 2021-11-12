@@ -8,4 +8,5 @@ RUN dnf install -y --nodocs python3.8 python38-devel procps-ng iproute net-tools
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN pip3 install --upgrade pip # benchmark-wrapper fails to install otherwise
 COPY . /opt/snafu
+RUN pip3 install --upgrade pip
 RUN pip3 install -r /opt/snafu/requirements/py38-reqs/install.txt -e /opt/snafu

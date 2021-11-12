@@ -7,4 +7,5 @@ RUN curl -L https://github.com/tsenart/vegeta/releases/download/v12.8.3/vegeta-1
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN mkdir -p /opt/snafu/
 COPY . /opt/snafu/
+RUN pip3 install --upgrade pip
 RUN pip3 install -e /opt/snafu/

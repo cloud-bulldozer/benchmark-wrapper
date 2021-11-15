@@ -3,7 +3,7 @@ FROM registry.access.redhat.com/ubi8:latest
 # install requirements
 COPY snafu/image_resources/centos8.repo /etc/yum.repos.d/centos8.repo
 COPY snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
-RUN dnf install -y --enablerepo=centos8 --enablerepo=centos8-appstream --nodocs tcl unixODBC python3-pip python3-requests
+RUN dnf install -y --enablerepo=centos8 --enablerepo=centos8-appstream --nodocs tcl unixODBC python3-pip python3-requests gcc
 RUN dnf install -y --enablerepo=centos8 --enablerepo=centos8-appstream --nodocs procps-ng iproute net-tools ethtool nmap iputils
 RUN dnf -y install --enablerepo=centos8 --enablerepo=centos8-appstream --nodocs mysql-libs mysql-common mysql-devel mysql-errmsg libpq
 

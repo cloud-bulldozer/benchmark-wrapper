@@ -1,7 +1,7 @@
 FROM registry.centos.org/centos:8
 
 COPY snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
-RUN dnf install -y epel-release && dnf install -y --nodocs redis python3 python3-pip openssl-devel ck-devel yum-plugin-copr && \
+RUN dnf install -y epel-release && dnf install -y --nodocs redis python3 python3-pip openssl-devel ck-devel yum-plugin-copr gcc && \
     dnf copr enable @dnsoarc/dnsperf -y && \
     dnf install dnsperf -y && \
     dnf clean all && rm -rf /var/cache/yum

@@ -1,6 +1,6 @@
 FROM registry.access.redhat.com/ubi8:latest
 
-RUN dnf install -y --nodocs git python3-pip gcc
+RUN dnf install -y --nodocs git python3-pip python3-devel gcc
 RUN ln -s /usr/bin/python3 /usr/bin/python
 COPY . /opt/snafu/
 RUN pip3 install --upgrade pip

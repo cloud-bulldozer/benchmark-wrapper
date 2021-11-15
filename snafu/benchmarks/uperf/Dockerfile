@@ -8,4 +8,5 @@ RUN dnf install -y uperf && dnf clean all
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN mkdir -p /opt/snafu/
 COPY . /opt/snafu/
+RUN pip3 install --upgrade pip
 RUN pip3 install -e /opt/snafu/

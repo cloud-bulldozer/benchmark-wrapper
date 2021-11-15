@@ -1,7 +1,7 @@
 FROM registry.access.redhat.com/ubi8:latest
 
 # install requirements
-RUN dnf -y install --nodocs git wget procps python3 vim python3-pip pciutils && dnf clean all
+RUN dnf -y install --nodocs git wget procps python3 vim python3-pip python3-devel pciutils gcc && dnf clean all
 COPY snafu/image_resources/centos8.repo /etc/yum.repos.d/centos8.repo
 COPY snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
 RUN dnf install -y --nodocs hostname iproute net-tools ethtool nmap iputils https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && dnf clean all
@@ -24,6 +24,7 @@ RUN chmod +x /usr/local/bin/run*
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN mkdir -p /opt/snafu/
 COPY . /opt/snafu/
+RUN pip3 install --upgrade pip
 RUN pip3 install -e /opt/snafu/
 
 WORKDIR /opt/trex/v2.87

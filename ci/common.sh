@@ -25,7 +25,7 @@ function update_operator_image() {
   sed -i "s#${default_ripsaw_image_prefix}/hammerdb:master#${SNAFU_WRAPPER_IMAGE_PREFIX}/hammerdb:${SNAFU_IMAGE_TAG}#g" roles/hammerdb/templates/*
   sed -i "s#${default_ripsaw_image_prefix}/iperf3:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/iperf3:${SNAFU_IMAGE_TAG}#g" roles/iperf3/templates/*
   sed -i "s#${default_ripsaw_image_prefix}/pgbench:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/pgbench:${SNAFU_IMAGE_TAG}#g"  roles/pgbench/defaults/main.yml
-  sed -i "s#${default_ripsaw_image_prefix}/smallfile:master#${SNAFU_WRAPPER_IMAGE_PREFIX}/smallfile:${SNAFU_IMAGE_TAG}#g" roles/smallfile/templates/* roles/smallfile/tasks/*
+  sed -i "s#${default_ripsaw_image_prefix}/smallfile:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/smallfile:${SNAFU_IMAGE_TAG}#g" roles/smallfile/templates/* roles/smallfile/tasks/*
   sed -i "s#${default_ripsaw_image_prefix}/sysbench:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/sysbench:${SNAFU_IMAGE_TAG}#g" roles/sysbench/templates/*
   sed -i "s#${default_ripsaw_image_prefix}/uperf:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/uperf:${SNAFU_IMAGE_TAG}#g" roles/uperf/templates/*
   sed -i "s#${default_ripsaw_image_prefix}/ycsb-server:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/ycsb-server:${SNAFU_IMAGE_TAG}#g" roles/ycsb/templates/*

@@ -33,6 +33,8 @@ function update_operator_image() {
   sed -i "s#${default_ripsaw_image_prefix}/scale_openshift:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/scale_openshift:${SNAFU_IMAGE_TAG}#g" roles/scale_openshift/templates/*
   sed -i "s#${default_ripsaw_image_prefix}/stressng:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/stressng:${SNAFU_IMAGE_TAG}#g" roles/stressng/templates/*
   sed -i "s#${default_ripsaw_image_prefix}/flent:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/flent:${SNAFU_IMAGE_TAG}#g" roles/flent/templates/*
+  sed -i "s#${default_ripsaw_image_prefix}/image_pull:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/image_pull:${SNAFU_IMAGE_TAG}#g" roles/image_pull/templates/*
+  sed -i "s#${default_ripsaw_image_prefix}/log_generator:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/log_generator:${SNAFU_IMAGE_TAG}#g" roles/log_generator/templates/*
   image_spec=$image_location/$image_account/benchmark-operator:$SNAFU_IMAGE_TAG
   make image-build image-push deploy IMG=$image_spec
   kubectl wait --for=condition=available "deployment/benchmark-controller-manager" -n benchmark-operator --timeout=300s

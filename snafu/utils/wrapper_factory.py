@@ -45,6 +45,7 @@ wrapper_dict = {
 
 
 def wrapper_factory(tool_name, parser):
+    logger.debug("looking for %s" % tool_name)
     if TOOLS.get(tool_name, None) is not None:
         wrapper = TOOLS[tool_name]
         wrapper_obj = wrapper()

@@ -11,31 +11,32 @@ backports.entry-points-selectable==1.1.0
 backports.zoneinfo==0.2.1
     # via
     #   -r requirements/py36-reqs/install.txt
+    #   pytz-deprecation-shim
     #   tzlocal
-boto3==1.18.40
+boto3==1.19.8
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-botocore==1.21.40
+botocore==1.22.8
     # via
     #   -r requirements/py36-reqs/install.txt
     #   boto3
     #   s3transfer
-cachetools==4.2.2
+cachetools==4.2.4
     # via
     #   -r requirements/py36-reqs/install.txt
     #   google-auth
-certifi==2021.5.30
+certifi==2021.10.8
     # via
     #   -r requirements/py36-reqs/install.txt
     #   elasticsearch
     #   kubernetes
     #   requests
-charset-normalizer==2.0.4
+charset-normalizer==2.0.7
     # via
     #   -r requirements/py36-reqs/install.txt
     #   requests
-configargparse==1.5.2
+configargparse==1.5.3
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
@@ -43,13 +44,13 @@ configparser==5.0.2
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-coverage==5.5
+coverage[toml]==6.1.1
     # via pytest-cov
 dataclasses==0.8
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-dateparser==1.0.0
+dateparser==1.1.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   prometheus-api-client
@@ -57,8 +58,12 @@ dictdiffer==0.9.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   openshift
-distlib==0.3.2
+distlib==0.3.3
     # via virtualenv
+distro==1.6.0
+    # via
+    #   -r requirements/py36-reqs/install.txt
+    #   snafu (setup.cfg)
 docutils==0.16
     # via
     #   -r requirements/py36-reqs/install.txt
@@ -68,7 +73,7 @@ elasticsearch==7.13.4
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-filelock==3.0.12
+filelock==3.3.2
     # via
     #   tox
     #   virtualenv
@@ -76,11 +81,11 @@ flent==2.0.1
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-google-auth==2.0.2
+google-auth==2.3.2
     # via
     #   -r requirements/py36-reqs/install.txt
     #   kubernetes
-idna==3.2
+idna==3.3
     # via
     #   -r requirements/py36-reqs/install.txt
     #   requests
@@ -92,14 +97,14 @@ importlib-metadata==4.8.1
     #   snafu (setup.cfg)
     #   tox
     #   virtualenv
-importlib-resources==5.2.2
+importlib-resources==5.4.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   backports.zoneinfo
     #   virtualenv
 iniconfig==1.1.1
     # via pytest
-jinja2==3.0.1
+jinja2==3.0.2
     # via
     #   -r requirements/py36-reqs/install.txt
     #   openshift
@@ -136,7 +141,7 @@ openshift==0.11
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-packaging==21.0
+packaging==21.2
     # via
     #   -r requirements/py36-reqs/install.txt
     #   pytest
@@ -146,7 +151,7 @@ pandas==1.1.5
     # via
     #   -r requirements/py36-reqs/install.txt
     #   prometheus-api-client
-platformdirs==2.3.0
+platformdirs==2.4.0
     # via virtualenv
 pluggy==1.0.0
     # via
@@ -177,7 +182,7 @@ pytest==6.2.5
     # via
     #   pytest-cov
     #   snafu (setup.cfg)
-pytest-cov==2.12.1
+pytest-cov==3.0.0
     # via snafu (setup.cfg)
 python-dateutil==2.8.2
     # via
@@ -191,12 +196,16 @@ python-string-utils==1.0.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   openshift
-pytz==2021.1
+pytz==2021.3
     # via
     #   -r requirements/py36-reqs/install.txt
     #   dateparser
     #   pandas
-pyyaml==5.4.1
+pytz-deprecation-shim==0.1.0.post0
+    # via
+    #   -r requirements/py36-reqs/install.txt
+    #   tzlocal
+pyyaml==6.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   kubernetes
@@ -205,7 +214,7 @@ redis==3.5.3
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-regex==2021.8.28
+regex==2021.10.23
     # via
     #   -r requirements/py36-reqs/install.txt
     #   dateparser
@@ -224,7 +233,7 @@ rsa==4.7.2
     # via
     #   -r requirements/py36-reqs/install.txt
     #   google-auth
-ruamel.yaml==0.17.16
+ruamel.yaml==0.17.17
     # via
     #   -r requirements/py36-reqs/install.txt
     #   openshift
@@ -243,6 +252,7 @@ scipy==1.5.4
 six==1.16.0
     # via
     #   -r requirements/py36-reqs/install.txt
+    #   google-auth
     #   kubernetes
     #   openshift
     #   python-dateutil
@@ -255,11 +265,12 @@ statistics==1.0.3.5
 toml==0.10.2
     # via
     #   pytest
-    #   pytest-cov
     #   tox
-tox==3.24.3
+tomli==1.2.2
+    # via coverage
+tox==3.24.4
     # via snafu (setup.cfg)
-ttp==0.8.0
+ttp==0.8.1
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
@@ -267,24 +278,28 @@ typing-extensions==3.10.0.2
     # via
     #   -r requirements/py36-reqs/install.txt
     #   importlib-metadata
-tzlocal==3.0
+tzdata==2021.5
+    # via
+    #   -r requirements/py36-reqs/install.txt
+    #   pytz-deprecation-shim
+tzlocal==4.1
     # via
     #   -r requirements/py36-reqs/install.txt
     #   dateparser
-urllib3==1.26.6
+urllib3==1.26.7
     # via
     #   -r requirements/py36-reqs/install.txt
     #   botocore
     #   elasticsearch
     #   kubernetes
     #   requests
-virtualenv==20.7.2
+virtualenv==20.10.0
     # via tox
 websocket-client==1.2.1
     # via
     #   -r requirements/py36-reqs/install.txt
     #   kubernetes
-zipp==3.5.0
+zipp==3.6.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   importlib-metadata

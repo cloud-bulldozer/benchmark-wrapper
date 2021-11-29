@@ -76,7 +76,9 @@ wait_clean
 for dir in ${test_list}; do
   start_time=`date`
   figlet "CI test for ${dir}"
-  if $dir/ci_test.sh; then
+  if [ ! -f $dir/ci_test.sh ]; then
+    result="No CI test"
+  elif $dir/ci_test.sh; then
     result="PASS"
   else
     result="FAIL"

@@ -20,19 +20,17 @@ NOTOK=1
 # which will be the first thing the wrapper ci_test.sh does to it
 
 function update_operator_image() {
+
+  WORKLOADS=("hammerdb" "iperf3" "sysbench" "uperf" "vegeta" "scale_openshift" "stressng" "flent" "image_pull" "log_generator")
+
+  for workload in "${WORKLOADS[@]}"; do
+      sed -i "s#${default_ripsaw_image_prefix}/${workload}:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/${workload}:${SNAFU_IMAGE_TAG}#g" roles/${workload}/templates/*
+  done
   sed -i "s#${default_ripsaw_image_prefix}/fio:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/fio:${SNAFU_IMAGE_TAG}#g" roles/fio_distributed/templates/*
-  sed -i "s#${default_ripsaw_image_prefix}/fs-drift:master#${SNAFU_WRAPPER_IMAGE_PREFIX}/fs-drift:${SNAFU_IMAGE_TAG}#g" roles/fs-drift/templates/* roles/fs-drift/tasks/*
-  sed -i "s#${default_ripsaw_image_prefix}/hammerdb:master#${SNAFU_WRAPPER_IMAGE_PREFIX}/hammerdb:${SNAFU_IMAGE_TAG}#g" roles/hammerdb/templates/*
-  sed -i "s#${default_ripsaw_image_prefix}/iperf3:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/iperf3:${SNAFU_IMAGE_TAG}#g" roles/iperf3/templates/*
-  sed -i "s#${default_ripsaw_image_prefix}/pgbench:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/pgbench:${SNAFU_IMAGE_TAG}#g"  roles/pgbench/defaults/main.yml
-  sed -i "s#${default_ripsaw_image_prefix}/smallfile:master#${SNAFU_WRAPPER_IMAGE_PREFIX}/smallfile:${SNAFU_IMAGE_TAG}#g" roles/smallfile/templates/* roles/smallfile/tasks/*
-  sed -i "s#${default_ripsaw_image_prefix}/sysbench:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/sysbench:${SNAFU_IMAGE_TAG}#g" roles/sysbench/templates/*
-  sed -i "s#${default_ripsaw_image_prefix}/uperf:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/uperf:${SNAFU_IMAGE_TAG}#g" roles/uperf/templates/*
   sed -i "s#${default_ripsaw_image_prefix}/ycsb-server:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/ycsb-server:${SNAFU_IMAGE_TAG}#g" roles/ycsb/templates/*
-  sed -i "s#${default_ripsaw_image_prefix}/vegeta:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/vegeta:${SNAFU_IMAGE_TAG}#g" roles/vegeta/templates/*
-  sed -i "s#${default_ripsaw_image_prefix}/scale_openshift:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/scale_openshift:${SNAFU_IMAGE_TAG}#g" roles/scale_openshift/templates/*
-  sed -i "s#${default_ripsaw_image_prefix}/stressng:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/stressng:${SNAFU_IMAGE_TAG}#g" roles/stressng/templates/*
-  sed -i "s#${default_ripsaw_image_prefix}/flent:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/flent:${SNAFU_IMAGE_TAG}#g" roles/flent/templates/*
+  sed -i "s#${default_ripsaw_image_prefix}/pgbench:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/pgbench:${SNAFU_IMAGE_TAG}#g"  roles/pgbench/defaults/main.yml
+  sed -i "s#${default_ripsaw_image_prefix}/fs-drift:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/fs-drift:${SNAFU_IMAGE_TAG}#g" roles/fs-drift/templates/* roles/fs-drift/tasks/*
+  sed -i "s#${default_ripsaw_image_prefix}/smallfile:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/smallfile:${SNAFU_IMAGE_TAG}#g" roles/smallfile/templates/* roles/smallfile/tasks/*
   image_spec=$image_location/$image_account/benchmark-operator:$SNAFU_IMAGE_TAG
   make image-build image-push deploy IMG=$image_spec
   kubectl wait --for=condition=available "deployment/benchmark-controller-manager" -n benchmark-operator --timeout=300s

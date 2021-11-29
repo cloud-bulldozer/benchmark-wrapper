@@ -21,35 +21,36 @@ backcall==0.2.0
 backports.zoneinfo==0.2.1
     # via
     #   -r requirements/py36-reqs/install.txt
+    #   pytz-deprecation-shim
     #   tzlocal
 bleach==4.1.0
     # via nbconvert
-boto3==1.18.40
+boto3==1.19.8
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-botocore==1.21.40
+botocore==1.22.8
     # via
     #   -r requirements/py36-reqs/install.txt
     #   boto3
     #   s3transfer
-cachetools==4.2.2
+cachetools==4.2.4
     # via
     #   -r requirements/py36-reqs/install.txt
     #   google-auth
-certifi==2021.5.30
+certifi==2021.10.8
     # via
     #   -r requirements/py36-reqs/install.txt
     #   elasticsearch
     #   kubernetes
     #   requests
-cffi==1.14.6
+cffi==1.15.0
     # via argon2-cffi
-charset-normalizer==2.0.4
+charset-normalizer==2.0.7
     # via
     #   -r requirements/py36-reqs/install.txt
     #   requests
-configargparse==1.5.2
+configargparse==1.5.3
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
@@ -61,7 +62,7 @@ dataclasses==0.8
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-dateparser==1.0.0
+dateparser==1.1.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   prometheus-api-client
@@ -75,6 +76,10 @@ dictdiffer==0.9.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   openshift
+distro==1.6.0
+    # via
+    #   -r requirements/py36-reqs/install.txt
+    #   snafu (setup.cfg)
 docutils==0.16
     # via
     #   -r requirements/py36-reqs/install.txt
@@ -96,11 +101,11 @@ flent==2.0.1
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-google-auth==2.0.2
+google-auth==2.3.2
     # via
     #   -r requirements/py36-reqs/install.txt
     #   kubernetes
-idna==3.2
+idna==3.3
     # via
     #   -r requirements/py36-reqs/install.txt
     #   requests
@@ -111,11 +116,11 @@ importlib-metadata==4.8.1
     #   -r requirements/py36-reqs/install.txt
     #   jsonschema
     #   snafu (setup.cfg)
-importlib-resources==5.2.2
+importlib-resources==5.4.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   backports.zoneinfo
-ipykernel==5.5.5
+ipykernel==5.5.6
     # via
     #   notebook
     #   snafu (setup.cfg)
@@ -125,12 +130,13 @@ ipython==7.16.1
     #   snafu (setup.cfg)
 ipython-genutils==0.2.0
     # via
+    #   ipykernel
     #   nbformat
     #   notebook
     #   traitlets
 jedi==0.18.0
     # via ipython
-jinja2==3.0.1
+jinja2==3.0.2
     # via
     #   -r requirements/py36-reqs/install.txt
     #   myst-parser
@@ -146,12 +152,12 @@ jmespath==0.10.0
     #   botocore
 jsonschema==3.2.0
     # via nbformat
-jupyter-client==7.0.2
+jupyter-client==7.0.6
     # via
     #   ipykernel
     #   nbclient
     #   notebook
-jupyter-core==4.7.1
+jupyter-core==4.9.1
     # via
     #   jupyter-client
     #   nbconvert
@@ -200,7 +206,7 @@ nest-asyncio==1.5.1
     # via
     #   jupyter-client
     #   nbclient
-notebook==6.4.3
+notebook==6.4.5
     # via snafu (setup.cfg)
 numpy==1.19.5
     # via
@@ -217,7 +223,7 @@ openshift==0.11
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-packaging==21.0
+packaging==21.2
     # via
     #   -r requirements/py36-reqs/install.txt
     #   bleach
@@ -229,7 +235,7 @@ pandas==1.1.5
     #   prometheus-api-client
 pandoc==1.1.0
     # via snafu (setup.cfg)
-pandocfilters==1.4.3
+pandocfilters==1.5.0
     # via nbconvert
 parso==0.8.2
     # via jedi
@@ -245,9 +251,9 @@ prometheus-api-client==0.4.2
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-prometheus-client==0.11.0
+prometheus-client==0.12.0
     # via notebook
-prompt-toolkit==3.0.20
+prompt-toolkit==3.0.21
     # via ipython
 ptyprocess==0.7.0
     # via
@@ -289,19 +295,23 @@ python-string-utils==1.0.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   openshift
-pytz==2021.1
+pytz==2021.3
     # via
     #   -r requirements/py36-reqs/install.txt
     #   babel
     #   dateparser
     #   pandas
-pyyaml==5.4.1
+pytz-deprecation-shim==0.1.0.post0
+    # via
+    #   -r requirements/py36-reqs/install.txt
+    #   tzlocal
+pyyaml==6.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   kubernetes
     #   myst-parser
     #   snafu (setup.cfg)
-pyzmq==22.2.1
+pyzmq==22.3.0
     # via
     #   jupyter-client
     #   notebook
@@ -309,7 +319,7 @@ redis==3.5.3
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-regex==2021.8.28
+regex==2021.10.23
     # via
     #   -r requirements/py36-reqs/install.txt
     #   dateparser
@@ -329,7 +339,7 @@ rsa==4.7.2
     # via
     #   -r requirements/py36-reqs/install.txt
     #   google-auth
-ruamel.yaml==0.17.16
+ruamel.yaml==0.17.17
     # via
     #   -r requirements/py36-reqs/install.txt
     #   openshift
@@ -351,6 +361,7 @@ six==1.16.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   bleach
+    #   google-auth
     #   jsonschema
     #   kubernetes
     #   openshift
@@ -364,7 +375,7 @@ sphinx==4.2.0
     #   nbsphinx
     #   snafu (setup.cfg)
     #   sphinx-rtd-theme
-sphinx-rtd-theme==0.5.2
+sphinx-rtd-theme==1.0.0
     # via snafu (setup.cfg)
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
@@ -403,7 +414,7 @@ traitlets==4.3.3
     #   nbformat
     #   nbsphinx
     #   notebook
-ttp==0.8.0
+ttp==0.8.1
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
@@ -412,11 +423,15 @@ typing-extensions==3.10.0.2
     #   -r requirements/py36-reqs/install.txt
     #   importlib-metadata
     #   markdown-it-py
-tzlocal==3.0
+tzdata==2021.5
+    # via
+    #   -r requirements/py36-reqs/install.txt
+    #   pytz-deprecation-shim
+tzlocal==4.1
     # via
     #   -r requirements/py36-reqs/install.txt
     #   dateparser
-urllib3==1.26.6
+urllib3==1.26.7
     # via
     #   -r requirements/py36-reqs/install.txt
     #   botocore
@@ -431,7 +446,7 @@ websocket-client==1.2.1
     # via
     #   -r requirements/py36-reqs/install.txt
     #   kubernetes
-zipp==3.5.0
+zipp==3.6.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   importlib-metadata

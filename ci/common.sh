@@ -29,7 +29,7 @@ function update_operator_image() {
   sed -i "s#${default_ripsaw_image_prefix}/fio:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/fio:${SNAFU_IMAGE_TAG}#g" roles/fio_distributed/templates/*
   sed -i "s#${default_ripsaw_image_prefix}/ycsb-server:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/ycsb-server:${SNAFU_IMAGE_TAG}#g" roles/ycsb/templates/*
   sed -i "s#${default_ripsaw_image_prefix}/pgbench:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/pgbench:${SNAFU_IMAGE_TAG}#g"  roles/pgbench/defaults/main.yml
-  sed -i "s#${default_ripsaw_image_prefix}/fs-drift:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/fs-drift:${SNAFU_IMAGE_TAG}#g" roles/fs-drift/templates/* roles/fs-drift/tasks/*
+  sed -i "s#${default_ripsaw_image_prefix}/fs_drift:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/fs_drift:${SNAFU_IMAGE_TAG}#g" roles/fs_drift/templates/* roles/fs_drift/tasks/*
   sed -i "s#${default_ripsaw_image_prefix}/smallfile:latest#${SNAFU_WRAPPER_IMAGE_PREFIX}/smallfile:${SNAFU_IMAGE_TAG}#g" roles/smallfile/templates/* roles/smallfile/tasks/*
   image_spec=$image_location/$image_account/benchmark-operator:$SNAFU_IMAGE_TAG
   make image-build image-push deploy IMG=$image_spec

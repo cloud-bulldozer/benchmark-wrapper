@@ -19,9 +19,8 @@ class SnafuResultException(Exception):
 
 
 # get an ES
-def connect_es():
+def connect_es(es_url=es_dev_server):
     cert_verify = False if os.getenv("ES_NO_VERIFY_CERT") else True
-    es_url = os.getenv("ES_SERVER", default=es_dev_server)
     print("Elasticsearch server at {}, verify_certs {}".format(es_url, str(cert_verify)))
     es = Elasticsearch([es_url], verify_certs=cert_verify)
     return es

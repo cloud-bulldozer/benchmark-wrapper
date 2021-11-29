@@ -98,6 +98,7 @@ def main():
     if es_settings["server"] and ":443" in es_settings["server"]:
         es_settings["verify_cert"] = "false"
     if es_settings["server"]:
+        index_args.elasticsearch_obj = None
         index_args.prefix = os.getenv("es_index", index_args.prefix)
         logger.info("Using elasticsearch server with host: %s" % es_settings["server"])
         logger.info("Using index prefix for ES: %s" % index_args.prefix)
@@ -116,6 +117,7 @@ def main():
                 es = elasticsearch.Elasticsearch([es_settings["server"]], send_get_body_as="POST")
             logger.info("Connected to the elasticsearch cluster with info as follows:")
             logger.info(json.dumps(es.info(), indent=4))
+            index_args.elasticsearch_obj = es
         except Exception as e:
             logger.warn("Elasticsearch connection caused an exception: %s" % e)
             index_args.index_results = False
@@ -216,6 +218,10 @@ def process_generator(index_args, parser):
                         es_valid_document = get_valid_es_document(action, index, index_args)
                         yield es_valid_document
 
+    if benchmark_wrapper_object_generator.requires_postprocessing and index_args.index_results:
+        logger.info('benchmark requires postprocessing from ES data, initiating...')
+        benchmark_wrapper_object_generator.post_process():
+
 
 def generate_wrapper_object(index_args, parser):
     benchmark_wrapper_object = wrapper_factory(index_args.tool, parser)
@@ -275,6 +281,7 @@ def index_prom_data(index_args, action):
                 es = elasticsearch.Elasticsearch([es_settings["server"]], send_get_body_as="POST")
             logger.info("Connected to the elasticsearch cluster with info as follows:")
             logger.info(json.dumps(es.info(), indent=4))
+            index_args.es = es
         except Exception as e:
             logger.warn("Elasticsearch connection caused an exception: %s" % e)
             index_args.index_results = False
@@ -302,6 +309,7 @@ def index_prom_data(index_args, action):
         tdelta = end_t - start_t
         logger.info("Prometheus indexing duration of execution - %s" % tdelta)
 
+        
 
 def process_archive_file(index_args):
 

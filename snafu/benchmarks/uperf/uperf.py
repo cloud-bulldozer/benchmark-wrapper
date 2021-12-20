@@ -273,21 +273,19 @@ class Uperf(Benchmark):
             timestamp, num_bytes, ops = result.timestamp, result.bytes, result.ops
 
             norm_ops = ops - prev_ops
-            if norm_ops == 0:
-                norm_ltcy = 0.0
-            else:
+            if norm_ops != 0 and prev_timestamp != 0.0:
                 norm_ltcy = ((timestamp - prev_timestamp) / norm_ops) * 1000
 
-            datapoint = UperfStat(
-                uperf_ts=datetime.datetime.fromtimestamp(int(timestamp) / 1000).isoformat(),
-                bytes=num_bytes,
-                norm_byte=num_bytes - prev_bytes,
-                ops=ops,
-                norm_ops=norm_ops,
-                norm_ltcy=norm_ltcy,
-            )
+                datapoint = UperfStat(
+                    uperf_ts=datetime.datetime.fromtimestamp(int(timestamp) / 1000).isoformat(),
+                    bytes=num_bytes,
+                    norm_byte=num_bytes - prev_bytes,
+                    ops=ops,
+                    norm_ops=norm_ops,
+                    norm_ltcy=norm_ltcy,
+                )
 
-            processed.append(datapoint)
+                processed.append(datapoint)
             prev_timestamp, prev_bytes, prev_ops = timestamp, num_bytes, ops
 
         return processed

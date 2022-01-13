@@ -52,8 +52,8 @@ for hit in hit_generator:
     sample = int(src["sample"])
     files = int(src["files"])
     records = int(src["records"])
-    file_size_KiB = int(src["params"]["file-size"])
-    files_per_sec = float(src["files-per-sec"])
+    file_size_KiB = int(src["params"]["file_size"])
+    files_per_sec = float(src["filesPerSec"])
     MiB_per_sec = files_per_sec * file_size_KiB / KiB_per_MiB
     elapsed = float(src["elapsed"])
     iops = float(records) / elapsed

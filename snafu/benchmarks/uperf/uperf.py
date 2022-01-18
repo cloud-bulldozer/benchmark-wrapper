@@ -65,6 +65,7 @@ class UperfConfig:
     remote_ip: Optional[str] = None
     client_ips: Optional[str] = None
     service_ip: Optional[str] = None
+    service_type: Optional[str] = None
     client_node: Optional[str] = None
     server_node: Optional[str] = None
     num_pairs: Optional[str] = None
@@ -139,6 +140,7 @@ class Uperf(Benchmark):
         ConfigArgument("--remoteip", dest="remote_ip", env_var="h", default=""),
         ConfigArgument("--hostnet", dest="hostnetwork", env_var="hostnet", default="False"),
         ConfigArgument("--serviceip", dest="service_ip", env_var="serviceip", default="False"),
+        ConfigArgument("--servicetype", dest="service_type", env_var="servicetype", default=""),
         ConfigArgument("--server-node", dest="server_node", env_var="server_node", default=""),
         ConfigArgument("--client-node", dest="client_node", env_var="client_node", default=""),
         ConfigArgument("--num-pairs", dest="num_pairs", env_var="num_pairs", default=""),
@@ -312,7 +314,7 @@ class Uperf(Benchmark):
         Returns immediately if a sample fails. Will attempt to Uperf run three times for each sample.
         """
 
-        cmd = shlex.split(f"uperf -v -a -R -i 1 -m {self.config.workload}")
+        cmd = shlex.split(f"uperf -v -a -R -i 1 -m {self.config.workload} -P 30000")
         _plural = "s" if self.config.sample > 1 else ""
         self.logger.info(f"Collecting {self.config.sample} sample{_plural} of Uperf")
 

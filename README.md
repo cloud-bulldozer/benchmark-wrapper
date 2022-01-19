@@ -5,7 +5,7 @@
 
 Benchmark-wrapper provides a convenient mechanism for launching, processing, and storing data produced by a suite of performance benchmarks. Users can run Benchmark-wrapper in a traditional bare-metal environment or with the use of [benchmark-operator](https://github.com/cloud-bulldozer/benchmark-operator) ran in a containerized environment such as Kubernetes.
 
-Documentation can be found over on [readthedocs](benchmark-wrapper.rtfd.io)
+Documentation can be found over on [readthedocs](https://benchmark-wrapper.rtfd.io)
 
 Note: If you need your benchmark to collect data for both Kubernetes and non-Kubernetes
 environments, incorporate your benchmark into benchmark-wrapper and then write a benchmark-operator benchmark to integrate with Kubernetes.

@@ -7,6 +7,8 @@ import re
 import shlex
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
+import numpy as np
+
 from snafu.benchmarks import Benchmark, BenchmarkResult
 from snafu.config import Config, ConfigArgument, FuncAction, check_file, none_or_type
 from snafu.process import sample_process
@@ -137,29 +139,59 @@ class Uperf(Benchmark):
         # These need help text
         ConfigArgument("--ips", dest="client_ips", env_var="ips", default=""),
         ConfigArgument("--remoteip", dest="remote_ip", env_var="h", default=""),
-        ConfigArgument("--hostnet", dest="hostnetwork", env_var="hostnet", default="False"),
-        ConfigArgument("--serviceip", dest="service_ip", env_var="serviceip", default="False"),
-        ConfigArgument("--server-node", dest="server_node", env_var="server_node", default=""),
-        ConfigArgument("--client-node", dest="client_node", env_var="client_node", default=""),
-        ConfigArgument("--num-pairs", dest="num_pairs", env_var="num_pairs", default=""),
-        ConfigArgument("--multus-client", dest="multus_client", env_var="multus_client", default=""),
+        ConfigArgument(
+            "--hostnet", dest="hostnetwork", env_var="hostnet", default="False"
+        ),
+        ConfigArgument(
+            "--serviceip", dest="service_ip", env_var="serviceip", default="False"
+        ),
+        ConfigArgument(
+            "--server-node", dest="server_node", env_var="server_node", default=""
+        ),
+        ConfigArgument(
+            "--client-node", dest="client_node", env_var="client_node", default=""
+        ),
+        ConfigArgument(
+            "--num-pairs", dest="num_pairs", env_var="num_pairs", default=""
+        ),
+        ConfigArgument(
+            "--multus-client", dest="multus_client", env_var="multus_client", default=""
+        ),
         ConfigArgument(
             "--network-policy",
             dest="networkpolicy",
             env_var="networkpolicy",
             default="",
         ),
-        ConfigArgument("--nodes-count", dest="nodes_in_iter", env_var="node_count", default=""),
-        ConfigArgument("--pod-density", dest="density", env_var="pod_count", default=""),
+        ConfigArgument(
+            "--nodes-count", dest="nodes_in_iter", env_var="node_count", default=""
+        ),
+        ConfigArgument(
+            "--pod-density", dest="density", env_var="pod_count", default=""
+        ),
         ConfigArgument("--colocate", dest="colocate", env_var="colocate", default=""),
         ConfigArgument("--step-size", dest="step_size", env_var="stepsize", default=""),
-        ConfigArgument("--test-type", dest="test_type", env_var="test_type", default=""),
+        ConfigArgument(
+            "--test-type", dest="test_type", env_var="test_type", default=""
+        ),
         ConfigArgument("--proto", dest="protocol", env_var="proto", default=""),
         ConfigArgument(
-            "--rsize", dest="read_message_size", env_var="rsize", default=None, type=none_or_type(int)
+            "--rsize",
+            dest="read_message_size",
+            env_var="rsize",
+            default=None,
+            type=none_or_type(int),
         ),
-        ConfigArgument("--wsize", dest="message_size", env_var="wsize", default=None, type=none_or_type(int)),
-        ConfigArgument("--nthr", dest="num_threads", env_var="nthr", default=1, type=int),
+        ConfigArgument(
+            "--wsize",
+            dest="message_size",
+            env_var="wsize",
+            default=None,
+            type=none_or_type(int),
+        ),
+        ConfigArgument(
+            "--nthr", dest="num_threads", env_var="nthr", default=1, type=int
+        ),
         # density_range and node_range are defined and exported in the cr file
         # it will appear in ES as startvalue-endvalue, for example
         # 5-10, for a run that began with 5 nodes involved and ended with 10
@@ -229,12 +261,15 @@ class Uperf(Benchmark):
         #     timestamp, number of bytes, number of operations
         # [('1559581000962.0330', '0', '0'), ('1559581001962.8459', '4697358336', '286704') ]
         tx_str = "Txn1" if parsed_profile_name["test_type"] == "connect" else "Txn2"
-        results = re.findall(rf"timestamp_ms:(.*) name:{tx_str} nr_bytes:(.*) nr_ops:(.*)", stdout)
+        results = re.findall(
+            rf"timestamp_ms:(.*) name:{tx_str} nr_bytes:(.*) nr_ops:(.*)", stdout
+        )
         # We assume message_size=write_message_size to prevent breaking dependant implementations
 
         uperf_stdout = UperfStdout(
             results=tuple(
-                RawUperfStat(timestamp=float(r[0]), bytes=int(r[1]), ops=int(r[2])) for r in results
+                RawUperfStat(timestamp=float(r[0]), bytes=int(r[1]), ops=int(r[2]))
+                for r in results
             ),
             duration=len(results),
         )
@@ -277,7 +312,9 @@ class Uperf(Benchmark):
                 norm_ltcy = ((timestamp - prev_timestamp) / norm_ops) * 1000
 
                 datapoint = UperfStat(
-                    uperf_ts=datetime.datetime.fromtimestamp(int(timestamp) / 1000).isoformat(),
+                    uperf_ts=datetime.datetime.fromtimestamp(
+                        int(timestamp) / 1000
+                    ).isoformat(),
                     bytes=num_bytes,
                     norm_byte=num_bytes - prev_bytes,
                     ops=ops,
@@ -295,12 +332,18 @@ class Uperf(Benchmark):
         self.config.parse_args()
         self.logger.debug(f"Got config: {vars(self.config)}")
 
-        if not getattr(self.config, "user", False) or not getattr(self.config, "uuid", False):
-            self.logger.critical("Missing required metadata. Need both user and uuid to continue")
+        if not getattr(self.config, "user", False) or not getattr(
+            self.config, "uuid", False
+        ):
+            self.logger.critical(
+                "Missing required metadata. Need both user and uuid to continue"
+            )
             return False
 
         if not check_file(self.config.workload):
-            self.logger.critical(f"Unable to read workload file located at {self.config.workload}")
+            self.logger.critical(
+                f"Unable to read workload file located at {self.config.workload}"
+            )
             return False
 
         return True
@@ -334,16 +377,25 @@ class Uperf(Benchmark):
             self.logger.debug(f"Got sample: {sample}")
 
             if sample.successful.stdout is None:
-                self.logger.critical(f"Uperf ran successfully, but didn't get stdout. Got results: {sample}")
+                self.logger.critical(
+                    f"Uperf ran successfully, but didn't get stdout. Got results: {sample}"
+                )
                 return
 
-            self.logger.info(sample.successful.stdout)
+            # Only show the full output if debug is enabled
+            self.logger.debug(sample.successful.stdout)
 
             stdout: UperfStdout = self.parse_stdout(sample.successful.stdout)
             result_data: List[UperfStat] = self.get_results_from_stdout(stdout)
             config: UperfConfig = UperfConfig.new(stdout, self.config)
 
+            byte_summary = []
+            lat_summary = []
+            op_summary = []
             for result_datapoint in result_data:
+                byte_summary.append(result_datapoint.norm_byte)
+                lat_summary.append(result_datapoint.norm_ltcy)
+                op_summary.append(result_datapoint.norm_ops)
                 result_datapoint.iteration = sample_num
                 result: BenchmarkResult = self.create_new_result(
                     data=dataclasses.asdict(result_datapoint),
@@ -352,8 +404,15 @@ class Uperf(Benchmark):
                 )
                 self.logger.debug(f"Got sample result: {result}")
                 yield result
-
-        self.logger.info(f"Successfully collected {self.config.sample} sample{_plural} of Uperf.")
+            self.logger.info(f"{'-'*50}")
+            self.logger.info(f"Summary result for sample : {sample_num}")
+            self.logger.info(f"Average byte : {np.average(byte_summary)}")
+            self.logger.info(f"Average ops : {np.average(op_summary)}")
+            self.logger.info(f"95%ile Latency(ms) : {np.percentile(lat_summary,95)}")
+            self.logger.info(f"{'-'*50}")
+        self.logger.info(
+            f"Successfully collected {self.config.sample} sample{_plural} of Uperf."
+        )
 
     @staticmethod
     def cleanup() -> bool:

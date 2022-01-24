@@ -5,7 +5,7 @@ on:
     paths:
       - 'setup.cfg'
   schedule:
-    - cron: '0 0 * * 1'
+    - cron: '0 0 1 * *'
 jobs:
   update_requirements:
     runs-on: ubuntu-latest

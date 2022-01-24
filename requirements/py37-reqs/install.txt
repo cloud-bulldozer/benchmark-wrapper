@@ -8,9 +8,9 @@ backports.zoneinfo==0.2.1
     # via
     #   pytz-deprecation-shim
     #   tzlocal
-boto3==1.19.8
+boto3==1.20.41
     # via snafu (setup.cfg)
-botocore==1.22.8
+botocore==1.23.41
     # via
     #   boto3
     #   s3transfer
@@ -21,16 +21,18 @@ certifi==2021.10.8
     #   elasticsearch
     #   kubernetes
     #   requests
-charset-normalizer==2.0.7
+charset-normalizer==2.0.10
     # via requests
 configargparse==1.5.3
     # via snafu (setup.cfg)
-configparser==5.0.2
+configparser==5.2.0
     # via snafu (setup.cfg)
 dataclasses==0.6
     # via snafu (setup.cfg)
 dateparser==1.1.0
     # via prometheus-api-client
+deprecated==1.2.13
+    # via redis
 dictdiffer==0.9.0
     # via openshift
 distro==1.6.0
@@ -43,13 +45,15 @@ elasticsearch==7.13.4
     # via snafu (setup.cfg)
 flent==2.0.1
     # via snafu (setup.cfg)
-google-auth==2.3.2
+google-auth==2.3.3
     # via kubernetes
 idna==3.3
     # via requests
-importlib-metadata==4.8.1
-    # via snafu (setup.cfg)
-jinja2==3.0.2
+importlib-metadata==4.10.1
+    # via
+    #   redis
+    #   snafu (setup.cfg)
+jinja2==3.0.3
     # via openshift
 jmespath==0.10.0
     # via
@@ -63,7 +67,7 @@ kubernetes==11.0.0
     #   snafu (setup.cfg)
 markupsafe==2.0.1
     # via jinja2
-numpy==1.21.3
+numpy==1.21.5
     # via
     #   pandas
     #   prometheus-api-client
@@ -73,11 +77,13 @@ oauthlib==3.1.1
     # via requests-oauthlib
 openshift==0.11
     # via snafu (setup.cfg)
-packaging==21.2
-    # via snafu (setup.cfg)
-pandas==1.3.4
+packaging==21.3
+    # via
+    #   redis
+    #   snafu (setup.cfg)
+pandas==1.3.5
     # via prometheus-api-client
-prometheus-api-client==0.4.2
+prometheus-api-client==0.5.0
     # via snafu (setup.cfg)
 pyasn1==0.4.8
     # via
@@ -85,7 +91,7 @@ pyasn1==0.4.8
     #   rsa
 pyasn1-modules==0.2.8
     # via google-auth
-pyparsing==2.4.7
+pyparsing==3.0.7
     # via packaging
 python-dateutil==2.8.2
     # via
@@ -106,11 +112,11 @@ pyyaml==6.0
     # via
     #   kubernetes
     #   snafu (setup.cfg)
-redis==3.5.3
+redis==4.1.1
     # via snafu (setup.cfg)
-regex==2021.10.23
+regex==2022.1.18
     # via dateparser
-requests==2.26.0
+requests==2.27.1
     # via
     #   kubernetes
     #   prometheus-api-client
@@ -118,15 +124,15 @@ requests==2.26.0
     #   snafu (setup.cfg)
 requests-oauthlib==1.3.0
     # via kubernetes
-rsa==4.7.2
+rsa==4.8
     # via google-auth
-ruamel.yaml==0.17.17
+ruamel.yaml==0.17.20
     # via openshift
 ruamel.yaml.clib==0.2.6
     # via ruamel.yaml
 s3transfer==0.5.0
     # via boto3
-scipy==1.7.1
+scipy==1.7.3
     # via snafu (setup.cfg)
 six==1.16.0
     # via
@@ -136,23 +142,25 @@ six==1.16.0
     #   python-dateutil
 statistics==1.0.3.5
     # via snafu (setup.cfg)
-ttp==0.8.1
+ttp==0.8.4
     # via snafu (setup.cfg)
-typing-extensions==3.10.0.2
+typing-extensions==4.0.1
     # via importlib-metadata
 tzdata==2021.5
     # via pytz-deprecation-shim
 tzlocal==4.1
     # via dateparser
-urllib3==1.26.7
+urllib3==1.26.8
     # via
     #   botocore
     #   elasticsearch
     #   kubernetes
     #   requests
-websocket-client==1.2.1
+websocket-client==1.2.3
     # via kubernetes
-zipp==3.6.0
+wrapt==1.13.3
+    # via deprecated
+zipp==3.7.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:

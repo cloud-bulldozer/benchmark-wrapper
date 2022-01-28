@@ -79,7 +79,7 @@ class trigger_sysbench:
         sysbench_result_summary = {
             "uuid": self.uuid,
             "user": self.user,
-            "clustername": self.cluster_name,
+            "cluster_name": self.cluster_name,
             "date": sample_starttime,
             "sample": self.sample,
             "test_config": self.test_config,

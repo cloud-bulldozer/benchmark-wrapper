@@ -33,7 +33,7 @@ class fs_drift_wrapper:
         parser.add_argument(
             "-d", "--dir", help="output parent directory", default=os.path.dirname(os.getcwd())
         )
-        parser.add_argument("-y", "--yaml-input-file", help="fs-drift parameters passed via YAML input file")
+        parser.add_argument("-y", "--yaml-input-file", help="fs_drift parameters passed via YAML input file")
         self.args = parser.parse_args()
 
         if not self.args.top:

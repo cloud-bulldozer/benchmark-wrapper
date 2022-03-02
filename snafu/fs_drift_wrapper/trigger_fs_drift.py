@@ -51,11 +51,11 @@ class _trigger_fs_drift:
                 if c.endswith(".csv"):
                     os.unlink(os.path.join(rsptime_dir, c))
 
-        json_output_file = os.path.join(self.result_dir, "fs-drift.json")
+        json_output_file = os.path.join(self.result_dir, "fs_drift.json")
         network_shared_dir = os.path.join(self.working_dir, "network-shared")
         rsptime_file = os.path.join(network_shared_dir, "stats-rsptimes.csv")
         cmd = [
-            "fs-drift.py",
+            "fs_drift.py",
             "--top",
             self.working_dir,
             "--output-json",
@@ -71,7 +71,7 @@ class _trigger_fs_drift:
             process = subprocess.check_call(cmd, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             self.logger.exception(e)
-            raise FsDriftWrapperException("fs-drift.py non-zero process return code %d" % e.returncode)
+            raise FsDriftWrapperException("fs_drift.py non-zero process return code %d" % e.returncode)
         self.logger.info("completed sample {} , results in {}".format(self.sample, json_output_file))
         fsdict = get_vfs_stat_dict(self.working_dir)
         with open(json_output_file) as f:
@@ -118,7 +118,7 @@ class _trigger_fs_drift:
                     rsptime_date = start_time + int(flds[0])
                     rsptime_date_str = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(rsptime_date))
                     interval = {}
-                    # number of fs-drift file operations in this interval
+                    # number of fs_drift file operations in this interval
                     interval["op-count"] = int(flds[2])
                     if interval["op-count"] == 0:
                         self.logger.info(

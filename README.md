@@ -93,7 +93,7 @@ python3.7 ./snafu/run_snafu.py --tool archive --archive-file /tmp/my_sysbench_da
 | YCSB                           | Database Performance   | Working            |
 | Pgbench                        | Postgres Performance   | Working            |
 | smallfile                      | metadata-intensive ops | Working            |
-| fs-drift                       | metadata-intensive mix | Working            |
+| fs_drift                       | metadata-intensive mix | Working            |
 | cyclictest                     | Real-Time Latency      | Working            |
 | oslat                          | Real-Time Latency              | Working            |
 | OpenShift Upgrade              | Time to upgrade                | Working            |

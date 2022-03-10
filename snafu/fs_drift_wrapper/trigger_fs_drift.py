@@ -24,6 +24,7 @@ class _trigger_fs_drift:
         self.logger = logger
         self.yaml_input_file = yaml_input_file
         self.working_dir = working_dir
+        self.network_shared_dir = os.path.join(self.working_dir, "network-shared")
         self.result_dir = result_dir
         self.user = user
         self.uuid = uuid
@@ -42,18 +43,17 @@ class _trigger_fs_drift:
         """
 
         self.ensure_dir_exists(self.working_dir)
-        rsptime_dir = os.path.join(self.working_dir, "network-shared")
 
-        # clear out any unconsumed response time files in this directory
-        if os.path.exists(rsptime_dir):
-            contents = os.listdir(rsptime_dir)
+        # clear out any unconsumed response time files or thread counters in this directory
+        if os.path.exists(self.network_shared_dir):
+            contents = os.listdir(self.network_shared_dir)
             for c in contents:
                 if c.endswith(".csv"):
-                    os.unlink(os.path.join(rsptime_dir, c))
+                    os.unlink(os.path.join(self.network_shared_dir, c))
+                elif c.startswith("counters"):
+                    os.unlink(os.path.join(self.network_shared_dir, c))
 
         json_output_file = os.path.join(self.result_dir, "fs-drift.json")
-        network_shared_dir = os.path.join(self.working_dir, "network-shared")
-        rsptime_file = os.path.join(network_shared_dir, "stats-rsptimes.csv")
         cmd = [
             "fs-drift.py",
             "--top",
@@ -92,8 +92,17 @@ class _trigger_fs_drift:
                 thrd["params"] = params
                 yield thrd, "results"
 
-        # process response time data
+        #self.process_per_thread_counters()
 
+        # comment out for now until we can debug
+        #self.process_rsptimes()
+
+
+    def process_rsptimes(self):
+        """
+        convert response time logs to stats as a function of time
+        """
+        rsptime_file = os.path.join(self.network_shared_dir, "stats-rsptimes.csv")
         elapsed_time = float(data["results"]["elapsed"])
         start_time = data["results"]["start-time"]
         sampling_interval = max(int(elapsed_time / 120.0), 1)
@@ -144,48 +153,46 @@ class _trigger_fs_drift:
                     interval["99%"] = float(flds[10])
                     yield interval, "rsptimes"
 
-        # process counter data
 
-        for fn in os.listdir(rsptime_dir):
+    def process_per_thread_counters(self):
+        """
+        reads in JSON per-thread counters, converts counters to rates
+        """
+
+        counter_dir = os.path.join(self.working_dir, "network-shared")
+        for fn in os.listdir(counter_dir):
             previous_obj = None
             if fn.startswith("counters") and fn.endswith("json"):
-                pathnm = os.path.join(rsptime_dir, fn)
+                pathnm = os.path.join(counter_dir, fn)
                 matched = counters_regex_prog.match(fn)
                 thread_id = matched.group(1)
                 with open(pathnm, "r") as f:
-                    records = [line.strip() for line in f.readlines()]
-                json_start = 0
-                self.logger.info("process %d records from rates-over-time file %s " % (len(records), fn))
-                for index, record in enumerate(records):
-                    if record == "{":
-                        json_start = index
-                    if record == "}{" or record == "}":
-                        # extract next JSON string from counter logfile
+                    thread_counters = json.load(f)
+                self.logger.info("process records from rates-over-time file %s " % (len(records), fn))
+                for snapshot in thread_counters:
 
-                        json_str = " ".join(records[json_start:index])
-                        json_str += " }"
-                        if record == "}{":
-                            records[index] = "{"
-                        json_start = index
-                        json_obj = json.loads(json_str)
-                        rate_obj = self.compute_rates(json_obj, previous_obj)
-                        previous_obj = json_obj
+                    # compute timestamp from start of test and time since start
 
-                        # timestamp this sample
+                    time_since_test_start = float(snapshot["elapsed-time"])
+                    counter_time = time_since_test_start + start_time
+                    timestamp_str = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(counter_time))
 
-                        time_since_test_start = float(rate_obj["elapsed-time"])
-                        counter_time = time_since_test_start + start_time
-                        timestamp_str = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(counter_time))
-                        rate_obj["date"] = timestamp_str
+                    # convert counters into rates
 
-                        # add other info needed to display data in elastic search
+                    rate_obj = self.compute_rates(snapshot, previous_obj)
+                    previous_obj = snapshot
 
-                        rate_obj["thread"] = thread_id
-                        rate_obj["cluster_name"] = self.cluster_name
-                        rate_obj["user"] = self.user
-                        rate_obj["uuid"] = self.uuid
-                        rate_obj["sample"] = self.sample
-                        yield rate_obj, "rates-over-time"
+                    # add fields for elastic search indexing
+
+                    rate_obj["date"] = timestamp_str
+                    rate_obj['thread'] = thread_id
+                    rate_obj['uuid'] = self.uuid
+                    rate_obj['timestamp'] = timestamp_str
+                    rate_obj["cluster_name"] = self.cluster_name
+                    rate_obj["user"] = self.user
+                    rate_obj["sample"] = self.sample
+                    yield rate_obj, "rates-over-time"
+
 
     # assumes that the input dictionaries have same fields
     # and that all fields other than 'elapsed_time' are integer counters

@@ -1,0 +1,5 @@
+[centos-stream-8]
+name=CentOS-Stream-8
+baseurl=http://mirror.centos.org/centos/8-stream//BaseOS/$basearch/os/
+enabled=0
+gpgcheck=0

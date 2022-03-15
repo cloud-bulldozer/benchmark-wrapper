@@ -145,6 +145,7 @@ class _trigger_fs_drift:
                         # FIXME: how do we indicate to grafana that preceding sample
                         # is not continuing into this interval.
                         continue
+                    interval["host"] = self.host
                     interval["cluster_name"] = self.cluster_name
                     interval["uuid"] = self.uuid
                     interval["user"] = self.user
@@ -194,6 +195,7 @@ class _trigger_fs_drift:
 
                     rate_obj["date"] = timestamp_str
                     rate_obj['thread'] = thread_id
+                    rate_obj['host'] = self.host
                     rate_obj['uuid'] = self.uuid
                     rate_obj['timestamp'] = timestamp_str
                     rate_obj["cluster_name"] = self.cluster_name

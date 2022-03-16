@@ -43,7 +43,7 @@ class trigger_sysbench:
         #  open config file
         config_file = open(self.sysbench_file, "r")
 
-        cmd = "/usr/bin/sysbench"
+        cmd = "sysbench"
         #  for each option add it to the command line
         for option in config_file:
             option = option.strip()

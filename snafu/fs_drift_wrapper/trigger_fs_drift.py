@@ -68,7 +68,7 @@ class _trigger_fs_drift:
         self.logger.info("running:" + " ".join(cmd))
         self.logger.info("from current directory %s" % os.getcwd())
         try:
-            process = subprocess.check_call(cmd, stderr=subprocess.STDOUT)
+            subprocess.check_call(cmd, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             self.logger.exception(e)
             raise FsDriftWrapperException("fs-drift.py non-zero process return code %d" % e.returncode)
@@ -81,7 +81,7 @@ class _trigger_fs_drift:
             yield thrd, index
         elapsed_time = float(data["results"]["elapsed"])
         start_time = data["results"]["start-time"]
-        self.logger.info('elapsed time = %f start_time = %d' % (elapsed_time, start_time))
+        self.logger.info("elapsed time = %f start_time = %d" % (elapsed_time, start_time))
         for rsptime_interval, rsptime_index in self.process_rsptimes(start_time, elapsed_time):
             yield rsptime_interval, rsptime_index
         for rates_interval, rates_index in self.process_per_thread_counters(start_time):
@@ -110,9 +110,9 @@ class _trigger_fs_drift:
         """
         rsptime_file = os.path.join(self.network_shared_dir, "stats-rsptimes.csv")
         sampling_interval = max(int(elapsed_time / 120.0), 1)
-        self.logger.info('sampling_interval %d' % sampling_interval)
+        self.logger.info("sampling_interval %d" % sampling_interval)
         if sampling_interval <= 1:
-            self.logger.info('not enough duration to calculate response time stats, skipping')
+            self.logger.info("not enough duration to calculate response time stats, skipping")
             return
         cmd = ["rsptime_stats.py", "--time-interval", str(sampling_interval), self.network_shared_dir]
         self.logger.info("process response times with: %s" % " ".join(cmd))
@@ -162,7 +162,6 @@ class _trigger_fs_drift:
                     interval["99%"] = float(flds[10])
                     yield interval, "rsptimes"
 
-
     def process_per_thread_counters(self, start_time):
         """
         reads in JSON per-thread counters, converts counters to rates
@@ -177,7 +176,9 @@ class _trigger_fs_drift:
                 thread_id = matched.group(1)
                 with open(pathnm, "r") as f:
                     thread_counters = json.load(f)
-                self.logger.info("process %d intervals from rates-over-time file %s " % (len(thread_counters), fn))
+                self.logger.info(
+                    "process %d intervals from rates-over-time file %s " % (len(thread_counters), fn)
+                )
                 for snapshot in thread_counters:
 
                     # compute timestamp from start of test and time since start
@@ -194,15 +195,14 @@ class _trigger_fs_drift:
                     # add fields for elastic search indexing
 
                     rate_obj["date"] = timestamp_str
-                    rate_obj['thread'] = thread_id
-                    rate_obj['host'] = self.host
-                    rate_obj['uuid'] = self.uuid
-                    rate_obj['timestamp'] = timestamp_str
+                    rate_obj["thread"] = thread_id
+                    rate_obj["host"] = self.host
+                    rate_obj["uuid"] = self.uuid
+                    rate_obj["timestamp"] = timestamp_str
                     rate_obj["cluster_name"] = self.cluster_name
                     rate_obj["user"] = self.user
                     rate_obj["sample"] = self.sample
                     yield rate_obj, "rates-over-time"
-
 
     # assumes that the input dictionaries have same fields
     # and that all fields other than 'elapsed_time' are integer counters

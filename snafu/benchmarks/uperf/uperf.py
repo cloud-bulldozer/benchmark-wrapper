@@ -3,6 +3,7 @@
 """Wrapper for running the uperf benchmark. See http://uperf.org/ for more information."""
 import dataclasses
 import datetime
+import os
 import re
 import shlex
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
@@ -316,6 +317,13 @@ class Uperf(Benchmark):
         if not check_file(self.config.workload):
             self.logger.critical(f"Unable to read workload file located at {self.config.workload}")
             return False
+        self.config["cluster"] = {}
+        self.config["cluster"]["name"] = os.getenv("CLUSTER_NAME", "")
+        self.config["cluster"]["id"] = os.getenv("CLUSTER_ID", "")
+        self.config["cluster"]["openshift_version"] = os.getenv("OPENSHIFT_VERSION", "")
+        self.config["cluster"]["kubernetes_version"] = os.getenv("KUBERNETES_VERSION", "")
+        self.config["cluster"]["sdn"] = os.getenv("CLUSTER_NETWORK_TYPE", "")
+        self.config["cluster"]["platform"] = os.getenv("CLOUD_TYPE", "")
 
         return True
 

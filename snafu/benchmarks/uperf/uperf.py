@@ -292,6 +292,7 @@ class Uperf(Benchmark):
 
                 datapoint = UperfStat(
                     uperf_ts=datetime.datetime.fromtimestamp(int(timestamp) / 1000).isoformat(),
+                    timestamp=datetime.datetime.fromtimestamp(int(timestamp) / 1000).isoformat(),
                     bytes=num_bytes,
                     norm_byte=num_bytes - prev_bytes,
                     ops=ops,

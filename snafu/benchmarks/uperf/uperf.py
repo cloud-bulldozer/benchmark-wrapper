@@ -99,6 +99,7 @@ class UperfStat:
     """Parsed Uperf Statistic."""
 
     uperf_ts: str
+    timestamp: str
     bytes: int
     norm_byte: int
     ops: int

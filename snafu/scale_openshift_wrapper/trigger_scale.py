@@ -170,6 +170,11 @@ class Trigger_scale:
             logger.error(err)
             exit(1)
 
+        clusterversion = dyn_client.resources.get(kind="ClusterVersion")
+        openshift_version = clusterversion.get().items[0].status.desired.version
+        network_type = dyn_client.resources.get(kind="Network", api_version="config.openshift.io/v1")
+        network_type = network_type.get().attributes.items[0].spec.networkType
+
         worker_count = (
             len(
                 nodes.get(
@@ -222,7 +227,7 @@ class Trigger_scale:
         action = "scale_nochange"
         if int(worker_count) == int(self.scale):
             logger.info("Already at requested worker count")
-            return init_workers, worker_count, master_count, infra_count, workload_count, platform, action
+            return init_workers, worker_count, master_count, infra_count, workload_count, platform, action, openshift_version, network_type
         elif int(worker_count) > int(self.scale):
             action = "scale_down"
         else:
@@ -312,7 +317,7 @@ class Trigger_scale:
         master_count = len(nodes.get(label_selector="node-role.kubernetes.io/master").attributes.items) or 0
         infra_count = len(nodes.get(label_selector="node-role.kubernetes.io/infra").attributes.items) or 0
 
-        return init_workers, worker_count, master_count, infra_count, workload_count, platform, action
+        return init_workers, worker_count, master_count, infra_count, workload_count, platform, action, openshift_version, network_type
 
     def emit_actions(self):
         logger.info(
@@ -329,6 +334,8 @@ class Trigger_scale:
             workload_count,
             platform,
             action,
+            openshift_version,
+            network_type
         ) = self._run_scale()
         end_time = time.time()
         elaspsed_time = end_time - start_time
@@ -343,6 +350,8 @@ class Trigger_scale:
             "action": action,
             "total_count": worker_count + master_count + infra_count + workload_count,
             "platform": platform,
+            "openshift_version": openshift_version,
+            "network_type": network_type
         }
         es_data = self._json_payload(data)
         yield es_data, ""

@@ -129,7 +129,7 @@ markupsafe==2.0.1
     # via
     #   -r requirements/py36-reqs/install.txt
     #   jinja2
-numpy==1.19.5
+numpy==1.22.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   pandas

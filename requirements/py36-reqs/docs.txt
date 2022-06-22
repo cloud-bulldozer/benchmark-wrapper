@@ -220,7 +220,7 @@ nest-asyncio==1.5.4
     #   notebook
 notebook==6.4.10
     # via snafu (setup.cfg)
-numpy==1.19.5
+numpy==1.22.0
     # via
     #   -r requirements/py36-reqs/install.txt
     #   pandas

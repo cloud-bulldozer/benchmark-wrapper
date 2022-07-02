@@ -4,6 +4,7 @@
 import dataclasses
 import datetime
 import re
+import sys
 import shlex
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
@@ -346,14 +347,14 @@ class Uperf(Benchmark):
         for sample_num, sample in enumerate(samples):
             if not sample.success:
                 self.logger.critical(f"Uperf failed to run! Got results: {sample}")
-                return
+                sys.exit(1)
 
             self.logger.info(f"Finished collecting sample {sample_num}")
             self.logger.debug(f"Got sample: {sample}")
 
             if sample.successful.stdout is None:
                 self.logger.critical(f"Uperf ran successfully, but didn't get stdout. Got results: {sample}")
-                return
+                sys.exit(1)
 
             # Only show the full output if debug is enabled
             self.logger.debug(sample.successful.stdout)

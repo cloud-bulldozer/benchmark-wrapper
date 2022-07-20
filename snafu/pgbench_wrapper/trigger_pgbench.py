@@ -47,6 +47,7 @@ class Trigger_pgbench:
                 "run_start_timestamp": self.run_start_timestamp,
                 "sample_start_timestamp": self.sample_start_timestamp,
                 "description": self.description,
+                "num_clients": int(self.description.split('|')[-1].split(':')[-1].strip())
             }
         )
 

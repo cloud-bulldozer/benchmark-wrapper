@@ -192,7 +192,7 @@ mdit-py-plugins==0.3.0
     # via myst-parser
 mdurl==0.1.0
     # via markdown-it-py
-mistune==0.8.4
+mistune==2.0.3
     # via nbconvert
 myst-parser==0.16.1
     # via snafu (setup.cfg)

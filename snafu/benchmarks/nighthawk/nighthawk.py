@@ -2,18 +2,13 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running the nighthawk workload. See https://github.com/envoyproxy/nighthawk for more information."""
 import dataclasses
-import datetime
-import re
-import shlex
-import sys
 import json
 import os
 import socket
-import numpy as np
 import subprocess
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional
 from snafu.benchmarks import Benchmark, BenchmarkResult
-from snafu.config import Config, ConfigArgument, FuncAction, check_file, none_or_type
+from snafu.config import Config, ConfigArgument
 
 
 @dataclasses.dataclass
@@ -83,9 +78,9 @@ class Nighthawk(Benchmark):
     args = (
         ConfigArgument(
             "-s",
-            "--sample",
-            dest="sample",
-            env_var="SAMPLE",
+            "--samples",
+            dest="samples",
+            env_var="SAMPLES",
             default=1,
             type=int,
             help="Number of times to run the benchmark",
@@ -95,7 +90,7 @@ class Nighthawk(Benchmark):
             "--resourcetype",
             dest="kind",
             env_var="RESOURCETYPE",
-            help="Provide the resource type for uperf run - pod/vm/baremetal",
+            help="Provide the resource type for nighthawk run - pod/vm/baremetal",
             required=True,
         ),
         ConfigArgument(
@@ -238,17 +233,17 @@ class Nighthawk(Benchmark):
 
     def collect(self) -> Iterable[BenchmarkResult]:
         """
-        Run nighthawk benchmark ``self.config.sample`` number of times.
+        Run nighthawk benchmark ``self.config.samples`` number of times.
 
         Returns immediately if a sample fails. Will attempt to Nighthawk run for each sample.
         """
 
-        _plural = "s" if self.config.sample > 1 else ""
-        self.logger.info(f"Collecting {self.config.sample} sample{_plural} of Nighthawk")
+        _plural = "s" if self.config.samples > 1 else ""
+        self.logger.info(f"Collecting {self.config.samples} sample{_plural} of Nighthawk")
 
-        for s in range(1, self.config.sample + 1):
+        for s in range(1, self.config.samples + 1):
 
-            self.logger.info("Starting nighthawk sample %d out of %d with uuid %s" % (s, self.config.sample, self.config.uuid))
+            self.logger.info("Starting nighthawk sample %d out of %d with uuid %s" % (s, self.config.samples, self.config.uuid))
             stdout, stderr, rc = self._run_nighthawk()
             if rc:
                 self.logger.critical("Nighthawk failed with returncode %d, stopping benchmark" % rc)
@@ -267,8 +262,8 @@ class Nighthawk(Benchmark):
             self.logger.info(f"{'-'*50}")
             self.logger.info(f"Got sample result: {result}")
             self.logger.info(f"{'-'*50}")
-            self.logger.info("Finished executing nighthawk sample %d out of %d" % (s, self.config.sample))
-        self.logger.info(f"Successfully collected {self.config.sample} sample{_plural} of nighthawk.")
+            self.logger.info("Finished executing nighthawk sample %d out of %d" % (s, self.config.samples))
+        self.logger.info(f"Successfully collected {self.config.samples} sample{_plural} of nighthawk.")
 
     @staticmethod
     def cleanup() -> bool:

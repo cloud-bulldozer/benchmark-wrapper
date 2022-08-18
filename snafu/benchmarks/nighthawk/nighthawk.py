@@ -20,10 +20,23 @@ from snafu.config import Config, ConfigArgument, FuncAction, check_file, none_or
 class NighthawkStat:
     """Parsed Nighthawk Statistic."""
 
+    workload: str
+    uuid: str
+    user: str
+    cluster_name: str
+    duration: int
+    targets: List[str]
+    concurrency: int
+    connections: int
+    max_requests_per_connection: int
+    hostname: str
     requested_qps: float
-    actual_qps: float
     throughput: float
-    status_codes: dict()
+    status_codes_1xx: float
+    status_codes_2xx: float
+    status_codes_3xx: float
+    status_codes_4xx: float
+    status_codes_5xx: float
     p50_latency: float
     p75_latency: float
     p80_latency: float
@@ -36,23 +49,6 @@ class NighthawkStat:
     bytes_in: float
     bytes_out: float
     iteration: Optional[int] = None
-
-
-@dataclasses.dataclass
-class NighthawkOut:
-    """Parsed Nighthawk Final Output."""
-
-    workload: str
-    uuid: str
-    user: str
-    cluster_name: str
-    duration: str
-    targets: List[str]
-    execution_results: NighthawkStat
-    concurrency: int
-    connections: int
-    max_requests_per_connection: int
-    hostname: str
 
 
 @dataclasses.dataclass
@@ -178,12 +174,40 @@ class Nighthawk(Benchmark):
             if percentile not in latency_percentiles.keys():
                 latency_percentiles[percentile] = 0
             latency_percentiles[percentile] += each_percentile['Value'] * 1000
+        
+        status_codes = { "1xx": 0, "2xx": 0, "3xx": 0, "4xx": 0, "5xx": 0 }
+        for key, value in data["RetCodes"].items():
+            status_code = int(key)
+            request_count = int(value)
+            if 100 <= status_code < 200:
+                status_codes["1xx"] += request_count
+            elif 200 <= status_code < 300:
+                status_codes["2xx"] += request_count
+            elif 300 <= status_code < 400:
+                status_codes["3xx"] += request_count
+            elif 400 <= status_code < 500:
+                status_codes["4xx"] += request_count
+            else:
+                status_codes["5xx"] += request_count
 
         return NighthawkStat(
+            workload="nighthawk",
+            uuid=self.config.uuid,
+            user=self.config.user,
+            cluster_name=os.getenv("clustername", "mycluster"),
+            duration=int(self.config.duration),
+            targets=[self.config.url],
+            concurrency=self.config.concurrency,
+            connections=self.config.connections,
+            max_requests_per_connection=self.config.max_requests_per_connection,
+            hostname=socket.gethostname(),
             requested_qps=data['RequestedQPS'],
-            actual_qps=data["ActualQPS"], 
             throughput=data["ActualQPS"],
-            status_codes=data["RetCodes"],
+            status_codes_1xx=status_codes["1xx"],
+            status_codes_2xx=status_codes["2xx"],
+            status_codes_3xx=status_codes["3xx"],
+            status_codes_4xx=status_codes["4xx"],
+            status_codes_5xx=status_codes["5xx"],
             p50_latency=latency_percentiles.get("50", None),
             p75_latency=latency_percentiles.get("75", None),
             p80_latency=latency_percentiles.get("80", None),
@@ -210,26 +234,7 @@ class Nighthawk(Benchmark):
         self.logger.info(cmd)
         p = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return p.stdout.strip().decode("utf-8"), p.stderr.strip().decode("utf-8"), p.returncode
-    
-    def _json_payload(self, data, sample):
-        """
-        Method to return the final nighthawk output of a sample.
-        """
 
-        data.iteration = sample
-        return NighthawkOut(
-            workload="nighthawk",
-            uuid=self.config.uuid,
-            user=self.config.user,
-            cluster_name=os.getenv("clustername", "mycluster"),
-            duration=self.config.duration,
-            targets=[self.config.url],
-            execution_results=data,
-            concurrency=self.config.concurrency,
-            connections=self.config.connections,
-            max_requests_per_connection=self.config.max_requests_per_connection,
-            hostname=socket.gethostname()
-        )
 
     def collect(self) -> Iterable[BenchmarkResult]:
         """
@@ -238,7 +243,6 @@ class Nighthawk(Benchmark):
         Returns immediately if a sample fails. Will attempt to Nighthawk run for each sample.
         """
 
-        cmd = shlex.split(f"nighthawk_client --concurrency {self.config.concurrency} --duration {self.config.duration} --connections {self.config.connections} --max-requests-per-connection {self.config.max_requests_per_connection} --rps {self.config.rps} --output-format fortio {self.config.url} > nighthawk.json")
         _plural = "s" if self.config.sample > 1 else ""
         self.logger.info(f"Collecting {self.config.sample} sample{_plural} of Nighthawk")
 
@@ -252,10 +256,10 @@ class Nighthawk(Benchmark):
                 self.logger.critical("stderr: %s" % stderr)
                 exit(1)
             parsed_data: NighthawkStat = self._parse_stdout()
-            es_data: NighthawkOut = self._json_payload(parsed_data, s)
+            parsed_data.iteration = s
             config: NighthawkConfig = NighthawkConfig.new(parsed_data, self.config)
             result: BenchmarkResult = self.create_new_result(
-                data=dataclasses.asdict(es_data),
+                data=dataclasses.asdict(parsed_data),
                 config=dataclasses.asdict(config),
                 tag="results",
                 )

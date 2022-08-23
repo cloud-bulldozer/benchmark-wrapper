@@ -206,7 +206,7 @@ myst-parser==0.16.1
     # via snafu (setup.cfg)
 nbclient==0.5.10
     # via nbconvert
-nbconvert==6.4.0
+nbconvert==6.5.1
     # via
     #   nbsphinx
     #   notebook

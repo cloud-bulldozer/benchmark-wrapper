@@ -67,7 +67,7 @@ numpy==1.22.1
     #   prometheus-api-client
     #   scipy
     #   snafu (setup.cfg)
-oauthlib==3.1.1
+oauthlib==3.2.1
     # via requests-oauthlib
 openshift==0.11
     # via snafu (setup.cfg)

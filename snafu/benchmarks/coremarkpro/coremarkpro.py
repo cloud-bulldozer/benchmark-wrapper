@@ -38,7 +38,7 @@ class Coremarkpro(Benchmark):
             required=False,
         ),
         ConfigArgument(
-            "-worker",
+            "-w",
             "--worker",
             help="CoreMark Pro's worker",
             dest="worker",

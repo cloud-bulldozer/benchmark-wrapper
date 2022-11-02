@@ -387,6 +387,7 @@ class Uperf(Benchmark):
         self.logger.info(f"Successfully collected {self.config.sample} sample{_plural} of Uperf.")
 
     @staticmethod
+    # pylint: disable-next=arguments-differ
     def cleanup() -> bool:
         """Uperf doesn't have any cleanup tasks, therefore this method just returns ``True``."""
         return True

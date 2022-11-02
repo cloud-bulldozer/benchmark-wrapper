@@ -77,7 +77,8 @@ class FuncAction(argparse.Action):
     'my_input_this_is_my_string'
     """
 
-    def func(self, arg: Any) -> Any:
+    @staticmethod
+    def func(arg: Any) -> Any:
         """Overwrite me."""
 
     def __call__(

@@ -2,6 +2,7 @@
 jobs=0
 ignore-paths=
     snafu\/utils\/,
+    snafu\/hammerdb\/,
     snafu\/.*_wrapper\/,
     snafu\/run_snafu.py,
     snafu\/vfs_stat.py,

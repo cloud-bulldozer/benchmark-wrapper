@@ -112,7 +112,7 @@ class TestConfig:
         """Test that env_to_params attribute becomes populated appropriately as we add arguments."""
 
         config = self.get_config_instance()
-        assert config.env_to_params == {}
+        assert not config.env_to_params
         config.populate_parser(self.test_args)
         assert config.env_to_params == {"param3": "param3", "p4": "param4"}
 

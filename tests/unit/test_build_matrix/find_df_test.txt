@@ -16,7 +16,7 @@ snafu/scale_openshift_wrapper/Dockerfile.ppc64le
 snafu/smallfile_wrapper/Dockerfile
 snafu/smallfile_wrapper/Dockerfile.ppc64le
 snafu/stressng_wrapper/Dockerfile
-snafu/sysbench/Dockerfile
+snafu/sysbench_wrapper/Dockerfile
 snafu/trex_wrapper/Dockerfile
 snafu/upgrade_openshift_wrapper/Dockerfile
 snafu/upgrade_openshift_wrapper/Dockerfile.ppc64le

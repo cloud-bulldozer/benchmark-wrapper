@@ -14,7 +14,7 @@ from snafu.registry import TOOLS
 from snafu.scale_openshift_wrapper.scale_openshift_wrapper import scale_openshift_wrapper
 from snafu.smallfile_wrapper.smallfile_wrapper import smallfile_wrapper
 from snafu.stressng_wrapper.stressng_wrapper import stressng_wrapper
-from snafu.sysbench.sysbench_wrapper import sysbench_wrapper
+from snafu.sysbench_wrapper.sysbench_wrapper import sysbench_wrapper
 from snafu.trex_wrapper.trex_wrapper import trex_wrapper
 from snafu.upgrade_openshift_wrapper.upgrade_openshift_wrapper import upgrade_openshift_wrapper
 from snafu.vegeta_wrapper.vegeta_wrapper import vegeta_wrapper

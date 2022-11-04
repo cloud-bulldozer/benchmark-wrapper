@@ -144,11 +144,11 @@ snafu/stressng_wrapper/__init__.py
 snafu/stressng_wrapper/ci_test.sh
 snafu/stressng_wrapper/stressng_wrapper.py
 snafu/stressng_wrapper/trigger_stressng.py
-snafu/sysbench/Dockerfile
-snafu/sysbench/__init__.py
-snafu/sysbench/ci_test.sh
-snafu/sysbench/sysbench_wrapper.py
-snafu/sysbench/trigger_sysbench.py
+snafu/sysbench_wrapper/Dockerfile
+snafu/sysbench_wrapper/__init__.py
+snafu/sysbench_wrapper/ci_test.sh
+snafu/sysbench_wrapper/sysbench_wrapper.py
+snafu/sysbench_wrapper/trigger_sysbench.py
 snafu/trex_wrapper/Dockerfile
 snafu/trex_wrapper/__init__.py
 snafu/trex_wrapper/scripts/run_simple_burst
@@ -179,7 +179,7 @@ snafu/ycsb_wrapper/__init__.py
 snafu/ycsb_wrapper/ci_test.sh
 snafu/ycsb_wrapper/trigger_ycsb.py
 snafu/ycsb_wrapper/ycsb_wrapper.py
-sysbench/Dockerfile
+sysbench_wrapper/Dockerfile
 tests/unit/test_config.py
 tests/unit/test_process.py
 tox.ini

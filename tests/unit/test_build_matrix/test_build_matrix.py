@@ -202,6 +202,11 @@ def test_matrix_builder_benchmark_changed_method_correctly_identifies_if_benchma
         assert not builder.benchmark_changed(not_changed_benchmark)
 
 
+def reduce_to_dockerfiles(matrix):
+    """Pulls out the relative path of the Dockerfile for the image"""
+    return list(map(lambda entry: entry["dockerfile"], matrix["include"]))
+
+
 def test_matrix_builder_build_method_changed_only_param_works_as_expected():
     """Test that the MatrixBuilder.build method will only output changed dockerfiles with changed_only."""
 
@@ -215,7 +220,6 @@ def test_matrix_builder_build_method_changed_only_param_works_as_expected():
     builder.changed_set = build_matrix.parse_git_diff(EXAMPLE_GIT_DIFF)
     builder.dockerfile_set = build_matrix.parse_dockerfile_list(EXAMPLE_DF_LIST)
 
-    reduce_to_dockerfiles = lambda matrix: list(map(lambda entry: entry["dockerfile"], matrix["include"]))
     builder.build(changed_only=False)
     all_build_dockerfiles = reduce_to_dockerfiles(builder.build_matrix)
     all_manifest_dockerfiles = reduce_to_dockerfiles(builder.manifest_matrix)

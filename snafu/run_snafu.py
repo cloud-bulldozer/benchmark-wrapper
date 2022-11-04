@@ -117,8 +117,15 @@ def main():
             logger.info("Connected to the elasticsearch cluster with info as follows:")
             logger.info(json.dumps(es.info(), indent=4))
         except Exception as e:
-            logger.warn("Elasticsearch connection caused an exception: %s" % e)
-            index_args.index_results = False
+            error_msg = "Elasticsearch connection caused an exception: %s" % e
+
+            # Error out if user is only indexing an archive file
+            if "archive" in index_args.tool:
+                logger.error(error_msg)
+                exit(1)
+            else:
+                logger.warn(error_msg)
+                index_args.index_results = False
 
     index_args.document_size_capacity_bytes = 0
     # call py es bulk using a process generator to feed it ES documents
@@ -128,9 +135,14 @@ def main():
         if "archive" in index_args.tool:
             if index_args.archive_file:
                 #  if processing a archive file use the process archive file function
-                res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(
-                    es, process_archive_file(index_args), parallel_setting
-                )
+
+                try:
+                    res_beg, res_end, res_suc, res_dup, res_fail, res_retry = streaming_bulk(
+                        es, process_archive_file(index_args), parallel_setting
+                    )
+                except Exception as e:
+                    logger.error("Attempted to index archive causd an exception: %s" % e)
+                    exit(1)
             else:
                 logger.error(
                     "Attempted to index archive without specifying a file, use --archive-file=<file>"

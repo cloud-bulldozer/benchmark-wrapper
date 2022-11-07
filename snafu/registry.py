@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Implement a global tool registry that automatically maps tool names to their classes.
 

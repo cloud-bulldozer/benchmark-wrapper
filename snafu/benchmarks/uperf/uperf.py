@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Wrapper for running the uperf benchmark. See http://uperf.org/ for more information."""
 import dataclasses
 import datetime

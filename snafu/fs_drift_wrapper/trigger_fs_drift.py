@@ -77,15 +77,12 @@ class _trigger_fs_drift:
         fsdict = get_vfs_stat_dict(self.working_dir)
         with open(self.json_output_file) as f:
             data = json.load(f)
-        for thrd, index in self.process_result(data, fsdict):
-            yield thrd, index
+        yield from self.process_result(data, fsdict)
         elapsed_time = float(data["results"]["elapsed"])
         start_time = data["results"]["start-time"]
         self.logger.info("elapsed time = %f start_time = %d" % (elapsed_time, start_time))
-        for rsptime_interval, rsptime_index in self.process_rsptimes(start_time, elapsed_time):
-            yield rsptime_interval, rsptime_index
-        for rates_interval, rates_index in self.process_per_thread_counters(start_time):
-            yield rates_interval, rates_index
+        yield from self.process_rsptimes(start_time, elapsed_time)
+        yield from self.process_per_thread_counters(start_time)
 
     def process_result(self, data, filesys):
         params = data["parameters"]
@@ -174,7 +171,7 @@ class _trigger_fs_drift:
                 pathnm = os.path.join(counter_dir, fn)
                 matched = counters_regex_prog.match(fn)
                 thread_id = matched.group(1)
-                with open(pathnm, "r") as f:
+                with open(pathnm) as f:
                     thread_counters = json.load(f)
                 self.logger.info(
                     "process %d intervals from rates-over-time file %s " % (len(thread_counters), fn)

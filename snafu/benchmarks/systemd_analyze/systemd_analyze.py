@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """sample_benchmark hosts and export results."""
 import datetime
 import json

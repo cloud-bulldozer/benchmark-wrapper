@@ -91,7 +91,7 @@ class Trigger_hammerdb:
         return stdout.strip().decode("utf-8"), process.returncode
 
     def _fake_run(self):
-        with open("hammerdb.log", "r") as input:
+        with open("hammerdb.log") as input:
             stdout = input.read()
         return stdout, 0
 

@@ -41,7 +41,7 @@ class trigger_sysbench:
         """
 
         #  open config file
-        config_file = open(self.sysbench_file, "r")
+        config_file = open(self.sysbench_file)
 
         cmd = "sysbench"
         #  for each option add it to the command line

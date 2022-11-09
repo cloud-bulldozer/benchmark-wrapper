@@ -71,7 +71,7 @@ class get_prometheus_data:
             logger.info("using prometheus metric include file %s" % filename)
 
             # open tools include file and loop through all
-            with open(filename, "r") as f:
+            with open(filename) as f:
                 datastore = json.load(f)
 
             for metric_name in datastore["data"]:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Test functionality of ci/build_matrix.py"""
 import dataclasses
 import importlib.util

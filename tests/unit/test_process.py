@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Test functionality in the process module."""
 import logging
 import shlex

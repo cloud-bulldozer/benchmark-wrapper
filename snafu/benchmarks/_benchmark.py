@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Base benchmark tools."""
 import logging
 from abc import ABC, abstractmethod

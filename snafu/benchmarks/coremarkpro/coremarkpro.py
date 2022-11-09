@@ -1,5 +1,4 @@
 # /usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Runs CoreMark Pro."""
 import re
 import shlex
@@ -108,7 +107,7 @@ class Coremarkpro(Benchmark):
         ]
         types = [str, str, str, int, int, int, float, int, float, int, int]
 
-        with open(self.config.path + self.config.result_name + ".log", "rt", encoding="utf-8") as file:
+        with open(self.config.path + self.config.result_name + ".log", encoding="utf-8") as file:
             results = []
             prev_run_type = ""
             run_type = ""
@@ -153,7 +152,7 @@ class Coremarkpro(Benchmark):
         headers = ["name", "multicore", "singlecore", "scaling"]
         types = [str, float, float, float]
 
-        with open(self.config.path + self.config.result_name + ".mark", "rt", encoding="utf-8") as file:
+        with open(self.config.path + self.config.result_name + ".mark", encoding="utf-8") as file:
             table_name = ""
             for line in file:
                 line = line.rstrip()

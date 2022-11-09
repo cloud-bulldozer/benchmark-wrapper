@@ -152,7 +152,7 @@ class _trigger_fio:
                             logger.info("Error setting log_file_name")
                     log_file_name = os.path.join(directory, log_file_name)
                     try:
-                        with open(log_file_name, "r") as log_file:
+                        with open(log_file_name) as log_file:
                             for log_line in log_file:
                                 log_line_values = str(log_line).split(", ")
                                 if len(log_line_values) == 5:
@@ -192,7 +192,7 @@ class _trigger_fio:
         self, processed_histogram_file, longest_fio_startime, job, numjob=1
     ):  # pod_details
         logs = []
-        with open(processed_histogram_file, "r") as log_file:
+        with open(processed_histogram_file) as log_file:
             for log_line in log_file:
                 log_line_values = str(log_line).split(", ")
                 if len(log_line_values) == 7 and not (any(len(str(x)) <= 0 for x in log_line_values)):
@@ -301,7 +301,7 @@ class _trigger_fio:
 
             if rc != 0:
                 logger.error("Fio failed to execute")
-                with open(fio_output_file, "r") as output:
+                with open(fio_output_file) as output:
                     logger.error("Output file: %s" % output.read())
                     exit(1)
             stdout, stderr, rc = self._clean_output(fio_output_file)

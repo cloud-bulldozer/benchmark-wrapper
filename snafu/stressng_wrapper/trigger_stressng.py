@@ -26,7 +26,7 @@ class Trigger_stressng:
         return stdout.strip().decode("utf-8"), process.returncode
 
     def _parse_outfile(self):
-        stream = open("stressng.yml", "r")
+        stream = open("stressng.yml")
         data = yaml.load(stream, Loader=yaml.FullLoader)
         metrics = data["metrics"]
         results = []

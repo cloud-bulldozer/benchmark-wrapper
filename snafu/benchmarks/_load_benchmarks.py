@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Holds function for automagically importing all benchmark modules in ``snafu.benchmarks``
 

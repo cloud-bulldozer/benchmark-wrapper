@@ -76,7 +76,7 @@ def parse_hist_file(logfn, buckets_per_interval, log_hist_msec):
     previous_ts_ms_read = -1
     previous_ts_ms_write = -1
 
-    with open(logfn, "r") as f:
+    with open(logfn) as f:
         records = [line.strip() for line in f.readlines()]
     intervals = []
     last_time_ms = -1

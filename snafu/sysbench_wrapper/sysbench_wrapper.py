@@ -26,7 +26,9 @@ class sysbench_wrapper:
 
         # it is assumed that the parser was created using argparse and already knows
         # about the initial --tool option
-        parser.add_argument("-f", "--file", help="sysbench test file containing benchmark parameters")
+        parser.add_argument(
+            "-f", "--file", default="", help="sysbench test file containing benchmark parameters"
+        )
         parser.add_argument(
             "-s", "--sample", type=int, default=1, help="number of times to run benchmark, defaults to 1"
         )
@@ -37,6 +39,7 @@ class sysbench_wrapper:
             default=0,
             help="add delay(seconds) in between samples, defaults to 0",
         )
+        parser.add_argument("--args", default="", help="arguments to pass to sysbench with --test flag")
 
         self.args = parser.parse_args()
 
@@ -48,6 +51,7 @@ class sysbench_wrapper:
         self.user = os.getenv("test_user", "myuser")
         self.delay = self.args.delay
         self.samples = self.args.sample
+        self.sysbench_args = self.args.args
 
     def run(self):
 
@@ -55,7 +59,7 @@ class sysbench_wrapper:
         for sample in range(1, self.samples + 1):
 
             trigger_sysbench_generator = trigger_sysbench.trigger_sysbench(
-                self.uuid, self.user, self.args.cluster_name, self.args.file, sample
+                self.uuid, self.user, self.args.cluster_name, self.args.file, sample, self.sysbench_args
             )
 
             yield trigger_sysbench_generator

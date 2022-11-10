@@ -10,24 +10,31 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+"""
+sysbench benchmark runs
+"""
 
 import logging
 import os
 import re
 import subprocess
+import sys
 from datetime import datetime
 
 logger = logging.getLogger("snafu")
 
 
 class trigger_sysbench:
-    def __init__(self, uuid, user, cluster_name, sysbench_file, sample):
+    """Logic for all sysbench runs"""
+
+    def __init__(self, uuid, user, cluster_name, sysbench_file, sample, sysbench_args):
 
         self.uuid = uuid
         self.user = user
         self.cluster_name = cluster_name
         self.sysbench_file = sysbench_file
         self.sample = sample
+        self.sysbench_args = sysbench_args
 
         #  blank dictionary to capture test configuration
         self.test_config = {}
@@ -40,12 +47,18 @@ class trigger_sysbench:
         specific sysbench versions/future changes.
         """
 
-        #  open config file
-        config_file = open(self.sysbench_file)
+        #  Use args from command line or a config file
+        if self.sysbench_args:
+            config_options = self.sysbench_args.split()
+        elif self.sysbench_file:
+            config_options = open(self.sysbench_file, encoding="utf8")
+        else:
+            logger.error("Arugments were not specified by file or command line")
+            sys.exit(1)
 
         cmd = "sysbench"
         #  for each option add it to the command line
-        for option in config_file:
+        for option in config_options:
             option = option.strip()
             #  need to use --test for ease of use when parsing, but will strip off before adding to cmd
             if "--test" in option:
@@ -53,14 +66,14 @@ class trigger_sysbench:
             else:
                 cmd = cmd + " " + option
             #  slipt option Key=Value pair up and remove --
-            o, v = option.split("=")
+            opt, val = option.split("=")
             #  insert Key value pair into test config
-            self.test_config[o.replace("--", "")] = v
+            self.test_config[opt.replace("--", "")] = val
         #  add run as the last option to the command line
         cmd = cmd + " run"
 
         #  log the entire command
-        logger.info("Executing %s" % cmd)
+        logger.info("Executing %s", cmd)
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True, cwd=os.getcwd())
         #  run command and capture standard out and error
         stdout, stderr = process.communicate()
@@ -71,10 +84,13 @@ class trigger_sysbench:
         return stdout.strip().decode("utf-8"), stderr, process.returncode
 
     def emit_actions(self):
+        """
+        Parse results for Elasticsearch
+        """
 
         sample_starttime = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         # run the sysbench test
-        stdout, stderr, rc = self._run_sysbench()
+        stdout, stderr, ret = self._run_sysbench()
         #  setup result summary dictionary
         sysbench_result_summary = {
             "uuid": self.uuid,
@@ -87,10 +103,10 @@ class trigger_sysbench:
         #  this needs to be filled out when parsing stdout results
 
         #  if the return code is not 0 then log a failure, else log a successful run
-        if rc != 0:
+        if ret != 0:
             logger.error("failed to parse the output file")
             logger.error(stdout, stderr)
-            exit(1)
+            sys.exit(1)
 
         logger.info("sysbench has successfully finished \n")
         #  remove spacing for better parsing

@@ -242,7 +242,6 @@ class Nighthawk(Benchmark):
         self.logger.info(f"Collecting {self.config.samples} sample{_plural} of Nighthawk")
 
         for s in range(1, self.config.samples + 1):
-
             self.logger.info("Starting nighthawk sample %d out of %d with uuid %s" % (s, self.config.samples, self.config.uuid))
             stdout, stderr, rc = self._run_nighthawk()
             if rc:

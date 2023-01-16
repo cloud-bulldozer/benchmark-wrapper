@@ -32,7 +32,7 @@
             - sleep
             - inf
     ```
-2. Login to the host using ```oc rsh http-scale-client-test-7d45c599db-tdvn7 /bin/bash```
+2. Login to the host using ```oc rsh http-scale-client-test-[ID] /bin/bash```
 3. And follow the installation steps here: https://github.com/envoyproxy/nighthawk#building-on-ubuntu
 4. Once the binaries are generated copy them to your local file system using `oc cp` command.
 5. Create a Dockerfile in the directory which contains binaries and add the following code snippet.

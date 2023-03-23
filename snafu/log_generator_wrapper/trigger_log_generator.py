@@ -286,7 +286,7 @@ class Trigger_log_generator:
                 if messages_received >= message_count:
                     received_all_messages = True
                 else:
-                    logger.info("Message check failed. Retrying until timeout")
+                    logger.info("Message check failed. Received %d messages of %d. Retrying until timeout" % (messages_received, message_count))
                     if self.kafka_bootstrap_server:
                         logger.info(
                             "Current messages received is {}, waiting more time for kafka".format(

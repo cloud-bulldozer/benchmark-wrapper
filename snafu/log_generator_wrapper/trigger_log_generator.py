@@ -121,6 +121,7 @@ class Trigger_log_generator:
                 if total_diff < 1:
                     sleep(1 - total_diff)
                 count += self.messages_per_second
+                logger.info("Writing message and counting %d" % (count))
         return count
 
     def _check_cloudwatch(self, start_time, end_time):

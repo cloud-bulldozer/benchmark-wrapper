@@ -284,7 +284,7 @@ class Trigger_log_generator:
                 elif self.kafka_bootstrap_server:
                     messages_received = self._check_kafka(start_time, end_time + self.timeout)
                 if messages_received >= message_count-10: # ES misses 1 or 2 messages inconsistently and very negligible, so tolerating 0.00001% loss.
-                    received_all_messages = True               
+                    received_all_messages = True
                 else:
                     logger.info("Message check failed. Received %d messages of %d. Retrying until timeout" % (messages_received, message_count))
                     if self.kafka_bootstrap_server:

@@ -182,7 +182,7 @@ kubernetes==11.0.0
     #   -r requirements/py38-reqs/install.txt
     #   openshift
     #   snafu (setup.cfg)
-markdown-it-py==2.0.0
+markdown-it-py==2.2.0
     # via
     #   mdit-py-plugins
     #   myst-parser

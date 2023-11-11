@@ -24,7 +24,7 @@ cachetools==4.2.4
     # via
     #   -r requirements/py38-reqs/install.txt
     #   google-auth
-certifi==2021.10.8
+certifi==2022.12.7
     # via
     #   -r requirements/py38-reqs/install.txt
     #   elasticsearch

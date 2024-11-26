@@ -47,6 +47,7 @@ class Trigger_pgbench:
                 "run_start_timestamp": self.run_start_timestamp,
                 "sample_start_timestamp": self.sample_start_timestamp,
                 "description": self.description,
+                "num_clients": int(self.description.split('|')[-1].split(':')[-1].strip())
             }
         )
 
@@ -171,13 +172,16 @@ class Trigger_pgbench:
         print("+{}+".format("-" * (115)))
 
     def emit_actions(self):
+        sample_starttime = datetime.utcnow().strftime("%s")
         output = self._run_pgbench()
         if output[2] == 1:
             print("PGBench failed to execute, trying one more time..")
+            sample_starttime = datetime.utcnow().strftime("%s")
             output = self._run_pgbench()
             if output[2] == 1:
                 print("PGBench failed to execute a second time, stopping...")
                 exit(1)
+        sample_endtime = datetime.utcnow().strftime("%s")
         data = self._parse_stdout(output[0])
         progress = self._parse_stderr(output[1])
         documents = self._json_payload(self.meta_processed, data)
@@ -200,3 +204,15 @@ class Trigger_pgbench:
         if len(documents_prog) > 0:
             for document in documents_prog:
                 yield document, "results"
+        sample_info_dict = {
+            "uuid": self.uuid,
+            "user": self.user,
+            "cluster_name": self.cluster_name,
+            "starttime": sample_starttime,
+            "endtime": sample_endtime,
+            "sample": self.run[0],
+            "tool": "pgbench",
+            "test_config": self.meta_processed[0],
+        }
+
+        yield sample_info_dict, "get_prometheus_trigger"

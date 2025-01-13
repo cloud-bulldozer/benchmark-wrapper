@@ -292,7 +292,7 @@ urllib3==1.26.8
     #   elasticsearch
     #   kubernetes
     #   requests
-virtualenv==20.13.0
+virtualenv==20.26.6
     # via tox
 websocket-client==1.2.3
     # via

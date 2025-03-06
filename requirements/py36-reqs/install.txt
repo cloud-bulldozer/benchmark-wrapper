@@ -55,7 +55,7 @@ importlib-metadata==4.8.3
     #   snafu (setup.cfg)
 importlib-resources==5.4.0
     # via backports.zoneinfo
-jinja2==3.0.3
+jinja2==3.1.6
     # via openshift
 jmespath==0.10.0
     # via

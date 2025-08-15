@@ -475,7 +475,7 @@ def compute_percentiles_from_logs(
         csv_out = open(output_csv_file, "w")
     if output_csv_file_header:
         csv_out.write(header + "\n")
-    for (t_msec, all_threads_histo_t) in all_threads_histograms:
+    for t_msec, all_threads_histo_t in all_threads_histograms:
         if t_msec == 0:
             continue
         samples = get_samples(all_threads_histo_t)
@@ -752,7 +752,7 @@ if unittest2_imported:
             self.A(time_intervals[64][1] == 0.066 and time_intervals[127][1] == 0.256)
             pctiles_wanted = [0, 50, 100]
             pct_vs_time = []
-            for (time_ms, histo) in aligned_log:
+            for time_ms, histo in aligned_log:
                 pct_vs_time.append(get_pctiles(histo, pctiles_wanted, time_intervals))
             self.A(pct_vs_time[0] is None)  # no I/O in this time interval
             expected_pctiles = {0: 0.000, 50: 0.064, 100: 0.256}

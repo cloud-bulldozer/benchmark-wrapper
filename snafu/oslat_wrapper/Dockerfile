@@ -1,4 +1,4 @@
-FROM registry.centos.org/centos:8
+FROM registry.access.redhat.com/ubi9:latest
 USER root
 RUN dnf install -y --nodocs python3 python3-pip python3-devel numactl-devel perl \
     epel-release procps-ng iproute net-tools ethtool nmap iputils gcc

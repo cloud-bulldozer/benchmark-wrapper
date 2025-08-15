@@ -18,7 +18,7 @@ def run_subscriber(redis_host, redis_port, benchmark):
         count = 1
 
         while STATE:
-            print("Waiting For all {} Pods to get ready ...{}".format(benchmark, count))
+            print(f"Waiting For all {benchmark} Pods to get ready ...{count}")
             count += 1
             message = p.get_message()
             if message:
@@ -28,7 +28,7 @@ def run_subscriber(redis_host, redis_port, benchmark):
 
             time.sleep(1)
 
-        print("Executing {}...".format(benchmark))
+        print(f"Executing {benchmark}...")
         return True
     except Exception as e:
         print("******Exception Occured*******")

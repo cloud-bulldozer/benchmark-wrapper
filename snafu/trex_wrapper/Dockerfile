@@ -1,10 +1,8 @@
-FROM registry.access.redhat.com/ubi8:latest
+FROM registry.access.redhat.com/ubi9:latest
 
 # install requirements
 RUN dnf -y install --nodocs git wget procps python3 vim python3-pip python3-devel pciutils gcc && dnf clean all
-COPY snafu/image_resources/centos8.repo /etc/yum.repos.d/centos8.repo
-COPY snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
-RUN dnf install -y --nodocs hostname iproute net-tools ethtool nmap iputils https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && dnf clean all
+RUN dnf install -y --nodocs hostname iproute net-tools ethtool nmap iputils https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && dnf clean all
 
 # install trex server
 RUN mkdir -p /opt/trex
@@ -17,7 +15,7 @@ RUN git clone -b v2.87 https://github.com/cisco-system-traffic-generator/trex-co
 ENV PYTHONPATH="/opt/trex/trex-core/scripts/automation/trex_control_plane/interactive"
 
 # copy script
-COPY snafu/trex_wrapper/scripts/  /usr/local/bin/
+COPY snafu/trex_wrapper/scripts/ /usr/local/bin/
 RUN chmod +x /usr/local/bin/run*
 
 # copy snafu script

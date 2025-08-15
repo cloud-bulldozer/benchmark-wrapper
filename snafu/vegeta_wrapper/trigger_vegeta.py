@@ -65,7 +65,7 @@ class Trigger_vegeta:
             " -max-workers={1} | vegeta report --every=1s --type=json --output=vegeta.log"
         ).format(self.keepalive, self.workers, self.duration, self.targets)
         logger.info(cmd)
-        p = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, shell=True, capture_output=True)
         return p.stdout.strip().decode("utf-8"), p.stderr.strip().decode("utf-8"), p.returncode
 
     def _parse_stdout(self):

@@ -20,7 +20,7 @@ class Trigger_stressng:
         self.jobfile = args.jobfile
 
     def _run_stressng(self):
-        cmd = "stress-ng --job {} --log-file stressng.log -Y stressng.yml".format(self.jobfile)
+        cmd = f"stress-ng --job {self.jobfile} --log-file stressng.log -Y stressng.yml"
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         return stdout.strip().decode("utf-8"), process.returncode

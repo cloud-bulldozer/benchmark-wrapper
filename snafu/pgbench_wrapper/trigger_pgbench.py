@@ -53,15 +53,15 @@ class Trigger_pgbench:
     def _json_payload(self, meta_processed, data):
         processed = copy.deepcopy(meta_processed)
         for line in data["config"]:
-            processed[0].update({"{}".format(line[0]): self._num_convert(line[1])})
+            processed[0].update({f"{line[0]}": self._num_convert(line[1])})
         for line in data["results"]:
-            processed[0].update({"{}".format(line[0]): self._num_convert(line[1])})
+            processed[0].update({f"{line[0]}": self._num_convert(line[1])})
         return processed
 
     def _json_payload_raw(self, meta_processed, data):
         processed = copy.deepcopy(meta_processed)
         for line in data["config"]:
-            processed[0].update({"{}".format(line[0]): self._num_convert(line[1])})
+            processed[0].update({f"{line[0]}": self._num_convert(line[1])})
         processed[0].update({"raw_output_b64": data["raw_output_b64"].decode("utf-8")})
         return processed
 
@@ -71,7 +71,7 @@ class Trigger_pgbench:
             entry = copy.copy(meta_processed[0])
             for line in data["config"]:
                 if "timestamp" not in line[0]:
-                    entry.update({"{}".format(line[0]): self._num_convert(line[1])})
+                    entry.update({f"{line[0]}": self._num_convert(line[1])})
             entry.update(prog)
             processed.append(entry)
         return processed
@@ -121,7 +121,7 @@ class Trigger_pgbench:
             if re.search("tps", results[idx][0]):
                 cons = re.findall(r".*\((....)uding.*", results[idx][1])  # noqa
                 if cons:
-                    results[idx][0] = "tps_{}_con_est".format(cons[0]).strip()
+                    results[idx][0] = f"tps_{cons[0]}_con_est".strip()
                     results[idx][1] = self._num_convert(re.sub(r" \(.*", "", results[idx][1]).strip())  # noqa
             elif re.search("latency", results[idx][0]):
                 results[idx][0] += "_ms"
@@ -150,23 +150,23 @@ class Trigger_pgbench:
 
     def _summarize_data(self, data, iteration, uuid, database, pgb_vers):
         print("+{} PGBench Results {}+".format("-" * (50), "-" * (50)))
-        print("PGBench version: {}".format(pgb_vers))
+        print(f"PGBench version: {pgb_vers}")
         print("")
-        print("UUID: {}".format(uuid))
-        print("Run: {}".format(iteration))
+        print(f"UUID: {uuid}")
+        print(f"Run: {iteration}")
         print("")
-        print("Database: {}".format(database))
+        print(f"Database: {database}")
         print("")
         print("PGBench run info:")
         for line in data["config"]:
-            print("          {}: {}".format(line[0], line[1]))
+            print(f"          {line[0]}: {line[1]}")
         print("")
         # I asked for a mai tai, and they brought me a pina colada,
         # and I said no salt, NO salt on the margarita, but it had salt
         # on it, big grains of salt, floating in the glass.
         print("TPS report:")
         for line in data["results"]:
-            print("          {}: {}".format(line[0], line[1]))
+            print(f"          {line[0]}: {line[1]}")
         print("")
         print("+{}+".format("-" * (115)))
 

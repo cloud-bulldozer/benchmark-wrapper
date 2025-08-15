@@ -161,7 +161,7 @@ class _trigger_smallfile:
         except subprocess.CalledProcessError as e:
             self.logger.exception(e)
             raise SmallfileWrapperException("rsptime_stats return code %d" % e.returncode)
-        self.logger.info("response time result for operation {} in {}".format(self.operation, rsptime_file))
+        self.logger.info(f"response time result for operation {self.operation} in {rsptime_file}")
         with open(rsptime_file) as rf:
             lines = [ln.strip() for ln in rf.readlines()]
             start_grabbing = False

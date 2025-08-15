@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8:latest
+FROM registry.access.redhat.com/ubi9:latest
 
 RUN dnf install -y --nodocs git python3 python3-pip python3-devel gcc && dnf clean all
 RUN ln -s /usr/bin/python3 /usr/bin/python

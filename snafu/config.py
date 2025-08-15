@@ -2,7 +2,8 @@
 """Tools for setting up config arguments."""
 import argparse
 import os
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Sequence, Tuple, Union
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from typing import Any
 
 import configargparse
 
@@ -34,7 +35,7 @@ def check_file(file: str, perms: int = None) -> bool:
     return os.access(os.path.abspath(file), perms)
 
 
-def none_or_type(target_type: type) -> Callable[[Any], Union[type, None]]:
+def none_or_type(target_type: type) -> Callable[[Any], type | None]:
     """
     Return a function which supports allowing an argparse argument to be ``None`` or a specific type.
 
@@ -50,7 +51,7 @@ def none_or_type(target_type: type) -> Callable[[Any], Union[type, None]]:
         the argument is casted to the given type ``t``.
     """
 
-    def _t_or_none(val: Any) -> Union[type, None]:
+    def _t_or_none(val: Any) -> type | None:
         return val if val is None else target_type(val)
 
     return _t_or_none
@@ -84,7 +85,7 @@ class FuncAction(argparse.Action):
         self,
         parser: configargparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: Union[str, Sequence[Any], None],
+        values: str | Sequence[Any] | None,
         option_string=None,
     ):
         """Set destination attribute in namespace to output of performing func on given values."""
@@ -118,8 +119,8 @@ class ConfigArgument:
 
     def __init__(self, *args, **kwargs):
         """Set ``args`` to given args, and ``kwargs`` to given kwargs."""
-        self.args: Tuple[Any] = args
-        self.kwargs: Dict[str, Any] = kwargs
+        self.args: tuple[Any] = args
+        self.kwargs: dict[str, Any] = kwargs
 
 
 class Config:
@@ -154,7 +155,7 @@ class Config:
         self.params: argparse.Namespace = argparse.Namespace()
         self.parser: configargparse.ArgumentParser = configargparse.get_argument_parser()
         self.group = self.parser.add_argument_group(tool_name)
-        self.env_to_params: Dict[str, str] = {}
+        self.env_to_params: dict[str, str] = {}
 
     def __getattr__(self, attr):
         """If given ``attr`` doesn't already exist in instance, try to pull from ``params``."""
@@ -167,7 +168,7 @@ class Config:
         Will add in environment variables from the OS environment.
         """
 
-        env: Dict[str, str] = {}
+        env: dict[str, str] = {}
         env.update(os.environ)
         for env_var, dest in self.env_to_params.items():
             try:
@@ -202,7 +203,7 @@ class Config:
         for arg in args:
             self.add_argument(*arg.args, **arg.kwargs)
 
-    def parse_args(self, args: List[str] = None) -> None:
+    def parse_args(self, args: list[str] = None) -> None:
         """
         Parse arguments and store them in the ``params`` attribute.
 

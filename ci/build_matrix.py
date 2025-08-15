@@ -61,7 +61,7 @@ import pathlib
 import re
 import shlex
 import subprocess
-from typing import Dict, Iterable, List, Set, Union
+from collections.abc import Iterable
 
 ARCHS = (
     "amd64",
@@ -108,7 +108,7 @@ def get_git_diff(upstream_branch: str) -> str:
     return completed_process.stdout.decode("utf-8")
 
 
-def parse_git_diff(diff_str: str) -> Set[str]:
+def parse_git_diff(diff_str: str) -> set[str]:
     """
     Return parsed output of `git-diff --name-only`.
 
@@ -142,7 +142,7 @@ def get_dockerfile_list() -> str:
     return completed_process.stdout.decode("utf-8")
 
 
-def parse_dockerfile_list(df_list: str) -> Set[str]:
+def parse_dockerfile_list(df_list: str) -> set[str]:
     """
     Parse given list of Dockerfiles into a set of str.
 
@@ -220,7 +220,7 @@ class MatrixEntry:
             tags=tags,
         )
 
-    def build_json(self) -> Iterable[Dict[str, Union[str, bool]]]:
+    def build_json(self) -> Iterable[dict[str, str | bool]]:
         """Convert the given MatrixEntry into series of JSON-dicts, one for each arch."""
 
         for arch in self.archs:
@@ -236,7 +236,7 @@ class MatrixEntry:
                 "tags": " ".join([f"{tag}{tag_suffix}" for tag in self.tags]),
             }
 
-    def manifest_json(self) -> Iterable[Dict[str, Union[str, bool]]]:
+    def manifest_json(self) -> Iterable[dict[str, str | bool]]:
         """Convert the given MatrixEntry into series of JSON-dicts, one for each tag."""
 
         for tag in self.tags:
@@ -274,14 +274,14 @@ class MatrixBuilder:
         Set of changed files within the snafu repository.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-positional-arguments
         self,
         archs: Iterable[str],
         tags: Iterable[str],
         bones: Iterable[str],
         upstream_branch: str,
-        dockerfile_set: Set[str],
-        changed_set: Set[str],
+        dockerfile_set: set[str],
+        changed_set: set[str],
     ):
         """Contsruct the matrix builder."""
 
@@ -291,8 +291,8 @@ class MatrixBuilder:
         self.upstream_branch = upstream_branch
         self.dockerfile_set = dockerfile_set
         self.changed_set = changed_set
-        self.manifest_matrix: Dict[str, List[Dict[str, Union[str, bool]]]] = {}
-        self.build_matrix: Dict[str, List[Dict[str, Union[str, bool]]]] = {}
+        self.manifest_matrix: dict[str, list[dict[str, str | bool]]] = {}
+        self.build_matrix: dict[str, list[dict[str, str | bool]]] = {}
 
         self.reset()
 

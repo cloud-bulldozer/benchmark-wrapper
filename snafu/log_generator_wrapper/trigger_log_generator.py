@@ -215,7 +215,7 @@ class Trigger_log_generator:
                 consumer_timeout_ms=1000,
             )  # Create consumer for the topic in a new consumer group
         except Exception as e:
-            logging.error("Error connecting to kafka/topic: {}".format(e))  # exit if can't connect to kafka
+            logging.error(f"Error connecting to kafka/topic: {e}")  # exit if can't connect to kafka
             exit(1)
         partitions = consumer.partitions_for_topic(self.kafka_topic)  # get all partitions for the topic
         consumer.poll()  # dummy poll so that future seek works
@@ -256,7 +256,7 @@ class Trigger_log_generator:
             "Running log test with %d byte size for %d minutes at a rate of %d messages per second"
             % (self.size, self.duration, self.messages_per_second)
         )
-        logger.info("Test UUID is {} on cluster {}".format(self.uuid, self.cluster_name))
+        logger.info(f"Test UUID is {self.uuid} on cluster {self.cluster_name}")
 
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
         start_time = time.time()
@@ -283,10 +283,16 @@ class Trigger_log_generator:
                     messages_received = self._check_es(int(start_time), int(end_time))
                 elif self.kafka_bootstrap_server:
                     messages_received = self._check_kafka(start_time, end_time + self.timeout)
-                if messages_received >= message_count-10: # ES misses 1 or 2 messages inconsistently and very negligible, so tolerating 0.00001% loss.
+                if (
+                    messages_received >= message_count - 10
+                ):  # ES misses 1 or 2 messages inconsistently and very negligible,
+                    # so tolerating 0.00001% loss.
                     received_all_messages = True
                 else:
-                    logger.info("Message check failed. Received %d messages of %d. Retrying until timeout" % (messages_received, message_count))
+                    logger.info(
+                        "Message check failed. Received %d messages of %d. Retrying until timeout"
+                        % (messages_received, message_count)
+                    )
                     if self.kafka_bootstrap_server:
                         logger.info(
                             "Current messages received is {}, waiting more time for kafka".format(

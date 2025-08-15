@@ -90,7 +90,7 @@ class Trigger_upgrade:
         elif self.version:
             cmd = ("oc adm upgrade --to={}").format(self.version)
         logger.info(cmd)
-        p = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, shell=True, capture_output=True)
 
         if p.returncode == 1:
             logger.error("Error executing upgrade command. The error was:")
@@ -153,7 +153,7 @@ class Trigger_upgrade:
                 logger.info(clusterversion.get().attributes.items[0].status.history[0])
                 break
             status = "oc adm upgrade | grep info"
-            s = subprocess.run(status, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            s = subprocess.run(status, shell=True, capture_output=True)
             logger.info(s.stdout.strip().decode("utf-8"))
             time.sleep(self.poll_interval)
 
@@ -184,9 +184,7 @@ class Trigger_upgrade:
             op_time = datetime.datetime.strptime(op.metadata.managedFields[field_len - 1].time, time_format)
             update_time = op_time - self.start_time
             op_time = op_time.strftime(time_format)
-            logger.info(
-                "Operator: {} finished update at {} and took {}".format(op_name, op_time, update_time)
-            )
+            logger.info(f"Operator: {op_name} finished update at {op_time} and took {update_time}")
             op_data = {
                 "operator": op_name,
                 "end_time": op_time,

@@ -13,7 +13,7 @@ def run_publisher(redis_host, redis_port, benchmark, pod_count):
         r = redis.StrictRedis(host=redis_host, port=redis_port)
         count = 0
         while count != pod_count:
-            redis_command = "PUBSUB NUMSUB {}".format(benchmark)
+            redis_command = f"PUBSUB NUMSUB {benchmark}"
             count = r.execute_command(redis_command)[1]
             print(count)
             time.sleep(1)

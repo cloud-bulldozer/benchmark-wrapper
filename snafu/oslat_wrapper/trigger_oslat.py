@@ -81,7 +81,7 @@ class Trigger_oslat:
         return payload
 
     def _run_oslat(self):
-        cmd = "dumb-init -- {}".format(self.path)
+        cmd = f"dumb-init -- {self.path}"
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         logger.info("Raw result is \n{}".format(stdout.strip().decode("utf-8")))
@@ -89,10 +89,10 @@ class Trigger_oslat:
 
     def emit_actions(self):
         if not os.path.exists(self.path):
-            logger.critical("oslat script {} not found".format(self.path))
+            logger.critical(f"oslat script {self.path} not found")
             exit(1)
         for s in range(1, self.samples + 1):
-            logger.info("Starting sample {} out of {}".format(s, self.samples))
+            logger.info(f"Starting sample {s} out of {self.samples}")
             logger.info("Starting oslat benchmark")
             stdout, stderr, rc = self._run_oslat()
             timestamp = datetime.datetime.now()

@@ -41,7 +41,6 @@ def _tstos(ts=None):
 
 
 def _calc_backoff_sleep(backoff):
-    global _r
     b = math.pow(2, backoff)
     return _r.uniform(0, min(b, _MAX_SLEEP_TIME))
 

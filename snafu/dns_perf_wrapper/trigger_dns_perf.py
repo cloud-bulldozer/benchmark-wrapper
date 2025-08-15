@@ -62,9 +62,9 @@ class Trigger_dns_perf:
         )
         (output, err) = out.communicate()
         if out.returncode != 0:
-            logger.error("Failed to run {}, error: {}".format(command, err))
+            logger.error(f"Failed to run {command}, error: {err}")
             exit(1)
-        logger.info("Raw result: \n{}".format(output))
+        logger.info(f"Raw result: \n{output}")
         return output
 
     def _parse_stdout(self, stdout):
@@ -114,7 +114,7 @@ Statistics:
         out = self.run()
         end_time = time.time()
         elapsed_time = end_time - start_time
-        logger.info("Elapsed time in seconds: {}".format(elapsed_time))
+        logger.info(f"Elapsed time in seconds: {elapsed_time}")
         logger.info("Starting output parsing")
         try:
             data = self._parse_stdout(str(out))

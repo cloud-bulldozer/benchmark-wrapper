@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        pyver: [6, 7, 8, 9]
+        pyver: [11, 12]
     name: Run Unit Tests -- Python 3.${{ matrix.pyver }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.${{ matrix.pyver }}
       - name: Install tox
@@ -23,10 +23,10 @@ jobs:
       - name: Run Tox
         run: tox -e py3${{ matrix.pyver }}-unit
       - name: Generate coverage report
-        if: matrix.pyver == 6
+        if: matrix.pyver == 11
         run: tox -e coverage
       - name: Upload coverage report
-        if: matrix.pyver == 6
+        if: matrix.pyver == 11
         uses: codecov/codecov-action@v1
         with:
           files: ./coverage.xml

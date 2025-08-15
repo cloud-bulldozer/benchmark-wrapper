@@ -2,8 +2,9 @@
 """Base benchmark tools."""
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable
+from typing import Any
 
 from snafu import registry
 from snafu.config import Config, ConfigArgument, FuncAction
@@ -31,16 +32,16 @@ class BenchmarkResult:
     """
 
     name: str
-    metadata: Dict[str, Any]
-    config: Dict[str, Any]
-    data: Dict[str, Any]
-    labels: Dict[str, Any]
+    metadata: dict[str, Any]
+    config: dict[str, Any]
+    data: dict[str, Any]
+    labels: dict[str, Any]
     tag: str
 
-    def to_jsonable(self) -> Dict[str, Any]:
+    def to_jsonable(self) -> dict[str, Any]:
         """Transform dataclass into exportable JSON doc."""
 
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
         result.update(self.config)
         result.update(self.data)
         result.update(self.metadata)
@@ -61,7 +62,7 @@ class LabelParserAction(FuncAction):
     """
 
     @staticmethod
-    def func(arg: str) -> Dict[str, str]:
+    def func(arg: str) -> dict[str, str]:
         """Parse given arg by splitting on ',', then on '='."""
         labels = {}
         for pair in arg.strip().split(","):
@@ -110,21 +111,21 @@ class Benchmark(ABC, metaclass=registry.ToolRegistryMeta):
         self.config.populate_parser(self._common_args)
         self.config.populate_parser(self.args)
 
-    def get_metadata(self) -> Dict[str, str]:
+    def get_metadata(self) -> dict[str, str]:
         """
         Get metadata dictionary
 
         Uses the metadata attribute as a list of keys to pull from the config.
         """
 
-        metadata: Dict[str, str] = {}
+        metadata: dict[str, str] = {}
         for key in self.metadata:
             value = getattr(self.config, key, None)
             if value is not None:
                 metadata[key] = value
         return metadata
 
-    def create_new_result(self, data: Dict[str, Any], config: Dict[str, Any], tag: str) -> BenchmarkResult:
+    def create_new_result(self, data: dict[str, Any], config: dict[str, Any], tag: str) -> BenchmarkResult:
         """Shortcut method for creating a new :py:class:`BenchmarkResult` instance."""
         result = BenchmarkResult(
             name=self.tool_name,

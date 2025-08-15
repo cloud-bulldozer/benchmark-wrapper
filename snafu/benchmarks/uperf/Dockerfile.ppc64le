@@ -1,9 +1,11 @@
-FROM registry.access.redhat.com/ubi8:latest
+FROM registry.access.redhat.com/ubi9:latest
 
-RUN dnf install -y --nodocs git python3 python3-pip gcc python3-devel gcc-c++ atlas-devel gcc-gfortran  && dnf clean all
-COPY snafu/image_resources/centos8-appstream.repo /etc/yum.repos.d/centos8-appstream.repo
-RUN dnf install -y --nodocs redis --enablerepo=centos8-appstream && dnf clean all
-RUN dnf install -y --nodocs hostname procps-ng iproute net-tools ethtool nmap iputils https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && dnf clean all
+COPY snafu/image_resources/centos9.repo /etc/yum.repos.d/centos9.repo
+RUN dnf config-manager --set-enabled ubi-9-codeready-builder-rpms
+RUN dnf install -y --nodocs git python3 python3-pip gcc python3-devel gcc-c++ gcc-gfortran && dnf clean all
+RUN dnf install -y --enablerepo=centos9 --nodocs atlas-devel || dnf install -y --nodocs openblas-devel
+RUN dnf install -y --nodocs redis && dnf clean all
+RUN dnf install -y --nodocs hostname procps-ng iproute net-tools ethtool nmap iputils https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && dnf clean all
 RUN dnf install -y uperf && dnf clean all
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN python3 -m pip install --upgrade cython numpy importlib_metadata 'urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1' && python3 -m pip install --upgrade scipy pandas

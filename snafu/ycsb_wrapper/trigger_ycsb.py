@@ -123,14 +123,14 @@ class Trigger_ycsb:
                 python, self.phase, self.driver[0], self.workload, extra
             )
             stdout, stderr, rc = self._run(cmd)
-            output = "{}\n{}".format(stdout, stderr)
+            output = f"{stdout}\n{stderr}"
         else:
             self.phase = "run"
             cmd = "{} /ycsb/bin/ycsb {} {} -s -P /tmp/ycsb/{} {}".format(
                 python, self.phase, self.driver[0], self.workload, extra
             )
             stdout, stderr, rc = self._run(cmd)
-            output = "{}\n{}".format(stdout, stderr)
+            output = f"{stdout}\n{stderr}"
 
         if rc != 0:
             print("YCSB failed to execute:\n%s", stderr)

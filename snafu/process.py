@@ -4,38 +4,38 @@ import dataclasses
 import datetime
 import logging
 import subprocess
-from typing import Iterable, List, Optional, Union
+from collections.abc import Iterable
 
 
 @dataclasses.dataclass
 class ProcessRun:
     """Represent a single run of a subprocess without retries."""
 
-    rc: Optional[int] = None  # pylint: disable=C0103
-    stdout: Optional[str] = None
-    stderr: Optional[str] = None
-    time_seconds: Optional[float] = None
-    hit_timeout: Optional[bool] = None
+    rc: int | None = None  # pylint: disable=C0103
+    stdout: str | None = None
+    stderr: str | None = None
+    time_seconds: float | None = None
+    hit_timeout: bool | None = None
 
 
 @dataclasses.dataclass
 class ProcessSample:
     """Represent a process that will be retried on failure."""
 
-    expected_rc: Optional[int] = None
-    success: Optional[bool] = None
-    attempts: Optional[int] = None
-    timeout: Optional[int] = None
-    failed: List[ProcessRun] = dataclasses.field(default_factory=list)
-    successful: Optional[ProcessRun] = None
+    expected_rc: int | None = None
+    success: bool | None = None
+    attempts: int | None = None
+    timeout: int | None = None
+    failed: list[ProcessRun] = dataclasses.field(default_factory=list)
+    successful: ProcessRun | None = None
 
 
 def get_process_sample(
-    cmd: Union[str, List[str]],
+    cmd: str | list[str],
     logger: logging.Logger,
     retries: int = 0,
     expected_rc: int = 0,
-    timeout: Optional[int] = None,
+    timeout: int | None = None,
     **kwargs,
 ) -> ProcessSample:
     """
@@ -79,19 +79,14 @@ def get_process_sample(
         kwargs.get("capture_output", False)
         or {"stdout", "stderr", "capture_output"}.intersection(set(kwargs)) == set()
     ):
-        kwargs["stdout"] = subprocess.PIPE
-        kwargs["stderr"] = subprocess.PIPE
-
-    # Keeps python 3.6 compatibility
-    if "capture_output" in kwargs:
-        del kwargs["capture_output"]
+        kwargs["capture_output"] = True
 
     while tries <= retries:
         tries += 1
         logger.debug(f"On try {tries}")
 
         attempt = ProcessRun()
-        start_time = datetime.datetime.utcnow()
+        start_time = datetime.datetime.now(datetime.UTC)
         try:
             proc = subprocess.run(cmd, check=False, timeout=timeout, **kwargs)
         except subprocess.TimeoutExpired as timeout_error:
@@ -100,7 +95,7 @@ def get_process_sample(
             stdout = timeout_error.stdout
             stderr = timeout_error.stderr
         else:
-            attempt.time_seconds = (datetime.datetime.utcnow() - start_time).total_seconds()
+            attempt.time_seconds = (datetime.datetime.now(datetime.UTC) - start_time).total_seconds()
             attempt.hit_timeout = False
             attempt.rc = proc.returncode
             stdout = proc.stdout
@@ -131,12 +126,12 @@ def get_process_sample(
     return result
 
 
-def sample_process(
-    cmd: Union[str, List[str]],
+def sample_process(  # pylint: disable=too-many-positional-arguments
+    cmd: str | list[str],
     logger: logging.Logger,
     retries: int = 0,
     expected_rc: int = 0,
-    timeout: Optional[int] = None,
+    timeout: int | None = None,
     num_samples: int = 1,
     **kwargs,
 ) -> Iterable[ProcessSample]:

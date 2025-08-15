@@ -5,7 +5,8 @@ import datetime
 import re
 import shlex
 import sys
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from collections.abc import Iterable
+from typing import Any
 
 import numpy as np
 
@@ -18,7 +19,7 @@ class ParseRangeAction(FuncAction):
     """Parses node_range and density_range attributes."""
 
     @staticmethod
-    def func(arg: str) -> List[int]:
+    def func(arg: str) -> list[int]:
         """Take the input argument, split by '-' and cast non-empty results into ints."""
         return [int(x) for x in arg.split("-") if x != ""]
 
@@ -43,50 +44,50 @@ class UperfStdout:
     we parse within the benchmark wrapper and store in this class.
     """
 
-    results: Tuple[RawUperfStat, ...]
+    results: tuple[RawUperfStat, ...]
     duration: int
-    test_type: Optional[str] = None
-    protocol: Optional[str] = None
-    message_size: Optional[int] = None
-    read_message_size: Optional[int] = None
-    num_threads: Optional[int] = None
+    test_type: str | None = None
+    protocol: str | None = None
+    message_size: int | None = None
+    read_message_size: int | None = None
+    num_threads: int | None = None
 
 
 @dataclasses.dataclass
 class UperfConfig:
     """Container for common configuration options that are passed to Uperf."""
 
-    test_type: Optional[str] = None
-    protocol: Optional[str] = None
-    message_size: Optional[int] = None
-    read_message_size: Optional[int] = None
-    num_threads: Optional[int] = None
-    duration: Optional[int] = None
-    kind: Optional[str] = None
-    hostnetwork: Optional[str] = None
-    remote_ip: Optional[str] = None
-    client_ips: Optional[str] = None
-    service_ip: Optional[str] = None
-    service_type: Optional[str] = None
-    port: Optional[str] = None
-    client_node: Optional[str] = None
-    server_node: Optional[str] = None
-    num_pairs: Optional[str] = None
-    multus_client: Optional[str] = None
-    networkpolicy: Optional[str] = None
-    density: Optional[str] = None
-    nodes_in_iter: Optional[str] = None
-    step_size: Optional[str] = None
-    colocate: Optional[str] = None
-    density_range: Optional[List[int]] = None
-    node_range: Optional[List[int]] = None
-    pod_id: Optional[str] = None
+    test_type: str | None = None
+    protocol: str | None = None
+    message_size: int | None = None
+    read_message_size: int | None = None
+    num_threads: int | None = None
+    duration: int | None = None
+    kind: str | None = None
+    hostnetwork: str | None = None
+    remote_ip: str | None = None
+    client_ips: str | None = None
+    service_ip: str | None = None
+    service_type: str | None = None
+    port: str | None = None
+    client_node: str | None = None
+    server_node: str | None = None
+    num_pairs: str | None = None
+    multus_client: str | None = None
+    networkpolicy: str | None = None
+    density: str | None = None
+    nodes_in_iter: str | None = None
+    step_size: str | None = None
+    colocate: str | None = None
+    density_range: list[int] | None = None
+    node_range: list[int] | None = None
+    pod_id: str | None = None
 
     @classmethod
     def new(cls, stdout: UperfStdout, config: Config):
         """Create a new instance given instances of :py:mod:`~snafu.config.Config` and UperfStdout."""
 
-        kwargs: Dict[str, Any] = {}
+        kwargs: dict[str, Any] = {}
         for fields in dataclasses.fields(cls):
             val = getattr(stdout, fields.name, None)
             if val is None:
@@ -106,7 +107,7 @@ class UperfStat:
     ops: int
     norm_ops: int
     norm_ltcy: float
-    iteration: Optional[int] = None
+    iteration: int | None = None
 
 
 class Uperf(Benchmark):
@@ -216,14 +217,14 @@ class Uperf(Benchmark):
         # <profile name="{{test}}-{{proto}}-{{wsize}}-{{rsize}}-{{nthr}}">
         profile_name = re.findall(r"running profile:(.*) \.\.\.", stdout)[0]
         vals = profile_name.split("-")
-        parsed_profile_name_types: Dict[str, type] = {
+        parsed_profile_name_types: dict[str, type] = {
             "test_type": str,
             "protocol": str,
             "message_size": int,
             "read_message_size": int,
             "num_threads": int,
         }
-        parsed_profile_name: Dict[str, Optional[Union[str, int]]] = {}
+        parsed_profile_name: dict[str, str | int | None] = {}
         if len(vals) != 5:
             self.logger.warning(
                 f"Unable to parse detected profile name: {profile_name}. Expected format of "
@@ -231,7 +232,7 @@ class Uperf(Benchmark):
             )
             parsed_profile_name = {key: None for key in parsed_profile_name_types}
         else:
-            overwritten: List[str] = []
+            overwritten: list[str] = []
             for i, (key, cast) in enumerate(parsed_profile_name_types.items()):
                 if getattr(self.config, key, None) is not None:
                     overwritten.append(key)
@@ -261,7 +262,7 @@ class Uperf(Benchmark):
         return uperf_stdout
 
     @staticmethod
-    def get_results_from_stdout(stdout: UperfStdout) -> List[UperfStat]:
+    def get_results_from_stdout(stdout: UperfStdout) -> list[UperfStat]:
         """
         Return list of results given raw uperf stdout.
 
@@ -276,7 +277,7 @@ class Uperf(Benchmark):
         list of UperfStat
         """
 
-        processed: List[UperfStat] = []
+        processed: list[UperfStat] = []
         prev_bytes: int = 0
         prev_ops: int = 0
         prev_timestamp: float = 0.0
@@ -359,7 +360,7 @@ class Uperf(Benchmark):
             self.logger.debug(sample.successful.stdout)
 
             stdout: UperfStdout = self.parse_stdout(sample.successful.stdout)
-            result_data: List[UperfStat] = self.get_results_from_stdout(stdout)
+            result_data: list[UperfStat] = self.get_results_from_stdout(stdout)
             config: UperfConfig = UperfConfig.new(stdout, self.config)
 
             byte_summary = []
@@ -377,12 +378,12 @@ class Uperf(Benchmark):
                 )
                 self.logger.debug(f"Got sample result: {result}")
                 yield result
-            self.logger.info(f"{'-'*50}")
+            self.logger.info(f"{'-' * 50}")
             self.logger.info(f"Summary result for sample : {sample_num}")
             self.logger.info(f"Average byte : {np.average(byte_summary)}")
             self.logger.info(f"Average ops : {np.average(op_summary)}")
-            self.logger.info(f"95%ile Latency(ms) : {np.percentile(lat_summary,95)}")
-            self.logger.info(f"{'-'*50}")
+            self.logger.info(f"95%ile Latency(ms) : {np.percentile(lat_summary, 95)}")
+            self.logger.info(f"{'-' * 50}")
         self.logger.info(f"Successfully collected {self.config.sample} sample{_plural} of Uperf.")
 
     @staticmethod

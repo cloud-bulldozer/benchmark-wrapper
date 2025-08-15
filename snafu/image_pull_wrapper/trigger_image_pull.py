@@ -78,7 +78,7 @@ class Trigger_image_pull:
                 logger.info("Failed to pull image: %s" % self.image)
                 logger.info("STDOUT: %s" % output)
                 logger.info("STDERR: %s" % errors)
-                logger.info("Retrying. {}/{} failures.".format(failures, self.retries))
+                logger.info(f"Retrying. {failures}/{self.retries} failures.")
 
             # Statistics / Data
             elapsed_time = end_time - start_time
@@ -105,7 +105,7 @@ class Trigger_image_pull:
         logger.info(
             "Running image pull test with %d image retries and image: %s" % (self.retries, str(self.image))
         )
-        logger.info("Test UUID is {} on cluster {}".format(self.uuid, self.cluster_name))
+        logger.info(f"Test UUID is {self.uuid} on cluster {self.cluster_name}")
 
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
         results = self._run_image_pull_test()

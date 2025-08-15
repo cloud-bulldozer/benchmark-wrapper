@@ -40,7 +40,6 @@ class trigger_sysbench:
         self.test_config = {}
 
     def _run_sysbench(self):
-
         """
         loop through each option in config file and add it to the command line option,
         and test_confg then run the command. this we reduce our dependency on

@@ -3,8 +3,8 @@
 import re
 import shlex
 import uuid
+from collections.abc import Iterable
 from datetime import datetime
-from typing import Dict, Iterable, List
 
 from dateutil import tz
 
@@ -75,11 +75,11 @@ class Coremarkpro(Benchmark):
         ),
     )
 
-    result_config: Dict = {}
+    result_config: dict = {}
 
     """ Helper functions"""
 
-    def build_workload_cmd(self) -> List[str]:
+    def build_workload_cmd(self) -> list[str]:
         """
         Builds the command line arguments needed to run CoreMark Pro
         """
@@ -108,7 +108,7 @@ class Coremarkpro(Benchmark):
         types = [str, str, str, int, int, int, float, int, float, int, int]
 
         with open(self.config.path + self.config.result_name + ".log", encoding="utf-8") as file:
-            results = []
+            results: list[dict] = []
             prev_run_type = ""
             run_type = ""
             run_index = 0

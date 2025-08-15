@@ -12,18 +12,17 @@ import sys
 import traceback
 from dataclasses import dataclass
 from types import TracebackType
-from typing import Dict, List, Tuple, Type, Union
 
-_ExcInfoType = Union[Tuple[Type[BaseException], BaseException, TracebackType], Tuple[None, None, None]]
+_ExcInfoType = tuple[type[BaseException], BaseException, TracebackType] | tuple[None, None, None]
 
 
 @dataclass
 class DetectedBenchmarks:
     """Dataclass representation of benchmark modules that were detected and attempted to be imported."""
 
-    imported: List[str]
-    failed: List[str]
-    errors: Dict[str, _ExcInfoType]
+    imported: list[str]
+    failed: list[str]
+    errors: dict[str, _ExcInfoType]
 
     def log(self, logger: logging.Logger, level: int = logging.DEBUG, show_tb: bool = False) -> None:
         """

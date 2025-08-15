@@ -6,7 +6,6 @@ import logging
 import os
 import re
 import subprocess
-from typing import List
 
 import distro
 
@@ -22,8 +21,8 @@ class systemd_analyze(Benchmark):  # pylint: disable=invalid-name
     """
 
     tool_name = "systemd_analyze"
-    tc_values: List[str] = []
-    td_values: List[str] = []
+    tc_values: list[str] = []
+    td_values: list[str] = []
 
     # Test configuration lists
     tc_list = [
@@ -53,7 +52,6 @@ class systemd_analyze(Benchmark):  # pylint: disable=invalid-name
     )  # pylint: disable=attribute-defined-outside-init
 
     def setup(self):  # pylint: disable=too-many-branches
-
         """
         No arguments at this time.
         args = (
@@ -83,6 +81,7 @@ class systemd_analyze(Benchmark):  # pylint: disable=invalid-name
         cpuinfo_out = subprocess.run(["lscpu"], stdout=subprocess.PIPE, check=False)
         cpuinfo_out = cpuinfo_out.stdout.decode("utf-8")
         # cpu model
+        model = None
         for line in cpuinfo_out.split("\n"):
             if "Model name:" in line:
                 model = re.search("Model name.*:(.*)", cpuinfo_out).group(1)
@@ -93,6 +92,7 @@ class systemd_analyze(Benchmark):  # pylint: disable=invalid-name
             self.tc_values.insert(1, model.lstrip())
 
         # number of cores
+        numcores = None
         for line in cpuinfo_out.split("\n"):
             if "CPU(s):" in line:
                 numcores = re.search(r"CPU\(s\):(.*)", cpuinfo_out).group(1)
@@ -103,6 +103,7 @@ class systemd_analyze(Benchmark):  # pylint: disable=invalid-name
             self.tc_values.insert(2, numcores.strip())
 
         # CPU max MHz
+        maxmhz = None
         for line in cpuinfo_out.split("\n"):
             if "CPU max MHz:" in line:
                 maxmhz = re.search("CPU max MHz:(.*)", cpuinfo_out).group(1)
@@ -131,6 +132,7 @@ class systemd_analyze(Benchmark):  # pylint: disable=invalid-name
         distro_name = distro_name.replace(" ", "_")
         self.sa_config["test_config"]["distro"]["name"] = distro_name
 
+        clustername = "unknown"
         if "clustername" in os.environ:
             clustername = os.environ["clustername"]
         self.sa_config["test_config"]["platform"] = clustername + "_" + distro_name + "_" + self.short_curtime
@@ -203,6 +205,7 @@ class systemd_analyze(Benchmark):  # pylint: disable=invalid-name
             minutes = re.search(r"(\d+)min", line)
             seconds = re.search(r"(\d+\.\d+)s", line)
             millisec = re.search(r"(\d+)ms", line)
+            etime = None
             if minutes and seconds:
                 min_var = minutes[0].strip("min")
                 sec = seconds[0].strip("s")

@@ -9,13 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        pyver: [6, 7, 8, 9]
+        pyver: [11, 12]
     name: Run Doc Tests -- Python 3.${{ matrix.pyver }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Install build dependencies
         run: sudo apt-get install -y pandoc
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.${{ matrix.pyver }}
       - name: Install tox

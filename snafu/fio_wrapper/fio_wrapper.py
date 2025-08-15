@@ -71,11 +71,9 @@ class fio_wrapper:
             os.makedirs(sample_dir, exist_ok=True)
             if self.cache_drop_ip:
                 try:
-                    drop = requests.get("http://{}:9432/drop_osd_caches".format(self.cache_drop_ip)).text
+                    drop = requests.get(f"http://{self.cache_drop_ip}:9432/drop_osd_caches").text
                 except:  # noqa
-                    logger.error(
-                        "Failed HTTP request to Ceph OSD cache drop pod {}".format(self.cache_drop_ip)
-                    )
+                    logger.error(f"Failed HTTP request to Ceph OSD cache drop pod {self.cache_drop_ip}")
                 if "SUCCESS" in drop:
                     logger.info("Ceph OSD cache successfully dropped")
                 else:

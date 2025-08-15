@@ -72,7 +72,7 @@ class _trigger_fs_drift:
         except subprocess.CalledProcessError as e:
             self.logger.exception(e)
             raise FsDriftWrapperException("fs-drift.py non-zero process return code %d" % e.returncode)
-        self.logger.info("completed sample {} , results in {}".format(self.sample, self.json_output_file))
+        self.logger.info(f"completed sample {self.sample} , results in {self.json_output_file}")
 
         fsdict = get_vfs_stat_dict(self.working_dir)
         with open(self.json_output_file) as f:
@@ -118,7 +118,7 @@ class _trigger_fs_drift:
         except subprocess.CalledProcessError as e:
             self.logger.exception(e)
             raise FsDriftWrapperException("rsptime_stats failed, see exception in log")
-        self.logger.info("response time result {}".format(rsptime_file))
+        self.logger.info(f"response time result {rsptime_file}")
         with open(rsptime_file) as rf:
             lines = [line.strip() for line in rf.readlines()]
             start_grabbing = False

@@ -75,7 +75,7 @@ elasticsearch==7.13.4
     # via
     #   -r requirements/py36-reqs/install.txt
     #   snafu (setup.cfg)
-filelock==3.4.1
+filelock==3.20.3
     # via
     #   tox
     #   virtualenv

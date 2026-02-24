@@ -26,6 +26,12 @@ import time
 from distutils.util import strtobool
 
 import configargparse
+
+# NumPy 2.0: elasticsearch 7.x uses np.float_ (removed in 2.0); use float64
+import numpy as np
+if not hasattr(np, "float_"):
+    np.float_ = np.float64
+
 import elasticsearch
 import urllib3
 
